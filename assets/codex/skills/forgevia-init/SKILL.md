@@ -12,4 +12,5 @@ Use this skill when the user explicitly wants Forgevia to initialize the current
 - Check whether `openspec` is installed and available.
 - Check whether the current project already has OpenSpec initialization.
 - If missing, invoke Forgevia's project bootstrap flow to run `openspec init`.
+- If the repository is expected to work from both Codex and Claude, prefer initializing with `--tools codex,claude`.
 - Do not modify project source files beyond OpenSpec's own initialization behavior.

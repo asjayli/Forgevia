@@ -40,6 +40,7 @@ Purpose:
 - check the global Forgevia environment
 - check whether the target repository already has OpenSpec initialization
 - invoke `openspec init` only when initialization is missing
+- prefer `--tools codex,claude` when the repository should support both Forgevia clients
 
 Behavior:
 - route to Forgevia's environment checks and bootstrap flow
