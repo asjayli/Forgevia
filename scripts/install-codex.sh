@@ -9,6 +9,10 @@ OPENSPEC_ASSETS_DIR="$ROOT_DIR/assets/openspec"
 CODEX_ROOT="${CODEX_HOME:-$HOME/.codex}"
 SUPERPOWERS_INSTALL_URL="https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.codex/INSTALL.md"
 OPENSPEC_ROOT="${OPENSPEC_ROOT:-}"
+# Forgevia's openspec override files are snapshots taken against this upstream
+# openspec version. Never overlay them onto a different upstream version —
+# that would silently downgrade upstream behavior.
+OPENSPEC_OVERRIDE_VERSION="1.5.0"
 
 usage() {
   cat <<EOF
@@ -113,6 +117,20 @@ resolve_openspec_root() {
   echo "$npm_global_root/@fission-ai/openspec"
 }
 
+read_openspec_version() {
+  local openspec_root="$1"
+  local pkg="$openspec_root/package.json"
+  [[ -f "$pkg" ]] || return 0
+  node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(p.version||"")' "$pkg" 2>/dev/null
+}
+
+openspec_version_matches() {
+  local openspec_root="$1"
+  local ver
+  ver="$(read_openspec_version "$openspec_root")"
+  [[ -z "$ver" || "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
+}
+
 verify_superpowers_present() {
   if [[ -d "$CODEX_ROOT/superpowers" ]]; then
     return
@@ -130,6 +148,10 @@ EOF
 overlay_assets() {
   log_step "Overlaying Forgevia-managed assets into $CODEX_ROOT"
 
+  sync_path "$ASSETS_DIR/skills/openspec-propose" "$CODEX_ROOT/skills/openspec-propose"
+  sync_path "$ASSETS_DIR/skills/openspec-apply-change" "$CODEX_ROOT/skills/openspec-apply-change"
+  sync_path "$ASSETS_DIR/skills/openspec-archive-change" "$CODEX_ROOT/skills/openspec-archive-change"
+  sync_path "$ASSETS_DIR/skills/openspec-explore" "$CODEX_ROOT/skills/openspec-explore"
   sync_path "$ASSETS_DIR/skills/forgevia" "$CODEX_ROOT/skills/forgevia"
   sync_path "$ASSETS_DIR/skills/forgevia-init" "$CODEX_ROOT/skills/forgevia-init"
   sync_path "$ASSETS_DIR/skills/forgevia-doctor" "$CODEX_ROOT/skills/forgevia-doctor"
@@ -160,6 +182,14 @@ overlay_openspec_assets() {
   if [[ ! -d "$openspec_root" ]]; then
     echo "openspec install root not found: $openspec_root" >&2
     exit 1
+  fi
+
+  if ! openspec_version_matches "$openspec_root"; then
+    local actual_version
+    actual_version="$(read_openspec_version "$openspec_root")"
+    log_info "openspec $actual_version detected; Forgevia openspec override targets $OPENSPEC_OVERRIDE_VERSION."
+    log_info "Skipping openspec override to avoid downgrading upstream. Pin openspec to $OPENSPEC_OVERRIDE_VERSION or update Forgevia's override."
+    return
   fi
 
   sync_path "$OPENSPEC_ASSETS_DIR/dist/core/config-prompts.js" "$openspec_root/dist/core/config-prompts.js"
