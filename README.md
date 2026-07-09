@@ -105,10 +105,10 @@ Forgevia 在下列上游之上叠加受管定制。覆盖快照针对的版本�
 
 | 上游 | 用途 | Forgevia 基准 | 上游最新 | 地址 |
 |------|------|---------------|----------|------|
-| OpenSpec (`@fission-ai/openspec`) | spec-driven 变更工作流 CLI | override 针对 `1.4.1` | `1.5.0`（含 `1.6.0-beta.1`） | https://www.npmjs.com/package/@fission-ai/openspec |
+| OpenSpec (`@fission-ai/openspec`) | spec-driven 变更工作流 CLI | override 针对 `1.5.0` | `1.5.0`（含 `1.6.0-beta.1`） | https://www.npmjs.com/package/@fission-ai/openspec |
 | superpowers (`obra/superpowers`) | brainstorming / TDD / 计划 / 评审等技能框架 | 测试基准 `5.0.5` | `6.1.1` | https://github.com/obra/superpowers |
 | playwright-interactive | 浏览器交互验证技能 | vendored（未追踪版本） | — | 见技能内 `LICENSE.txt` / `NOTICE.txt`（Apache-2.0，© Microsoft Corporation） |
 | mermaid-cli (`mmdc`) | `forgevia-draw` 渲染 SVG 的运行时依赖 | 运行时工具 | — | https://github.com/mermaid-js/mermaid-cli |
 | ripgrep (`rg`) | `forgevia-tasks` 扫描任务（可选，缺失回退 grep） | 运行时工具 | — | https://github.com/BurntSushi/ripgrep |
 
-> 说明：Forgevia 对 OpenSpec 的覆盖是针对 `1.4.1` 的内容快照。当上游 OpenSpec 版本与快照不一致时，安装器与 doctor 会保护性跳过覆盖，避免降级上游；若要在新版上游上恢复 Forgevia 定制，需同步更新覆盖快照与 `manifests/*.json` 中的 `overrideTargetVersion`。
+> 说明：Forgevia 对 OpenSpec 的覆盖是针对 `1.5.0` 的内容快照。当上游 OpenSpec 版本与快照不一致时，安装器与 doctor 会保护性跳过覆盖，避免降级上游；若要在新版上游上恢复 Forgevia 定制，需同步更新覆盖快照与 `manifests/*.json` 中的 `overrideTargetVersion`。

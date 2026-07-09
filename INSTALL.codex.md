@@ -61,7 +61,7 @@ After installation:
 
 ### OpenSpec Override Version Note
 
-Forgevia's OpenSpec override files are snapshots taken against a specific upstream OpenSpec version (currently `1.4.1`, recorded in `manifests/codex.json` as `overrideTargetVersion`). The installer and doctor refuse to overlay them onto a different upstream version, to avoid silently downgrading upstream behavior. When OpenSpec advances past this version, update Forgevia's override snapshot together with the target version.
+Forgevia's OpenSpec override files are snapshots taken against a specific upstream OpenSpec version (currently `1.5.0`, recorded in `manifests/codex.json` as `overrideTargetVersion`). The installer and doctor refuse to overlay them onto a different upstream version, to avoid silently downgrading upstream behavior. When OpenSpec advances past this version, update Forgevia's override snapshot together with the target version.
 
 ## Verify Managed State
 
