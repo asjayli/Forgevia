@@ -24,6 +24,25 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   exit 0
 fi
 
+# Cross-platform mtime: GNU stat uses -c '%Y', BSD/macOS stat uses -f '%m'.
+# Probe once with a stable target instead of sniffing `uname`.
+if stat -c '%Y' / >/dev/null 2>&1; then
+  stat_mtime() { stat -c '%Y' "$1"; }
+else
+  stat_mtime() { stat -f '%m' "$1"; }
+fi
+
+# Prefer ripgrep when available; fall back to grep so the command still works
+# on machines without rg instead of silently reporting "no unfinished tasks".
+list_unfinished_tasks() {
+  local tasks_file="$1"
+  if command -v rg >/dev/null 2>&1; then
+    rg '^- \[ \] ' "$tasks_file" 2>/dev/null || true
+  else
+    grep -E '^- \[ \] ' "$tasks_file" 2>/dev/null || true
+  fi
+}
+
 changes_root="$project_dir/openspec/changes"
 
 if [[ ! -d "$changes_root" ]]; then
@@ -41,7 +60,7 @@ find "$changes_root" -mindepth 1 -maxdepth 1 -type d ! -name archive | while rea
     continue
   fi
 
-  timestamp="$(stat -f '%m' "$change_dir/.openspec.yaml")"
+  timestamp="$(stat_mtime "$change_dir/.openspec.yaml")"
   printf '%s\t%s\n' "$timestamp" "$change_dir" >> "$tmp_list"
 done
 
@@ -53,7 +72,7 @@ while IFS=$'\t' read -r _timestamp change_dir; do
     continue
   fi
 
-  unfinished="$(rg '^- \[ \] ' "$tasks_file" || true)"
+  unfinished="$(list_unfinished_tasks "$tasks_file")"
   if [[ -z "$unfinished" ]]; then
     continue
   fi
