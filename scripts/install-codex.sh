@@ -175,6 +175,16 @@ overlay_assets() {
   log_success "Applied Forgevia-managed Codex assets"
 }
 
+overlay_runtime_scripts() {
+  local runtime_dir="$CODEX_ROOT/forgevia/bin"
+  log_step "Installing Forgevia runtime scripts into $runtime_dir"
+  mkdir -p "$runtime_dir"
+  sync_path "$ROOT_DIR/scripts/bootstrap-project.sh" "$runtime_dir/bootstrap-project.sh"
+  sync_path "$ROOT_DIR/scripts/list-change-tasks.sh" "$runtime_dir/list-change-tasks.sh"
+  sync_path "$ROOT_DIR/scripts/forgevia-draw.sh" "$runtime_dir/forgevia-draw.sh"
+  log_success "Installed Forgevia runtime scripts (bootstrap/list-change-tasks/draw)"
+}
+
 overlay_openspec_assets() {
   local openspec_root
   openspec_root="$(resolve_openspec_root)"
@@ -237,6 +247,7 @@ main() {
   verify_superpowers_present
   log_success "Detected upstream superpowers at $CODEX_ROOT/superpowers"
   overlay_assets
+  overlay_runtime_scripts
 
   echo "🎉 Forgevia Codex install complete"
 }

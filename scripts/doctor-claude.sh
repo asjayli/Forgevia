@@ -262,6 +262,12 @@ main() {
     managed_pairs+=("$pair")
   done < <(managed_command_pairs)
 
+  managed_pairs+=(
+    "$ROOT_DIR/scripts/bootstrap-project.sh::$CLAUDE_ROOT/forgevia/bin/bootstrap-project.sh"
+    "$ROOT_DIR/scripts/list-change-tasks.sh::$CLAUDE_ROOT/forgevia/bin/list-change-tasks.sh"
+    "$ROOT_DIR/scripts/forgevia-draw.sh::$CLAUDE_ROOT/forgevia/bin/forgevia-draw.sh"
+  )
+
   for pair in "${managed_pairs[@]}"
   do
     local source_path="${pair%%::*}"
