@@ -7,7 +7,8 @@
       "type": "npm",
       "package": "@fission-ai/openspec",
       "version": "latest",
-      "install": "npm install -g @fission-ai/openspec@latest"
+      "install": "npm install -g @fission-ai/openspec@latest",
+      "overrideTargetVersion": "1.5.0"
     },
     "superpowers": {
       "type": "claude-plugin-marketplace",
@@ -154,14 +155,16 @@
       "source": ".claude/skills/mermaid-diagram-specialist",
       "target": "~/.claude/skills/mermaid-diagram-specialist",
       "owner": "forgevia",
-      "kind": "skill-directory"
+      "kind": "skill-directory",
+      "origin": "forgevia-original"
     },
     {
       "id": "playwright-interactive-skill",
       "source": ".claude/skills/playwright-interactive",
       "target": "~/.claude/skills/playwright-interactive",
       "owner": "forgevia",
-      "kind": "skill-directory"
+      "kind": "skill-directory",
+      "upstream": "vendored third-party: Apache-2.0, © Microsoft Corporation (LICENSE.txt/NOTICE.txt retained)"
     },
     {
       "id": "opsx-commands",
