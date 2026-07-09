@@ -15,4 +15,4 @@ Use this skill when the user explicitly wants a read-only task overview.
 
 ## Implementation
 
-- Backed by `scripts/list-change-tasks.sh`; run it as `bash scripts/list-change-tasks.sh [project_dir]` (defaults to the current directory).
+- Backed by the installed runtime script `$HOME/.claude/forgevia/bin/list-change-tasks.sh`; run it as `bash "$HOME/.claude/forgevia/bin/list-change-tasks.sh" [project_dir]` (defaults to the current directory).

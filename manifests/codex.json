@@ -208,6 +208,27 @@
       "owner": "forgevia",
       "kind": "superpowers-override",
       "upstream": "superpowers"
+    },
+    {
+      "id": "runtime-bootstrap-script",
+      "source": "scripts/bootstrap-project.sh",
+      "target": "~/.codex/forgevia/bin/bootstrap-project.sh",
+      "owner": "forgevia",
+      "kind": "runtime-script"
+    },
+    {
+      "id": "runtime-list-change-tasks-script",
+      "source": "scripts/list-change-tasks.sh",
+      "target": "~/.codex/forgevia/bin/list-change-tasks.sh",
+      "owner": "forgevia",
+      "kind": "runtime-script"
+    },
+    {
+      "id": "runtime-forgevia-draw-script",
+      "source": "scripts/forgevia-draw.sh",
+      "target": "~/.codex/forgevia/bin/forgevia-draw.sh",
+      "owner": "forgevia",
+      "kind": "runtime-script"
     }
   ]
 }
