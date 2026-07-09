@@ -1,139 +1,89 @@
 # Forgevia For Codex
 
-Forgevia bootstraps an opinionated Codex workflow around:
+Forgevia installs an opinionated Codex workflow around OpenSpec, superpowers, requesting-code-review, and playwright-interactive.
 
-- OpenSpec
-- superpowers
-- requesting-code-review
-- playwright-interactive
-
-This repository is GitHub-first. The initial Codex path assumes:
+This repository is GitHub-first. The Codex path assumes:
 
 - `openspec` is installed or can be installed globally with npm
 - `superpowers` is installed from its upstream Codex install guide
-- Forgevia ships and manages its own curated copies of the workflow files it wants to own
+- Forgevia ships and manages its own curated copies of the workflow files it owns
 - `~/.codex` is the primary managed global target
 
-Claude now has a separate install path documented in `INSTALL.claude.md`. That path installs the Forgevia Claude skill set, supporting OpenSpec skills and commands, plus selected Forgevia-managed overrides for installed Claude superpowers skills and OpenSpec overrides.
+Claude has a separate install path documented in `INSTALL.claude.md`.
 
 ## Current Scope
 
-This document defines the intended Codex installation flow for Forgevia.
+The Codex installer manages:
 
-The current first-pass source assumptions are:
-
-- `openspec` comes from the upstream npm package
-- `superpowers` comes from the upstream Codex install instructions
-- `requesting-code-review` is treated as part of the installed superpowers skill set
-- `playwright-interactive` currently comes from the maintainer's local `~/.codex/skills/playwright-interactive`
-
-## Target State
-
-After Forgevia is fully implemented for Codex, the installation flow should leave the machine in a state where:
-
-- `openspec` is available on `PATH`
-- required Codex workflow files exist under `~/.codex`
-- Forgevia-managed skill files are installed from this repository's owned copies
-- project bootstrap can initialize OpenSpec when missing
-
-## Planned Install Flow
-
-### 1. Preflight
-
-Forgevia should verify:
-
-- `node` and `npm` are available
-- Codex is installed and using `~/.codex`
-- whether `openspec` is already installed
-- whether `superpowers` assets are already present
-- whether Forgevia-managed assets already exist
-
-### 2. Install OpenSpec
-
-If `openspec` is missing, install it with:
-
-```bash
-npm install -g @fission-ai/openspec@latest
-```
-
-If it already exists, Forgevia should not reinstall blindly. It should detect the existing installation first and then decide whether to keep it or warn about drift.
-
-### 3. Install Superpowers
-
-If `superpowers` is missing for Codex, install it from the upstream guide:
-
-The intended Codex instruction is:
-
-> Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.codex/INSTALL.md
-
-Forgevia should detect whether this step has already been completed before asking the user to repeat it.
-
-### 4. Install Forgevia-Managed Assets
-
-Forgevia should install its owned Codex assets into `~/.codex`.
-
-These assets will eventually include:
-
-- `~/.codex/skills/forgevia`
-- `~/.codex/skills/playwright-interactive`
-- Forgevia-managed overrides for these superpowers skills:
+- Forgevia and OpenSpec support skills under `~/.codex/skills`
+- the helper skills required by the Forgevia flow (`mermaid-diagram-specialist`, `playwright-interactive`)
+- Forgevia-managed overrides for selected installed superpowers skills:
   - `brainstorming`
   - `writing-plans`
+  - `test-driven-development`
   - `subagent-driven-development`
   - `requesting-code-review`
   - `executing-plans`
+- Forgevia-managed overrides for the upstream OpenSpec npm package internals (`config-prompts.js`, `propose.js`)
 
-For the current first phase, the source of truth for the shipped Codex assets is now being imported into this repository from the maintainer's local `~/.codex` setup.
+`playwright-interactive` is vendored into this repository (Apache-2.0, © Microsoft Corporation; see its `LICENSE.txt` / `NOTICE.txt`). `mermaid-diagram-specialist` is a Forgevia-original skill.
 
-### 5. Verify Managed State
+## Prerequisites
 
-Forgevia should provide a doctor or verification step that reports:
+- `node` and `npm` are available
+- `openspec` is installed, or installable with `npm install -g @fission-ai/openspec@latest` (or pass `--install-openspec`)
+- `superpowers` is installed under `~/.codex/superpowers` from the upstream guide:
 
-- missing required tools
-- missing managed files
-- locally modified managed files
-- unmanaged files in locations Forgevia expects to control
+> Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.codex/INSTALL.md
 
-The current repository includes a minimal doctor entrypoint:
+## Install
+
+```bash
+git clone https://github.com/asjayli/Forgevia.git
+cd Forgevia
+bash scripts/install-codex.sh
+```
+
+If you also want the installer to bootstrap `openspec` when missing:
+
+```bash
+bash scripts/install-codex.sh --install-openspec
+```
+
+## Managed State
+
+After installation:
+
+- `openspec` is available on `PATH`
+- Forgevia-managed Codex skill files are installed under `~/.codex/skills`
+- selected superpowers skill files are replaced with Forgevia-managed copies under `~/.codex/superpowers`
+- Forgevia-managed OpenSpec overrides are applied to the installed OpenSpec package
+
+### OpenSpec Override Version Note
+
+Forgevia's OpenSpec override files are snapshots taken against a specific upstream OpenSpec version (currently `1.4.1`, recorded in `manifests/codex.json` as `overrideTargetVersion`). The installer and doctor refuse to overlay them onto a different upstream version, to avoid silently downgrading upstream behavior. When OpenSpec advances past this version, update Forgevia's override snapshot together with the target version.
+
+## Verify Managed State
 
 ```bash
 ./scripts/doctor-codex.sh
 ```
 
-### 6. Bootstrap A Project
+Reports `OK`, `MISS`, or `DRIFT` for each managed asset. Run with `--repair` to restore drifted or missing assets:
 
-For a target repository, Forgevia should later provide a project bootstrap flow that:
+```bash
+./scripts/doctor-codex.sh --repair
+```
 
-- checks whether OpenSpec is already initialized
-- initializes OpenSpec for Codex when missing
-- does not take ownership of project business files
-
-The current repository now includes a minimal project bootstrap entrypoint:
+## Bootstrap A Project
 
 ```bash
 ./scripts/bootstrap-project.sh --tools codex /path/to/project
 ```
 
-## Open Questions Before Automation
+Checks whether OpenSpec is already initialized and runs `openspec init` only when missing. It does not take ownership of project source files.
 
-- Which exact files under `~/.codex` should Forgevia claim as managed in v1?
-- Should Forgevia require upstream `superpowers` installation first forever, or eventually vendor and fully own those files too?
-- Which local markers are sufficient to detect a valid superpowers install?
-- How should Forgevia distinguish healthy managed files from user-customized ones in `~/.codex`?
+## Notes
 
-## Working Assumptions
-
-Until the installer scripts exist, Forgevia is being designed under these Codex assumptions:
-
-- `openspec` is installed by npm
-- `superpowers` is installed from upstream
-- Forgevia explicitly ships overrides for five customized superpowers skills:
-  - `brainstorming`
-  - `writing-plans`
-  - `subagent-driven-development`
-  - `requesting-code-review`
-  - `executing-plans`
-- `requesting-code-review` is still operationally part of the superpowers install surface
-- `playwright-interactive` is sourced from the maintainer's current `~/.codex` setup and is being vendored into this repo as a Forgevia-managed skill
-- Forgevia itself is an explicit entry skill, not an auto-triggered replacement for all underlying skills
-- Forgevia does not manage project source files; it only checks for and invokes OpenSpec initialization
+- This is a Codex-specific install path and does not modify `~/.claude`.
+- This installer expects upstream `superpowers` to already be installed.
