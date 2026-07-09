@@ -236,7 +236,18 @@ overlay_runtime_scripts() {
   sync_path "$ROOT_DIR/scripts/bootstrap-project.sh" "$runtime_dir/bootstrap-project.sh"
   sync_path "$ROOT_DIR/scripts/list-change-tasks.sh" "$runtime_dir/list-change-tasks.sh"
   sync_path "$ROOT_DIR/scripts/forgevia-draw.sh" "$runtime_dir/forgevia-draw.sh"
-  log_success "Installed Forgevia runtime scripts (bootstrap/list-change-tasks/draw)"
+  sync_path "$ROOT_DIR/scripts/doctor-claude.sh" "$runtime_dir/doctor-claude.sh"
+  log_success "Installed Forgevia runtime scripts (bootstrap/list-change-tasks/draw/doctor)"
+}
+
+overlay_forgevia_home() {
+  local home_dir="$CLAUDE_ROOT/forgevia"
+  log_step "Mirroring Forgevia source into $home_dir (baseline for global doctor/repair)"
+  sync_path "$ROOT_DIR/.claude" "$home_dir/.claude"
+  sync_path "$ROOT_DIR/assets" "$home_dir/assets"
+  sync_path "$ROOT_DIR/scripts" "$home_dir/scripts"
+  sync_path "$ROOT_DIR/manifests" "$home_dir/manifests"
+  log_success "Mirrored Forgevia source baseline"
 }
 
 overlay_openspec_assets() {
@@ -316,6 +327,7 @@ main() {
   fi
 
   overlay_assets
+  overlay_forgevia_home
   overlay_runtime_scripts
   local superpowers_root
   superpowers_root="$(resolve_superpowers_root)"

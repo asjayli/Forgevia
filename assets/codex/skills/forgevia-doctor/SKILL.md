@@ -15,5 +15,5 @@ Use this skill when the user explicitly wants a health check for the Forgevia-ma
 
 ## Implementation
 
-- The check is implemented by `scripts/doctor-codex.sh` in the Forgevia repository; run it from the repository root: `bash scripts/doctor-codex.sh`.
-- It verifies the OpenSpec config override, Forgevia-managed Codex skills under `~/.codex`, and the Forgevia-managed superpowers overrides, reporting drift against Forgevia-owned copies.
+- The check is implemented by the installed runtime script `$HOME/.codex/forgevia/bin/doctor-codex.sh`; run it from any directory: `bash "$HOME/.codex/forgevia/bin/doctor-codex.sh"`.
+- It compares the Forgevia source baseline mirrored under `~/.codex/forgevia/` against the installed assets under `~/.codex`, reporting `OK`/`MISS`/`DRIFT`.

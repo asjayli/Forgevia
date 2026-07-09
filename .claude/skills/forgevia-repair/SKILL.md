@@ -15,5 +15,5 @@ Use this skill when the user explicitly wants Forgevia to repair the managed Cla
 
 ## Implementation
 
-- Repair is `doctor-claude.sh` invoked with `--repair`: `bash scripts/doctor-claude.sh --repair`.
+- Repair is the installed runtime script with `--repair`: `bash "$HOME/.claude/forgevia/bin/doctor-claude.sh" --repair`.
 - It refuses to repair OpenSpec overrides when the upstream OpenSpec version differs from the override snapshot version, to avoid downgrading upstream.

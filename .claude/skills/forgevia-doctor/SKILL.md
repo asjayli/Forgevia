@@ -15,5 +15,5 @@ Use this skill when the user explicitly wants a health check for the Forgevia-ma
 
 ## Implementation
 
-- The check is implemented by `scripts/doctor-claude.sh` in the Forgevia repository; run it from the repository root: `bash scripts/doctor-claude.sh`.
-- It verifies the OpenSpec config override, Forgevia-managed Claude skills and the `opsx` commands under `~/.claude`, and the Forgevia-managed superpowers overrides, reporting drift against Forgevia-owned copies.
+- The check is implemented by the installed runtime script `$HOME/.claude/forgevia/bin/doctor-claude.sh`; run it from any directory: `bash "$HOME/.claude/forgevia/bin/doctor-claude.sh"`.
+- It compares the Forgevia source baseline mirrored under `~/.claude/forgevia/` against the installed assets under `~/.claude`, reporting `OK`/`MISS`/`DRIFT`.
