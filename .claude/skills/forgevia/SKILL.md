@@ -161,6 +161,12 @@ Behavior:
 - render a matching `.svg`, preferring a local Chrome/Chromium executable for `mmdc` when available
 - name outputs as `YYYYMMDD-HHMMSS-功能`
 
+## Execution Principles
+
+### 1. Anchor on the named change
+
+Treat the explicitly named change as the single source of truth during implementation. Derive scope, tasks, and review focus from the change under `openspec/changes/<change>/`, not from conversation context.
+
 ### 2. Use the Forgevia-modified superpowers path
 
 When implementation planning or execution is needed, prefer the Forgevia-managed variants of:
