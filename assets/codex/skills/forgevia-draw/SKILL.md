@@ -17,7 +17,7 @@ Use this skill when the user explicitly asks Forgevia to draw an interaction seq
 - Prefer a complete interaction-module sequence diagram.
 - Request concise Chinese notes for key methods and critical intermediate steps.
 - Optimize for fast understanding, not maximum annotation density.
-- Hand the Mermaid output to `forgevia-draw.sh`.
-- Write a timestamped `.mmd`.
-- Render a matching `.svg`, preferring a local Chrome/Chromium executable for `mmdc` when available.
+- Hand the Mermaid output to the installed runtime script `$HOME/.codex/forgevia/bin/forgevia-draw.sh` (pipe Mermaid source via stdin).
+- Write a timestamped `.mmd` and a matching `.svg` under `./forgevia-drawings/` by default (override the output directory with a second argument).
+- Prefer a local Chrome/Chromium executable for `mmdc` when available.
 - Name outputs as `YYYYMMDD-HHMMSS-功能`.

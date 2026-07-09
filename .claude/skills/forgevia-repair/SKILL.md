@@ -12,3 +12,8 @@ Use this skill when the user explicitly wants Forgevia to repair the managed Cla
 - Run the Forgevia doctor flow with repair enabled.
 - Repair `MISS` and `DRIFT` states from Forgevia-owned copies.
 - Preserve backups before replacement.
+
+## Implementation
+
+- Repair is the installed runtime script with `--repair`: `bash "$HOME/.claude/forgevia/bin/doctor-claude.sh" --repair`.
+- It refuses to repair OpenSpec overrides when the upstream OpenSpec version differs from the override snapshot version, to avoid downgrading upstream.

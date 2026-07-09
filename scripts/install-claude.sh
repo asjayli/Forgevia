@@ -10,6 +10,10 @@ OPENSPEC_ASSETS_DIR="$ROOT_DIR/assets/openspec"
 CLAUDE_ROOT="${CLAUDE_HOME:-$HOME/.claude}"
 CLAUDE_SUPERPOWERS_ROOT="${CLAUDE_SUPERPOWERS_ROOT:-}"
 OPENSPEC_ROOT="${OPENSPEC_ROOT:-}"
+# Forgevia's openspec override files are snapshots taken against this upstream
+# openspec version. Never overlay them onto a different upstream version —
+# that would silently downgrade upstream behavior.
+OPENSPEC_OVERRIDE_VERSION="1.5.0"
 
 usage() {
   cat <<EOF
@@ -118,6 +122,23 @@ resolve_openspec_root() {
   echo "$npm_global_root/@fission-ai/openspec"
 }
 
+read_openspec_version() {
+  local openspec_root="$1"
+  local pkg="$openspec_root/package.json"
+  [[ -f "$pkg" ]] || return 0
+  node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(p.version||"")' "$pkg" 2>/dev/null
+}
+
+# Returns 0 (match) when upstream version is unknown or equals the override
+# snapshot version; returns 1 (mismatch) only on a known version drift, which
+# is the case where overlaying would downgrade upstream.
+openspec_version_matches() {
+  local openspec_root="$1"
+  local ver
+  ver="$(read_openspec_version "$openspec_root")"
+  [[ -z "$ver" || "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
+}
+
 copy_path() {
   local source_path="$1"
   local target_path="$2"
@@ -208,6 +229,27 @@ overlay_assets() {
   log_success "Applied Forgevia-managed Claude assets"
 }
 
+overlay_runtime_scripts() {
+  local runtime_dir="$CLAUDE_ROOT/forgevia/bin"
+  log_step "Installing Forgevia runtime scripts into $runtime_dir"
+  mkdir -p "$runtime_dir"
+  sync_path "$ROOT_DIR/scripts/bootstrap-project.sh" "$runtime_dir/bootstrap-project.sh"
+  sync_path "$ROOT_DIR/scripts/list-change-tasks.sh" "$runtime_dir/list-change-tasks.sh"
+  sync_path "$ROOT_DIR/scripts/forgevia-draw.sh" "$runtime_dir/forgevia-draw.sh"
+  sync_path "$ROOT_DIR/scripts/doctor-claude.sh" "$runtime_dir/doctor-claude.sh"
+  log_success "Installed Forgevia runtime scripts (bootstrap/list-change-tasks/draw/doctor)"
+}
+
+overlay_forgevia_home() {
+  local home_dir="$CLAUDE_ROOT/forgevia"
+  log_step "Mirroring Forgevia source into $home_dir (baseline for global doctor/repair)"
+  sync_path "$ROOT_DIR/.claude" "$home_dir/.claude"
+  sync_path "$ROOT_DIR/assets" "$home_dir/assets"
+  sync_path "$ROOT_DIR/scripts" "$home_dir/scripts"
+  sync_path "$ROOT_DIR/manifests" "$home_dir/manifests"
+  log_success "Mirrored Forgevia source baseline"
+}
+
 overlay_openspec_assets() {
   local openspec_root
   openspec_root="$(resolve_openspec_root)"
@@ -215,6 +257,14 @@ overlay_openspec_assets() {
   if [[ ! -d "$openspec_root" ]]; then
     echo "openspec install root not found: $openspec_root" >&2
     exit 1
+  fi
+
+  if ! openspec_version_matches "$openspec_root"; then
+    local actual_version
+    actual_version="$(read_openspec_version "$openspec_root")"
+    log_info "openspec $actual_version detected; Forgevia openspec override targets $OPENSPEC_OVERRIDE_VERSION."
+    log_info "Skipping openspec override to avoid downgrading upstream. Pin openspec to $OPENSPEC_OVERRIDE_VERSION or update Forgevia's override."
+    return
   fi
 
   sync_path "$OPENSPEC_ASSETS_DIR/dist/core/config-prompts.js" "$openspec_root/dist/core/config-prompts.js"
@@ -277,6 +327,8 @@ main() {
   fi
 
   overlay_assets
+  overlay_forgevia_home
+  overlay_runtime_scripts
   local superpowers_root
   superpowers_root="$(resolve_superpowers_root)"
   verify_superpowers_present "$superpowers_root"

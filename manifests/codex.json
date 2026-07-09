@@ -7,7 +7,8 @@
       "type": "npm",
       "package": "@fission-ai/openspec",
       "version": "latest",
-      "install": "npm install -g @fission-ai/openspec@latest"
+      "install": "npm install -g @fission-ai/openspec@latest",
+      "overrideTargetVersion": "1.5.0"
     },
     "superpowers": {
       "type": "upstream-install-doc",
@@ -33,11 +34,39 @@
       "upstream": "openspec"
     },
     {
-      "id": "forgevia-skill",
-      "source": "assets/codex/skills/forgevia/SKILL.md",
-      "target": "~/.codex/skills/forgevia/SKILL.md",
+      "id": "openspec-propose-skill",
+      "source": "assets/codex/skills/openspec-propose",
+      "target": "~/.codex/skills/openspec-propose",
       "owner": "forgevia",
-      "kind": "skill"
+      "kind": "skill-directory"
+    },
+    {
+      "id": "openspec-apply-change-skill",
+      "source": "assets/codex/skills/openspec-apply-change",
+      "target": "~/.codex/skills/openspec-apply-change",
+      "owner": "forgevia",
+      "kind": "skill-directory"
+    },
+    {
+      "id": "openspec-archive-change-skill",
+      "source": "assets/codex/skills/openspec-archive-change",
+      "target": "~/.codex/skills/openspec-archive-change",
+      "owner": "forgevia",
+      "kind": "skill-directory"
+    },
+    {
+      "id": "openspec-explore-skill",
+      "source": "assets/codex/skills/openspec-explore",
+      "target": "~/.codex/skills/openspec-explore",
+      "owner": "forgevia",
+      "kind": "skill-directory"
+    },
+    {
+      "id": "forgevia-skill",
+      "source": "assets/codex/skills/forgevia",
+      "target": "~/.codex/skills/forgevia",
+      "owner": "forgevia",
+      "kind": "skill-directory"
     },
     {
       "id": "forgevia-init-skill",
@@ -121,14 +150,16 @@
       "source": "assets/codex/skills/mermaid-diagram-specialist",
       "target": "~/.codex/skills/mermaid-diagram-specialist",
       "owner": "forgevia",
-      "kind": "skill-directory"
+      "kind": "skill-directory",
+      "origin": "forgevia-original"
     },
     {
       "id": "playwright-interactive-skill",
       "source": "assets/codex/skills/playwright-interactive",
       "target": "~/.codex/skills/playwright-interactive",
       "owner": "forgevia",
-      "kind": "skill-directory"
+      "kind": "skill-directory",
+      "upstream": "vendored third-party: Apache-2.0, © Microsoft Corporation (LICENSE.txt/NOTICE.txt retained)"
     },
     {
       "id": "brainstorming-skill",
@@ -177,6 +208,42 @@
       "owner": "forgevia",
       "kind": "superpowers-override",
       "upstream": "superpowers"
+    },
+    {
+      "id": "runtime-bootstrap-script",
+      "source": "scripts/bootstrap-project.sh",
+      "target": "~/.codex/forgevia/bin/bootstrap-project.sh",
+      "owner": "forgevia",
+      "kind": "runtime-script"
+    },
+    {
+      "id": "runtime-list-change-tasks-script",
+      "source": "scripts/list-change-tasks.sh",
+      "target": "~/.codex/forgevia/bin/list-change-tasks.sh",
+      "owner": "forgevia",
+      "kind": "runtime-script"
+    },
+    {
+      "id": "runtime-forgevia-draw-script",
+      "source": "scripts/forgevia-draw.sh",
+      "target": "~/.codex/forgevia/bin/forgevia-draw.sh",
+      "owner": "forgevia",
+      "kind": "runtime-script"
+    },
+    {
+      "id": "runtime-doctor-script",
+      "source": "scripts/doctor-codex.sh",
+      "target": "~/.codex/forgevia/bin/doctor-codex.sh",
+      "owner": "forgevia",
+      "kind": "runtime-script"
+    },
+    {
+      "id": "forgevia-home-mirror",
+      "source": "repo root (.claude, assets, scripts, manifests)",
+      "target": "~/.codex/forgevia",
+      "owner": "forgevia",
+      "kind": "source-mirror",
+      "note": "Source baseline mirrored by install so global doctor/repair can diff installed assets against Forgevia-owned copies from any directory."
     }
   ]
 }

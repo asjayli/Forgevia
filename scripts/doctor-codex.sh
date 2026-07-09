@@ -8,6 +8,10 @@ CODEX_ROOT="${CODEX_HOME:-$HOME/.codex}"
 ASSETS_DIR="$ROOT_DIR/assets/codex"
 OPENSPEC_ASSETS_DIR="$ROOT_DIR/assets/openspec"
 OPENSPEC_ROOT="${OPENSPEC_ROOT:-}"
+# Forgevia's openspec override files are snapshots taken against this upstream
+# openspec version. Repair must not overlay them onto a different upstream
+# version — that would silently downgrade upstream behavior.
+OPENSPEC_OVERRIDE_VERSION="1.5.0"
 
 usage() {
   cat <<EOF
@@ -21,8 +25,8 @@ Manifest:
 
 Checks:
   - openspec config override
-  - ~/.codex/skills/forgevia
-  - ~/.codex/skills/playwright-interactive
+  - Forgevia and OpenSpec support skills under ~/.codex/skills
+  - mermaid-diagram-specialist and playwright-interactive helper skills
   - Forgevia-managed superpowers overrides
   - content drift against Forgevia-owned copies
 EOF
@@ -66,6 +70,20 @@ resolve_openspec_root() {
   local npm_global_root
   npm_global_root="$(npm root -g)"
   echo "$npm_global_root/@fission-ai/openspec"
+}
+
+read_openspec_version() {
+  local openspec_root="$1"
+  local pkg="$openspec_root/package.json"
+  [[ -f "$pkg" ]] || return 0
+  node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(p.version||"")' "$pkg" 2>/dev/null
+}
+
+openspec_version_matches() {
+  local openspec_root="$1"
+  local ver
+  ver="$(read_openspec_version "$openspec_root")"
+  [[ -z "$ver" || "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
 }
 
 compare_path() {
@@ -163,6 +181,10 @@ main() {
   for pair in \
     "$OPENSPEC_ASSETS_DIR/dist/core/config-prompts.js::$openspec_root/dist/core/config-prompts.js" \
     "$OPENSPEC_ASSETS_DIR/dist/core/templates/workflows/propose.js::$openspec_root/dist/core/templates/workflows/propose.js" \
+    "$ASSETS_DIR/skills/openspec-propose::$CODEX_ROOT/skills/openspec-propose" \
+    "$ASSETS_DIR/skills/openspec-apply-change::$CODEX_ROOT/skills/openspec-apply-change" \
+    "$ASSETS_DIR/skills/openspec-archive-change::$CODEX_ROOT/skills/openspec-archive-change" \
+    "$ASSETS_DIR/skills/openspec-explore::$CODEX_ROOT/skills/openspec-explore" \
     "$ASSETS_DIR/skills/forgevia::$CODEX_ROOT/skills/forgevia" \
     "$ASSETS_DIR/skills/forgevia-init::$CODEX_ROOT/skills/forgevia-init" \
     "$ASSETS_DIR/skills/forgevia-doctor::$CODEX_ROOT/skills/forgevia-doctor" \
@@ -182,10 +204,26 @@ main() {
     "$ASSETS_DIR/superpowers/skills/executing-plans/SKILL.md::$CODEX_ROOT/superpowers/skills/executing-plans/SKILL.md" \
     "$ASSETS_DIR/superpowers/skills/subagent-driven-development::$CODEX_ROOT/superpowers/skills/subagent-driven-development" \
     "$ASSETS_DIR/superpowers/skills/requesting-code-review::$CODEX_ROOT/superpowers/skills/requesting-code-review" \
-    "$ASSETS_DIR/superpowers/skills/test-driven-development/SKILL.md::$CODEX_ROOT/superpowers/skills/test-driven-development/SKILL.md"
+    "$ASSETS_DIR/superpowers/skills/test-driven-development/SKILL.md::$CODEX_ROOT/superpowers/skills/test-driven-development/SKILL.md" \
+    "$ROOT_DIR/scripts/bootstrap-project.sh::$CODEX_ROOT/forgevia/bin/bootstrap-project.sh" \
+    "$ROOT_DIR/scripts/list-change-tasks.sh::$CODEX_ROOT/forgevia/bin/list-change-tasks.sh" \
+    "$ROOT_DIR/scripts/forgevia-draw.sh::$CODEX_ROOT/forgevia/bin/forgevia-draw.sh"
   do
     local source_path="${pair%%::*}"
     local target_path="${pair#*::}"
+
+    # If upstream superpowers is not installed, its override targets cannot
+    # exist. Warn once and skip them instead of flooding MISS rows, mirroring
+    # the Claude doctor's handling of a missing superpowers plugin.
+    if [[ "$target_path" == *"/superpowers/"* ]] && [[ ! -d "$CODEX_ROOT/superpowers" ]]; then
+      if [[ -z "${superpowers_warned:-}" ]]; then
+        print_status "MISS" "$CODEX_ROOT/superpowers"
+        log_info "Codex superpowers not found. Install upstream superpowers first; skipping its override checks."
+        superpowers_warned=1
+        unhealthy=1
+      fi
+      continue
+    fi
 
     if compare_path "$source_path" "$target_path"; then
       ((healthy+=1))
@@ -193,6 +231,11 @@ main() {
     fi
 
     if [[ "$repair_requested" == "true" ]]; then
+      if [[ "$target_path" == "$openspec_root"* ]] && ! openspec_version_matches "$openspec_root"; then
+        actual_version="$(read_openspec_version "$openspec_root")"
+        log_info "Skipping repair of $target_path: openspec $actual_version != override target $OPENSPEC_OVERRIDE_VERSION (repair would downgrade upstream)"
+        continue
+      fi
       repair_path "$source_path" "$target_path"
       ((repaired+=1))
       continue
