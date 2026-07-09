@@ -229,6 +229,21 @@
       "target": "~/.codex/forgevia/bin/forgevia-draw.sh",
       "owner": "forgevia",
       "kind": "runtime-script"
+    },
+    {
+      "id": "runtime-doctor-script",
+      "source": "scripts/doctor-codex.sh",
+      "target": "~/.codex/forgevia/bin/doctor-codex.sh",
+      "owner": "forgevia",
+      "kind": "runtime-script"
+    },
+    {
+      "id": "forgevia-home-mirror",
+      "source": "repo root (.claude, assets, scripts, manifests)",
+      "target": "~/.codex/forgevia",
+      "owner": "forgevia",
+      "kind": "source-mirror",
+      "note": "Source baseline mirrored by install so global doctor/repair can diff installed assets against Forgevia-owned copies from any directory."
     }
   ]
 }
