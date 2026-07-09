@@ -12,3 +12,7 @@ Use this skill when the user explicitly wants a read-only task overview.
 - List active, unarchived changes by creation time ascending.
 - Show only unfinished checklist items from each change's `tasks.md`.
 - Do not modify any files.
+
+## Implementation
+
+- Backed by `scripts/list-change-tasks.sh`; run it as `bash scripts/list-change-tasks.sh [project_dir]` (defaults to the current directory).
