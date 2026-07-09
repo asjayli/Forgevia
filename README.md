@@ -12,12 +12,27 @@
 
 Forgevia 是一套面向 agent coding 的工作流整合方案。
 
+## 职责范围
+
+### Forgevia 做什么
+
+- 把 OpenSpec、superpowers、代码评审与浏览器验证整合为一条从需求到归档的连贯工作流。
+- 通过 `init` / `doctor` / `repair` 管理全局受管资源：技能、命令，以及对上游的受管覆盖文件。
+- 提供显式命令编排：`draw` / `think` / `propose` / `implement` / `tasks` / `review` / `verify-web` / `archive`。
+
+### Forgevia 不做什么
+
+- 不替代 OpenSpec、superpowers 或 playwright-interactive，只负责编排，底层能力仍由它们提供。
+- 不接管你的项目源码：仅在缺失时调用 `openspec init`，不修改业务代码。
+- 不自动触发：仅在用户显式要求时工作，不会因为存在编码请求就自动介入。
+- 不强行锁定上游版本：上游以 `latest` 安装；Forgevia 的覆盖快照针对特定版本（见文末「上游依赖」），版本不匹配时安装器会保护性跳过覆盖，而不是降级上游。
+
 ## Codex 安装方式
 
 直接对 Codex 说：
 
 ```text
-帮我安装，交互过程请使用中文：Fetch and follow instructions from https://raw.githubusercontent.com/musegate/Forgevia/refs/heads/main/INSTALL.codex.md
+帮我安装，交互过程请使用中文：Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/Forgevia/refs/heads/main/INSTALL.codex.md
 ```
 
 ## Claude 安装方式
@@ -25,7 +40,7 @@ Forgevia 是一套面向 agent coding 的工作流整合方案。
 直接对 Claude 说：
 
 ```text
-帮我安装，交互过程请使用中文：Fetch and follow instructions from https://raw.githubusercontent.com/musegate/Forgevia/refs/heads/main/INSTALL.claude.md
+帮我安装，交互过程请使用中文：Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/Forgevia/refs/heads/main/INSTALL.claude.md
 ```
 
 ## 技能能力
@@ -77,3 +92,23 @@ Forgevia 是一套面向 agent coding 的工作流整合方案。
 `draw -> think -> propose -> implement -> review -> verify-web（如需要）-> archive`
 
 Forgevia 把需求梳理、结构化开发、代码评审、效果验证和最终归档串成一条一致的交付流程。
+
+## 第三方资产与许可
+
+- `playwright-interactive`：来源于上游，采用 Apache License 2.0（© Microsoft Corporation）。Forgevia 重新分发时保留了其 `LICENSE.txt` 与 `NOTICE.txt`。
+- `mermaid-diagram-specialist`：Forgevia 原创技能。
+- `superpowers` 与 `OpenSpec`：作为上游依赖分别安装，Forgevia 仅在其上叠加受管覆盖文件，详见 `INSTALL.claude.md` / `INSTALL.codex.md`。
+
+## 上游依赖
+
+Forgevia 在下列上游之上叠加受管定制。覆盖快照针对的版本与上游最新版本的差异，决定是否需要适配。
+
+| 上游 | 用途 | Forgevia 基准 | 上游最新 | 地址 |
+|------|------|---------------|----------|------|
+| OpenSpec (`@fission-ai/openspec`) | spec-driven 变更工作流 CLI | override 针对 `1.5.0` | `1.5.0`（含 `1.6.0-beta.1`） | https://www.npmjs.com/package/@fission-ai/openspec |
+| superpowers (`obra/superpowers`) | brainstorming / TDD / 计划 / 评审等技能框架 | 测试基准 `5.0.5` | `6.1.1` | https://github.com/obra/superpowers |
+| playwright-interactive | 浏览器交互验证技能 | vendored（未追踪版本） | — | 见技能内 `LICENSE.txt` / `NOTICE.txt`（Apache-2.0，© Microsoft Corporation） |
+| mermaid-cli (`mmdc`) | `forgevia-draw` 渲染 SVG 的运行时依赖 | 运行时工具 | — | https://github.com/mermaid-js/mermaid-cli |
+| ripgrep (`rg`) | `forgevia-tasks` 扫描任务（可选，缺失回退 grep） | 运行时工具 | — | https://github.com/BurntSushi/ripgrep |
+
+> 说明：Forgevia 对 OpenSpec 的覆盖是针对 `1.5.0` 的内容快照。当上游 OpenSpec 版本与快照不一致时，安装器与 doctor 会保护性跳过覆盖，避免降级上游；若要在新版上游上恢复 Forgevia 定制，需同步更新覆盖快照与 `manifests/*.json` 中的 `overrideTargetVersion`。

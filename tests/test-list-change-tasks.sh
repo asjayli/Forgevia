@@ -88,4 +88,23 @@ if [[ "$alpha_line" -ge "$beta_line" ]]; then
   exit 1
 fi
 
+# Reverse mtimes so beta becomes older than alpha. Output order must flip to
+# beta-before-alpha. If stat-based mtime were broken (the original BSD-only
+# `stat -f '%m'` bug on GNU/Linux), ordering would silently fall back to the
+# find lexical order (alpha, beta) and this assertion would fail.
+touch -t 202601030101 "$project_dir/openspec/changes/alpha/.openspec.yaml"
+touch -t 202601010101 "$project_dir/openspec/changes/beta/.openspec.yaml"
+
+reverse_output="$("$SCRIPT" "$project_dir")"
+reverse_alpha_line="$(printf '%s\n' "$reverse_output" | nl -ba | rg '🗂️ alpha' | awk '{print $1}')"
+reverse_beta_line="$(printf '%s\n' "$reverse_output" | nl -ba | rg '🗂️ beta' | awk '{print $1}')"
+if [[ -z "$reverse_alpha_line" || -z "$reverse_beta_line" ]]; then
+  echo "expected both changes in reversed-mtime output" >&2
+  exit 1
+fi
+if [[ "$reverse_beta_line" -ge "$reverse_alpha_line" ]]; then
+  echo "expected beta to appear before alpha after reversing mtimes" >&2
+  exit 1
+fi
+
 echo "list change tasks test passed"

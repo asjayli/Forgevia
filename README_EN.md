@@ -12,12 +12,27 @@ Forge your agent workflow into steel.
 
 Forgevia is an opinionated workflow bundle for agent coding.
 
+## Scope
+
+### What Forgevia does
+
+- Integrates OpenSpec, superpowers, code review, and browser validation into one coherent workflow from requirement to archive.
+- Manages global managed assets via `init` / `doctor` / `repair`: skills, commands, and managed override files layered on upstreams.
+- Provides explicit command orchestration: `draw` / `think` / `propose` / `implement` / `tasks` / `review` / `verify-web` / `archive`.
+
+### What Forgevia does not do
+
+- Does not replace OpenSpec, superpowers, or playwright-interactive — it only orchestrates; the underlying capabilities still come from them.
+- Does not take over your project source: it only invokes `openspec init` when missing and never edits business code.
+- Does not auto-trigger: it works only when the user explicitly asks; it will not step in just because a coding request exists.
+- Does not hard-pin upstream versions: upstreams install as `latest`; Forgevia's override snapshots target specific versions (see Upstream Dependencies below), and the installer skips overlays protectively on version mismatch instead of downgrading upstream.
+
 ## Install For Codex
 
 Tell Codex:
 
 ```text
-Fetch and follow instructions from https://raw.githubusercontent.com/musegate/Forgevia/refs/heads/main/INSTALL.codex.md
+Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/Forgevia/refs/heads/main/INSTALL.codex.md
 ```
 
 ## Install For Claude
@@ -25,7 +40,7 @@ Fetch and follow instructions from https://raw.githubusercontent.com/musegate/Fo
 Tell Claude:
 
 ```text
-Fetch and follow instructions from https://raw.githubusercontent.com/musegate/Forgevia/refs/heads/main/INSTALL.claude.md
+Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/Forgevia/refs/heads/main/INSTALL.claude.md
 ```
 
 ## Skills
@@ -77,3 +92,23 @@ Fetch and follow instructions from https://raw.githubusercontent.com/musegate/Fo
 `draw -> think -> propose -> implement -> review -> verify-web (if needed) -> archive`
 
 Forgevia turns requirement shaping, structured implementation, review, validation, and closure into one consistent delivery workflow.
+
+## Third-Party Assets & Licensing
+
+- `playwright-interactive`: sourced from upstream, Apache License 2.0 (© Microsoft Corporation). Forgevia redistributes it with its original `LICENSE.txt` and `NOTICE.txt` retained.
+- `mermaid-diagram-specialist`: a Forgevia-original skill.
+- `superpowers` and `OpenSpec`: installed as upstream dependencies; Forgevia only overlays managed customization files on top of them. See `INSTALL.claude.md` / `INSTALL.codex.md`.
+
+## Upstream Dependencies
+
+Forgevia layers managed customizations on the following upstreams. The gap between the snapshot version and the latest upstream release determines whether adaptation is needed.
+
+| Upstream | Purpose | Forgevia baseline | Latest upstream | URL |
+|----------|---------|-------------------|-----------------|-----|
+| OpenSpec (`@fission-ai/openspec`) | spec-driven change workflow CLI | override targets `1.5.0` | `1.5.0` (`1.6.0-beta.1`) | https://www.npmjs.com/package/@fission-ai/openspec |
+| superpowers (`obra/superpowers`) | brainstorming / TDD / planning / review skill framework | test baseline `5.0.5` | `6.1.1` | https://github.com/obra/superpowers |
+| playwright-interactive | browser interaction verification skill | vendored (untracked) | — | see `LICENSE.txt` / `NOTICE.txt` inside the skill (Apache-2.0, © Microsoft Corporation) |
+| mermaid-cli (`mmdc`) | runtime dependency for `forgevia-draw` SVG rendering | runtime tool | — | https://github.com/mermaid-js/mermaid-cli |
+| ripgrep (`rg`) | runtime dependency for `forgevia-tasks` scanning (optional, falls back to grep) | runtime tool | — | https://github.com/BurntSushi/ripgrep |
+
+> Note: Forgevia's OpenSpec override is a content snapshot taken against `1.5.0`. When the upstream OpenSpec version differs from the snapshot, the installer and doctor skip the overlay protectively to avoid downgrading upstream. To restore Forgevia's customizations on a newer upstream, update the override snapshot together with `overrideTargetVersion` in `manifests/*.json`.

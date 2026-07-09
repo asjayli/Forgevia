@@ -1,0 +1,36 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install runtime dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ripgrep shellcheck
+
+      - name: Shellcheck
+        run: shellcheck -S warning scripts/*.sh tests/*.sh
+
+      - name: Run test suite
+        run: |
+          status=0
+          for t in tests/test-*.sh; do
+            echo "::group::$t"
+            if ! bash "$t"; then
+              status=1
+            fi
+            echo "::endgroup::"
+          done
+          exit "$status"
