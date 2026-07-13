@@ -23,7 +23,7 @@ Load plan, review critically, execute OpenSpec tasks by dependency order, report
 4. Parse checklist items and classify TDD stage markers (`RED`, `GREEN`, `REFACTOR`) when present
    - If `Depends on:` is absent, execute groups in numeric order
 5. If concerns: Raise them with your human partner before starting
-6. If no concerns: Create TodoWrite and proceed
+6. If no concerns: Create todos for the plan items and proceed
 
 ### Step 2: Execute Dependency-Ready Group
 **Default: Execute the first group whose dependencies are complete**
@@ -92,6 +92,6 @@ After all tasks complete and verified:
 ## Integration
 
 **Required workflow skills:**
-- **superpowers:using-git-worktrees** - REQUIRED: Set up isolated workspace before starting
+- **superpowers:using-git-worktrees** - Ensures isolated workspace (creates one or verifies existing)
 - **superpowers:writing-plans** - Creates the plan this skill executes
 - **superpowers:finishing-a-development-branch** - Complete development after all tasks

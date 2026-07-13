@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Extract one task group's full text from an OpenSpec tasks.md into a file the
+# implementer reads in one call, so the task text never has to be pasted
+# through the controller's context.
+#
+# A "task" in the OpenSpec plan is a numbered capability group heading of the
+# form `## N. <Group Name>` (e.g. `## 1. User Authentication`). TASK_NUMBER is
+# the group number N; all sub-items (`- [ ] N.M ...`) under that heading are
+# extracted together as one implementable unit.
+#
+# Usage: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]
+# Default OUTFILE: <repo-root>/.superpowers/sdd/task-<N>-brief.md
+# (per worktree; concurrent runs in the same working tree share it).
+set -euo pipefail
+
+if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+  echo "usage: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]" >&2
+  exit 2
+fi
+
+plan=$1
+n=$2
+[ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
+
+if [ $# -eq 3 ]; then
+  out=$3
+else
+  dir=$("$(cd "$(dirname "$0")" && pwd)/sdd-workspace")
+  out="$dir/task-${n}-brief.md"
+fi
+
+awk -v n="$n" '
+  /^```/ { infence = !infence }
+  !infence && /^#+[ \t]+[0-9]+[ \t]*[.]/ {
+    intask = ($0 ~ ("^#+[ \t]+" n "[ \t]*[.]"))
+  }
+  intask { print }
+' "$plan" > "$out"
+
+if [ ! -s "$out" ]; then
+  echo "task group ${n} not found in ${plan} (no heading matching '${n}. <Group>')" >&2
+  exit 3
+fi
+
+echo "wrote ${out}: $(wc -l < "$out" | tr -d ' ') lines"

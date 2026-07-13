@@ -97,6 +97,11 @@ Recommended sections per spec/test-plan:
 ### 6) Validate and hand off
 
 - Run: `openspec status --change "<change-name>"`
+- **Artifact self-review** — look at each artifact with fresh eyes and fix inline:
+  1. **Placeholder scan:** Any "TBD", "TODO", incomplete sections, or vague requirements?
+  2. **Internal consistency:** Do artifacts contradict each other? Does the design match the proposal and specs?
+  3. **Scope check:** Is this focused enough for a single change, or does it need decomposition?
+  4. **Ambiguity check:** Could any requirement be interpreted two ways? If so, pick one and make it explicit.
 - Summarize capabilities produced and open questions.
 - If moving to planning, hand off to `superpowers:writing-plans` to generate unified `tasks.md`.
 
