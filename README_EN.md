@@ -106,7 +106,7 @@ Forgevia layers managed customizations on the following upstreams. The gap betwe
 | Upstream | Purpose | Forgevia baseline | Latest upstream | URL |
 |----------|---------|-------------------|-----------------|-----|
 | OpenSpec (`@fission-ai/openspec`) | spec-driven change workflow CLI | override targets `1.5.0` | `1.5.0` (`1.6.0-beta.1`) | https://www.npmjs.com/package/@fission-ai/openspec |
-| superpowers (`obra/superpowers`) | brainstorming / TDD / planning / review skill framework | test baseline `5.0.5` | `6.1.1` | https://github.com/obra/superpowers |
+| superpowers (`obra/superpowers`) | brainstorming / TDD / planning / review skill framework | test baseline `6.1.1` | `6.1.1` | https://github.com/obra/superpowers |
 | playwright-interactive | browser interaction verification skill | vendored (untracked) | — | see `LICENSE.txt` / `NOTICE.txt` inside the skill (Apache-2.0, © Microsoft Corporation) |
 | mermaid-cli (`mmdc`) | runtime dependency for `forgevia-draw` SVG rendering | runtime tool | — | https://github.com/mermaid-js/mermaid-cli |
 | ripgrep (`rg`) | runtime dependency for `forgevia-tasks` scanning (optional, falls back to grep) | runtime tool | — | https://github.com/BurntSushi/ripgrep |

@@ -24,6 +24,14 @@ test_file_exists() {
   fi
 }
 
+test_file_executable() {
+  local path="$1"
+  if [[ ! -x "$path" ]]; then
+    echo "expected file to be executable: $path" >&2
+    exit 1
+  fi
+}
+
 test_path_not_exists() {
   local path="$1"
   if [[ -e "$path" ]]; then
@@ -50,7 +58,7 @@ trap 'rm -rf "$tmp_dir"' EXIT
 
 export CLAUDE_HOME="$tmp_dir/.claude"
 bin_dir="$tmp_dir/bin"
-superpowers_root="$tmp_dir/plugin-cache/superpowers/5.0.5"
+superpowers_root="$tmp_dir/plugin-cache/superpowers/6.1.1"
 export OPENSPEC_ROOT="$tmp_dir/openspec"
 mkdir -p "$CLAUDE_HOME/skills/forgevia-think" "$bin_dir"
 mkdir -p "$CLAUDE_HOME/plugins"
@@ -80,7 +88,7 @@ cat > "$CLAUDE_HOME/plugins/installed_plugins.json" <<EOF
       {
         "scope": "user",
         "installPath": "$superpowers_root",
-        "version": "5.0.5"
+        "version": "6.1.1"
       }
     ]
   }
@@ -116,6 +124,22 @@ test_file_exists "$superpowers_root/skills/requesting-code-review/SKILL.md"
 test_file_exists "$superpowers_root/skills/requesting-code-review/code-reviewer.md"
 test_file_exists "$superpowers_root/skills/executing-plans/SKILL.md"
 
+# subagent-driven-development is overlaid as a whole directory: its runtime
+# scripts and prompt templates must land alongside SKILL.md, and the scripts
+# must keep their exec bit through the cp -R overlay.
+sdd_root="$superpowers_root/skills/subagent-driven-development"
+test_file_exists "$sdd_root/task-reviewer-prompt.md"
+test_file_exists "$sdd_root/implementer-prompt.md"
+test_file_executable "$sdd_root/scripts/task-brief"
+test_file_executable "$sdd_root/scripts/review-package"
+test_file_executable "$sdd_root/scripts/sdd-workspace"
+
+# Runtime scripts are installed to ~/.claude/forgevia/bin and must stay executable.
+test_file_executable "$CLAUDE_HOME/forgevia/bin/bootstrap-project.sh"
+test_file_executable "$CLAUDE_HOME/forgevia/bin/list-change-tasks.sh"
+test_file_executable "$CLAUDE_HOME/forgevia/bin/forgevia-draw.sh"
+test_file_executable "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
+
 expected_skill="$(cat "$ROOT_DIR/.claude/skills/forgevia-think/SKILL.md")"
 actual_skill="$(cat "$CLAUDE_HOME/skills/forgevia-think/SKILL.md")"
 assert_contains "$actual_skill" "$expected_skill"
@@ -131,6 +155,9 @@ assert_contains "$actual_tdd" "$expected_tdd"
 expected_review_template="$(cat "$ROOT_DIR/assets/claude/superpowers/skills/requesting-code-review/code-reviewer.md")"
 actual_review_template="$(cat "$superpowers_root/skills/requesting-code-review/code-reviewer.md")"
 assert_contains "$actual_review_template" "$expected_review_template"
+expected_sdd="$(cat "$ROOT_DIR/assets/claude/superpowers/skills/subagent-driven-development/SKILL.md")"
+actual_sdd="$(cat "$superpowers_root/skills/subagent-driven-development/SKILL.md")"
+assert_contains "$actual_sdd" "$expected_sdd"
 expected_command="$(cat "$ROOT_DIR/.claude/commands/opsx/propose.md")"
 actual_command="$(cat "$CLAUDE_HOME/commands/opsx/propose.md")"
 assert_contains "$actual_command" "$expected_command"
@@ -192,7 +219,7 @@ cat > "$CLAUDE_HOME/plugins/installed_plugins.json" <<EOF
       {
         "scope": "user",
         "installPath": "$superpowers_root",
-        "version": "5.0.5"
+        "version": "6.1.1"
       }
     ]
   }

@@ -24,6 +24,14 @@ test_file_exists() {
   fi
 }
 
+test_file_executable() {
+  local path="$1"
+  if [[ ! -x "$path" ]]; then
+    echo "expected file to be executable: $path" >&2
+    exit 1
+  fi
+}
+
 test_path_not_exists() {
   local path="$1"
   if [[ -e "$path" ]]; then
@@ -100,6 +108,29 @@ test_file_exists "$CODEX_HOME/skills/openspec-propose/SKILL.md"
 test_file_exists "$CODEX_HOME/skills/openspec-apply-change/SKILL.md"
 test_file_exists "$CODEX_HOME/skills/openspec-archive-change/SKILL.md"
 test_file_exists "$CODEX_HOME/skills/openspec-explore/SKILL.md"
+
+# Superpowers overrides: whole-directory overlays (subagent-driven-development,
+# requesting-code-review) must land their extra files alongside SKILL.md, and
+# the SDD runtime scripts must keep their exec bit through the cp -R overlay.
+codex_sp_root="$CODEX_HOME/superpowers/skills"
+test_file_exists "$codex_sp_root/brainstorming/SKILL.md"
+test_file_exists "$codex_sp_root/writing-plans/SKILL.md"
+test_file_exists "$codex_sp_root/executing-plans/SKILL.md"
+test_file_exists "$codex_sp_root/test-driven-development/SKILL.md"
+test_file_exists "$codex_sp_root/subagent-driven-development/SKILL.md"
+test_file_exists "$codex_sp_root/subagent-driven-development/task-reviewer-prompt.md"
+test_file_exists "$codex_sp_root/subagent-driven-development/implementer-prompt.md"
+test_file_executable "$codex_sp_root/subagent-driven-development/scripts/task-brief"
+test_file_executable "$codex_sp_root/subagent-driven-development/scripts/review-package"
+test_file_executable "$codex_sp_root/subagent-driven-development/scripts/sdd-workspace"
+test_file_exists "$codex_sp_root/requesting-code-review/SKILL.md"
+test_file_exists "$codex_sp_root/requesting-code-review/code-reviewer.md"
+
+# Runtime scripts are installed to ~/.codex/forgevia/bin and must stay executable.
+test_file_executable "$CODEX_HOME/forgevia/bin/bootstrap-project.sh"
+test_file_executable "$CODEX_HOME/forgevia/bin/list-change-tasks.sh"
+test_file_executable "$CODEX_HOME/forgevia/bin/forgevia-draw.sh"
+test_file_executable "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
 
 doctor_output="$("$DOCTOR")"
 assert_contains "$doctor_output" "🔎 Forgevia Codex doctor"

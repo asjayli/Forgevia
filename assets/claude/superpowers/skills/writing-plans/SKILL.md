@@ -37,6 +37,12 @@ Required shape:
 
 Depends on: <none|group numbers>
 
+Global Constraints: [spec's project-wide requirements — version floors, dependency limits, naming/copy rules — one line each, verbatim. Every task in this group implicitly includes them.]
+
+Interfaces:
+- Consumes: [exact signatures from earlier groups]
+- Produces: [exact names/types later groups rely on]
+
 Traceability:
 - Requirements: [[specs/<capability>/spec.md#<requirement-section>]]
 - Tests: [[specs/<capability>/test-plan.md#<test-section>]]
@@ -60,6 +66,7 @@ Traceability:
 6. Keep steps bite-sized and executable.
 7. Enforce TDD loop in every implementation sequence:
    - RED -> verify fail -> GREEN -> verify pass -> REFACTOR
+8. No placeholders: every step must contain actual content. Never write "TBD", "TODO", "add appropriate error handling", "similar to group N", or reference types/functions not defined in any group's Interfaces.
 
 ## Building Double-Link Traceability
 
@@ -83,6 +90,16 @@ This creates:
 5. Write `tasks.md` with TDD-structured checklists.
 6. Add backlink sections in `spec.md` and `test-plan.md`.
 7. Run `openspec status --change "<change-name>"` and summarize readiness.
+
+## Self-Review
+
+After writing `tasks.md`, look at the specs with fresh eyes and check the plan against them. This is a checklist you run yourself — not a subagent dispatch.
+
+1. **Spec coverage:** Skim each requirement/scenario in the specs and test plans. Can you point to a task that implements it? Add tasks for any gaps.
+2. **Placeholder scan:** Search `tasks.md` for red flags — "TBD", "TODO", "add appropriate error handling", "similar to group N", references to undefined types/functions. Fix them.
+3. **Type consistency:** Do the Interfaces (Consumes/Produces) declared across groups match? A function named `clearLayers()` in group 3 but `clearFullLayers()` in group 7 is a bug.
+
+Fix issues inline. No need to re-review — just fix and move on.
 
 ## Execution Handoff
 

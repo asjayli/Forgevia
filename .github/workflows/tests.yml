@@ -21,7 +21,7 @@ jobs:
           sudo apt-get install -y ripgrep shellcheck
 
       - name: Shellcheck
-        run: shellcheck -S warning scripts/*.sh tests/*.sh
+        run: shellcheck -S warning scripts/*.sh tests/*.sh assets/claude/superpowers/skills/subagent-driven-development/scripts/* assets/codex/superpowers/skills/subagent-driven-development/scripts/*
 
       - name: Run test suite
         run: |
