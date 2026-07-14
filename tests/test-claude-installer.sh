@@ -52,6 +52,7 @@ assert_contains "$installer_help" "--install-openspec"
 assert_contains "$doctor_help" "Check Forgevia Claude managed assets"
 assert_contains "$doctor_help" "$MANIFEST"
 assert_contains "$doctor_help" "--repair"
+assert_contains "$doctor_help" "Forgevia runtime command dispatcher"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
@@ -141,6 +142,8 @@ test_file_executable "$CLAUDE_HOME/forgevia/bin/forgevia-draw.sh"
 test_file_executable "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
 test_file_executable "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
 cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
+test_file_executable "$CLAUDE_HOME/forgevia/bin/forgevia"
+cmp "$ROOT_DIR/scripts/forgevia.sh" "$CLAUDE_HOME/forgevia/bin/forgevia"
 
 expected_skill="$(cat "$ROOT_DIR/.claude/skills/forgevia-think/SKILL.md")"
 actual_skill="$(cat "$CLAUDE_HOME/skills/forgevia-think/SKILL.md")"
@@ -223,6 +226,24 @@ validator_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
 assert_contains "$validator_repair_output" "validate-openspec-cn.mjs"
 test_file_executable "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
 cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
+
+rm "$CLAUDE_HOME/forgevia/bin/forgevia"
+
+set +e
+command_drift_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" 2>&1)"
+command_drift_status=$?
+set -e
+
+if [[ "$command_drift_status" != "1" ]]; then
+  echo "expected command drift exit code 1 but got $command_drift_status" >&2
+  exit 1
+fi
+assert_contains "$command_drift_output" "$CLAUDE_HOME/forgevia/bin/forgevia"
+
+command_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
+assert_contains "$command_repair_output" "$CLAUDE_HOME/forgevia/bin/forgevia"
+test_file_executable "$CLAUDE_HOME/forgevia/bin/forgevia"
+cmp "$ROOT_DIR/scripts/forgevia.sh" "$CLAUDE_HOME/forgevia/bin/forgevia"
 
 missing_openspec_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir" "$missing_openspec_dir"' EXIT

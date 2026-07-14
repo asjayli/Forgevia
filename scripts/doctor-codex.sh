@@ -26,6 +26,7 @@ Manifest:
 Checks:
   - openspec config override
   - Forgevia and OpenSpec support skills under ~/.codex/skills
+  - Forgevia runtime command dispatcher under ~/.codex/forgevia/bin
   - mermaid-diagram-specialist and playwright-interactive helper skills
   - Forgevia-managed superpowers overrides
   - content drift against Forgevia-owned copies
@@ -208,7 +209,8 @@ main() {
     "$ROOT_DIR/scripts/bootstrap-project.sh::$CODEX_ROOT/forgevia/bin/bootstrap-project.sh" \
     "$ROOT_DIR/scripts/list-change-tasks.sh::$CODEX_ROOT/forgevia/bin/list-change-tasks.sh" \
     "$ROOT_DIR/scripts/forgevia-draw.sh::$CODEX_ROOT/forgevia/bin/forgevia-draw.sh" \
-    "$ROOT_DIR/scripts/validate-openspec-cn.mjs::$CODEX_ROOT/forgevia/bin/validate-openspec-cn.mjs"
+    "$ROOT_DIR/scripts/validate-openspec-cn.mjs::$CODEX_ROOT/forgevia/bin/validate-openspec-cn.mjs" \
+    "$ROOT_DIR/scripts/forgevia.sh::$CODEX_ROOT/forgevia/bin/forgevia"
   do
     local source_path="${pair%%::*}"
     local target_path="${pair#*::}"

@@ -28,6 +28,7 @@ Manifest:
 Checks:
   - openspec config override
   - Forgevia-managed Claude skills and commands under ~/.claude
+  - Forgevia runtime command dispatcher under ~/.claude/forgevia/bin
   - Forgevia-managed Claude superpowers overrides
   - content drift against Forgevia-owned copies
 EOF
@@ -267,6 +268,7 @@ main() {
     "$ROOT_DIR/scripts/list-change-tasks.sh::$CLAUDE_ROOT/forgevia/bin/list-change-tasks.sh"
     "$ROOT_DIR/scripts/forgevia-draw.sh::$CLAUDE_ROOT/forgevia/bin/forgevia-draw.sh"
     "$ROOT_DIR/scripts/validate-openspec-cn.mjs::$CLAUDE_ROOT/forgevia/bin/validate-openspec-cn.mjs"
+    "$ROOT_DIR/scripts/forgevia.sh::$CLAUDE_ROOT/forgevia/bin/forgevia"
   )
 
   for pair in "${managed_pairs[@]}"

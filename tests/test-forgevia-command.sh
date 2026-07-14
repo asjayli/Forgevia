@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+assert_contains() {
+  local haystack="$1"
+  local needle="$2"
+
+  if [[ "$haystack" != *"$needle"* ]]; then
+    echo "expected output to contain: $needle" >&2
+    exit 1
+  fi
+}
+
+assert_exit_code() {
+  local actual="$1"
+  local expected="$2"
+
+  if [[ "$actual" != "$expected" ]]; then
+    echo "expected exit code $expected but got $actual" >&2
+    exit 1
+  fi
+}
+
+tmp_dir="$(mktemp -d)"
+trap 'rm -rf "$tmp_dir"' EXIT
+
+runtime_dir="$tmp_dir/runtime"
+mkdir -p "$runtime_dir"
+cp "$ROOT_DIR/scripts/forgevia.sh" "$runtime_dir/forgevia"
+
+cat > "$runtime_dir/validate-openspec-cn.mjs" <<'EOF'
+console.log(`validate ${process.argv.slice(2).join(' ')}`);
+EOF
+
+for command in bootstrap-project.sh list-change-tasks.sh forgevia-draw.sh doctor-codex.sh; do
+  cat > "$runtime_dir/$command" <<EOF
+#!/usr/bin/env bash
+echo "${command%.sh} \$*"
+EOF
+  chmod +x "$runtime_dir/$command"
+done
+
+validate_output="$("$runtime_dir/forgevia" validate --root project)"
+assert_contains "$validate_output" "validate --root project"
+
+init_output="$("$runtime_dir/forgevia" init --tools codex project)"
+assert_contains "$init_output" "bootstrap-project --tools codex project"
+
+tasks_output="$("$runtime_dir/forgevia" tasks project)"
+assert_contains "$tasks_output" "list-change-tasks project"
+
+draw_output="$("$runtime_dir/forgevia" draw feature-name)"
+assert_contains "$draw_output" "forgevia-draw feature-name"
+
+doctor_output="$("$runtime_dir/forgevia" doctor)"
+assert_contains "$doctor_output" "doctor-codex"
+
+repair_output="$("$runtime_dir/forgevia" repair)"
+assert_contains "$repair_output" "doctor-codex --repair"
+
+set +e
+unsupported_output="$("$runtime_dir/forgevia" archive 2>&1)"
+unsupported_status=$?
+set -e
+
+assert_exit_code "$unsupported_status" "1"
+assert_contains "$unsupported_output" "Usage: forgevia <command>"
+
+echo "forgevia command test passed"

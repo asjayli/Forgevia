@@ -72,7 +72,7 @@ Purpose:
 - execute development for a specific unarchived OpenSpec change
 
 Required checks:
-- the change exists under `openspec/changes/`
+- run `openspec status --change "<change>" --json` and use its resolved `changeRoot`
 - the change is not already archived
 - the change has a `tasks.md`
 
@@ -165,7 +165,7 @@ Behavior:
 
 ### 1. Anchor on the named change
 
-Treat the explicitly named change as the single source of truth during implementation. Derive scope, tasks, and review focus from the change under `openspec/changes/<change>/`, not from conversation context.
+Treat the explicitly named change as the single source of truth during implementation. Derive scope, tasks, and review focus from `changeRoot` and `artifactPaths` returned by `openspec status --json`, not from conversation context.
 
 ### 2. Use the Forgevia-modified superpowers path
 
@@ -177,7 +177,7 @@ When implementation planning or execution is needed, prefer the Forgevia-managed
 - `requesting-code-review`
 - `executing-plans`
 
-These variants are expected to be OpenSpec-oriented and to use `openspec/changes/<change-name>/...` paths.
+These variants are expected to be OpenSpec-oriented and to resolve artifact paths from `openspec status --json`.
 
 ### 3. Trigger review checkpoints
 
