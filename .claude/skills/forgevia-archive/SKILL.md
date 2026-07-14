@@ -16,5 +16,6 @@ Use this skill only when the user explicitly names a change to archive.
 - Verify the change exists.
 - Verify the change is not already archived.
 - Sync the change's delta specs into the main specs first.
+- Run `node "${CLAUDE_HOME:-$HOME/.claude}/forgevia/bin/validate-openspec-cn.mjs" --root <project-root>` after syncing and before archive. Stop if it returns a non-zero status.
 - Only then route to the archive flow.
 - Do not auto-select or infer the target change.

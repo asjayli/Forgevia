@@ -93,6 +93,16 @@ Forgevia 是一套面向 agent coding 的工作流整合方案。
 
 Forgevia 把需求梳理、结构化开发、代码评审、效果验证和最终归档串成一条一致的交付流程。
 
+### 中文 OpenSpec 严格校验
+
+Forgevia 提供 `validate-openspec-cn.mjs`，用于在不修改源规格的前提下支持需求正文中的“必须、不得、禁止、应当”。它先校验中文强制词，再在临时副本中注入 `MUST` 并运行原生严格校验：
+
+```bash
+node "${CODEX_HOME:-$HOME/.codex}/forgevia/bin/validate-openspec-cn.mjs" --root <项目根目录>
+```
+
+Claude 安装使用 `${CLAUDE_HOME:-$HOME/.claude}/forgevia/bin/validate-openspec-cn.mjs`。适配器同时校验主规格和活跃变更，且只支持 `spec-driven` schema；不支持中文章节或标题，必须继续使用 `## Requirements`、`### Requirement:` 和 `#### Scenario:` 等 OpenSpec 结构关键字。
+
 ## 第三方资产与许可
 
 - `playwright-interactive`：来源于上游，采用 Apache License 2.0（© Microsoft Corporation）。Forgevia 重新分发时保留了其 `LICENSE.txt` 与 `NOTICE.txt`。

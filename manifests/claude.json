@@ -250,6 +250,13 @@
       "kind": "runtime-script"
     },
     {
+      "id": "runtime-chinese-openspec-validator",
+      "source": "scripts/validate-openspec-cn.mjs",
+      "target": "~/.claude/forgevia/bin/validate-openspec-cn.mjs",
+      "owner": "forgevia",
+      "kind": "runtime-script"
+    },
+    {
       "id": "forgevia-home-mirror",
       "source": "repo root (.claude, assets, scripts, manifests)",
       "target": "~/.claude/forgevia",

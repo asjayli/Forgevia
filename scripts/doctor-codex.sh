@@ -207,7 +207,8 @@ main() {
     "$ASSETS_DIR/superpowers/skills/test-driven-development/SKILL.md::$CODEX_ROOT/superpowers/skills/test-driven-development/SKILL.md" \
     "$ROOT_DIR/scripts/bootstrap-project.sh::$CODEX_ROOT/forgevia/bin/bootstrap-project.sh" \
     "$ROOT_DIR/scripts/list-change-tasks.sh::$CODEX_ROOT/forgevia/bin/list-change-tasks.sh" \
-    "$ROOT_DIR/scripts/forgevia-draw.sh::$CODEX_ROOT/forgevia/bin/forgevia-draw.sh"
+    "$ROOT_DIR/scripts/forgevia-draw.sh::$CODEX_ROOT/forgevia/bin/forgevia-draw.sh" \
+    "$ROOT_DIR/scripts/validate-openspec-cn.mjs::$CODEX_ROOT/forgevia/bin/validate-openspec-cn.mjs"
   do
     local source_path="${pair%%::*}"
     local target_path="${pair#*::}"

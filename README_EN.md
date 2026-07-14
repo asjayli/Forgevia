@@ -93,6 +93,16 @@ Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/For
 
 Forgevia turns requirement shaping, structured implementation, review, validation, and closure into one consistent delivery workflow.
 
+### Chinese OpenSpec Strict Validation
+
+Forgevia provides `validate-openspec-cn.mjs` for requirements whose body uses the Chinese normative terms `必须`, `不得`, `禁止`, or `应当`, without changing source specs. It checks those terms, injects `MUST` only in a temporary copy, and then runs native strict validation:
+
+```bash
+node "${CODEX_HOME:-$HOME/.codex}/forgevia/bin/validate-openspec-cn.mjs" --root <project-root>
+```
+
+For Claude installations, use `${CLAUDE_HOME:-$HOME/.claude}/forgevia/bin/validate-openspec-cn.mjs`. The adapter validates main specs and active changes, supports only the `spec-driven` schema, and does not support Chinese section or heading keywords: keep `## Requirements`, `### Requirement:`, and `#### Scenario:` in English.
+
 ## Third-Party Assets & Licensing
 
 - `playwright-interactive`: sourced from upstream, Apache License 2.0 (© Microsoft Corporation). Forgevia redistributes it with its original `LICENSE.txt` and `NOTICE.txt` retained.
