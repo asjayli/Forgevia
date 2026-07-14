@@ -61,6 +61,7 @@ assert_contains "$installer_help" "$MANIFEST"
 assert_contains "$doctor_help" "Check Forgevia Codex managed assets"
 assert_contains "$doctor_help" "$MANIFEST"
 assert_contains "$doctor_help" "--repair"
+assert_contains "$doctor_help" "Forgevia runtime command dispatcher"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
@@ -133,6 +134,8 @@ test_file_executable "$CODEX_HOME/forgevia/bin/forgevia-draw.sh"
 test_file_executable "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
 test_file_executable "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
 cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
+test_file_executable "$CODEX_HOME/forgevia/bin/forgevia"
+cmp "$ROOT_DIR/scripts/forgevia.sh" "$CODEX_HOME/forgevia/bin/forgevia"
 
 doctor_output="$("$DOCTOR")"
 assert_contains "$doctor_output" "🔎 Forgevia Codex doctor"
@@ -191,5 +194,20 @@ validator_repair_output="$("$DOCTOR" --repair)"
 assert_contains "$validator_repair_output" "validate-openspec-cn.mjs"
 test_file_executable "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
 cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
+
+rm "$CODEX_HOME/forgevia/bin/forgevia"
+
+set +e
+command_drift_output="$($DOCTOR 2>&1)"
+command_drift_status=$?
+set -e
+
+assert_exit_code "$command_drift_status" "1"
+assert_contains "$command_drift_output" "$CODEX_HOME/forgevia/bin/forgevia"
+
+command_repair_output="$($DOCTOR --repair)"
+assert_contains "$command_repair_output" "$CODEX_HOME/forgevia/bin/forgevia"
+test_file_executable "$CODEX_HOME/forgevia/bin/forgevia"
+cmp "$ROOT_DIR/scripts/forgevia.sh" "$CODEX_HOME/forgevia/bin/forgevia"
 
 echo "codex installer smoke test passed"

@@ -245,6 +245,13 @@
       "kind": "runtime-script"
     },
     {
+      "id": "runtime-forgevia-command",
+      "source": "scripts/forgevia.sh",
+      "target": "~/.codex/forgevia/bin/forgevia",
+      "owner": "forgevia",
+      "kind": "runtime-command"
+    },
+    {
       "id": "forgevia-home-mirror",
       "source": "repo root (.claude, assets, scripts, manifests)",
       "target": "~/.codex/forgevia",

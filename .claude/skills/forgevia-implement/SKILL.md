@@ -13,7 +13,7 @@ Use this skill only when the user explicitly names a change to implement.
 
 ## Behavior
 
-- Verify the change exists under `openspec/changes/`.
+- Verify the change with `openspec status --change "<change>" --json` and use its resolved `changeRoot`.
 - Verify the change is not archived.
 - Verify the change has `tasks.md`.
 - Use superpowers to complete the development for the named change.

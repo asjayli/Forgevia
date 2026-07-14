@@ -21,4 +21,4 @@ Use this skill when the user explicitly wants Forgevia to produce a new OpenSpec
 - Treat the provided file as requirement input, not as implementation output.
 - Stop and clarify if the file does not exist or the requirement source is too incomplete to produce a meaningful change.
 - When writing Chinese requirements, use one of `必须、不得、禁止、应当` in the requirement body. Keep OpenSpec structure keywords in English, including `## Requirements` and `### Requirement:`.
-- After creating the change artifacts, run `node "${CODEX_HOME:-$HOME/.codex}/forgevia/bin/validate-openspec-cn.mjs" --root <project-root>`. Do not report the proposal as strictly valid if this command fails.
+- After creating the change artifacts, run `"${CODEX_HOME:-$HOME/.codex}/forgevia/bin/forgevia" validate --root <project-root>`. Do not report the proposal as strictly valid if this command fails.

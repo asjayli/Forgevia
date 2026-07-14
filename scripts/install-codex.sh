@@ -184,7 +184,8 @@ overlay_runtime_scripts() {
   sync_path "$ROOT_DIR/scripts/forgevia-draw.sh" "$runtime_dir/forgevia-draw.sh"
   sync_path "$ROOT_DIR/scripts/doctor-codex.sh" "$runtime_dir/doctor-codex.sh"
   sync_path "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$runtime_dir/validate-openspec-cn.mjs"
-  log_success "Installed Forgevia runtime scripts (bootstrap/list-change-tasks/draw/doctor/validate-openspec-cn)"
+  sync_path "$ROOT_DIR/scripts/forgevia.sh" "$runtime_dir/forgevia"
+  log_success "Installed Forgevia runtime scripts (forgevia/bootstrap/list-change-tasks/draw/doctor/validate-openspec-cn)"
 }
 
 overlay_forgevia_home() {

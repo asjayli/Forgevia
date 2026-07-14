@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+usage() {
+  cat <<'EOF'
+Usage: forgevia <command> [arguments]
+
+Commands:
+  validate [--root <project-root>]  Run Chinese-compatible OpenSpec strict validation
+  init [arguments]                  Initialize OpenSpec project files
+  tasks [arguments]                 List active change tasks
+  draw [arguments]                  Generate a Forgevia design diagram
+  doctor                            Check Forgevia managed assets
+  repair                            Repair Forgevia managed assets
+EOF
+}
+
+run_doctor() {
+  if [[ -x "$SCRIPT_DIR/doctor-codex.sh" ]]; then
+    exec "$SCRIPT_DIR/doctor-codex.sh" "$@"
+  fi
+  if [[ -x "$SCRIPT_DIR/doctor-claude.sh" ]]; then
+    exec "$SCRIPT_DIR/doctor-claude.sh" "$@"
+  fi
+  echo "Forgevia doctor runtime helper is missing" >&2
+  exit 1
+}
+
+command_name="${1:-help}"
+case "$command_name" in
+  validate)
+    shift
+    exec node "$SCRIPT_DIR/validate-openspec-cn.mjs" "$@"
+    ;;
+  init)
+    shift
+    exec "$SCRIPT_DIR/bootstrap-project.sh" "$@"
+    ;;
+  tasks)
+    shift
+    exec "$SCRIPT_DIR/list-change-tasks.sh" "$@"
+    ;;
+  draw)
+    shift
+    exec "$SCRIPT_DIR/forgevia-draw.sh" "$@"
+    ;;
+  doctor)
+    shift
+    run_doctor "$@"
+    ;;
+  repair)
+    shift
+    run_doctor --repair "$@"
+    ;;
+  help|--help|-h)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 1
+    ;;
+esac
