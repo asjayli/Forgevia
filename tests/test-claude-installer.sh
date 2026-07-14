@@ -139,6 +139,8 @@ test_file_executable "$CLAUDE_HOME/forgevia/bin/bootstrap-project.sh"
 test_file_executable "$CLAUDE_HOME/forgevia/bin/list-change-tasks.sh"
 test_file_executable "$CLAUDE_HOME/forgevia/bin/forgevia-draw.sh"
 test_file_executable "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
+test_file_executable "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
+cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
 
 expected_skill="$(cat "$ROOT_DIR/.claude/skills/forgevia-think/SKILL.md")"
 actual_skill="$(cat "$CLAUDE_HOME/skills/forgevia-think/SKILL.md")"
@@ -203,6 +205,24 @@ test_path_not_exists "$superpowers_root/skills/brainstorming/SKILL.md.forgevia.b
 post_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR")"
 assert_contains "$post_repair_output" "✨ No drift detected"
 assert_contains "$post_repair_output" "Forgevia Claude doctor passed"
+
+rm "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
+
+set +e
+validator_drift_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" 2>&1)"
+validator_drift_status=$?
+set -e
+
+if [[ "$validator_drift_status" != "1" ]]; then
+  echo "expected validator drift exit code 1 but got $validator_drift_status" >&2
+  exit 1
+fi
+assert_contains "$validator_drift_output" "validate-openspec-cn.mjs"
+
+validator_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
+assert_contains "$validator_repair_output" "validate-openspec-cn.mjs"
+test_file_executable "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
+cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
 
 missing_openspec_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir" "$missing_openspec_dir"' EXIT

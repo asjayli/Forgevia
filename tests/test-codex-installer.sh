@@ -131,6 +131,8 @@ test_file_executable "$CODEX_HOME/forgevia/bin/bootstrap-project.sh"
 test_file_executable "$CODEX_HOME/forgevia/bin/list-change-tasks.sh"
 test_file_executable "$CODEX_HOME/forgevia/bin/forgevia-draw.sh"
 test_file_executable "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
+test_file_executable "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
+cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
 
 doctor_output="$("$DOCTOR")"
 assert_contains "$doctor_output" "🔎 Forgevia Codex doctor"
@@ -174,5 +176,20 @@ test_path_not_exists "$CODEX_HOME/superpowers/skills/brainstorming/SKILL.md.forg
 post_repair_output="$("$DOCTOR")"
 assert_contains "$post_repair_output" "✨ No drift detected"
 assert_contains "$post_repair_output" "Forgevia Codex doctor passed"
+
+rm "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
+
+set +e
+validator_drift_output="$("$DOCTOR" 2>&1)"
+validator_drift_status=$?
+set -e
+
+assert_exit_code "$validator_drift_status" "1"
+assert_contains "$validator_drift_output" "validate-openspec-cn.mjs"
+
+validator_repair_output="$("$DOCTOR" --repair)"
+assert_contains "$validator_repair_output" "validate-openspec-cn.mjs"
+test_file_executable "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
+cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
 
 echo "codex installer smoke test passed"

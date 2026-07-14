@@ -266,6 +266,7 @@ main() {
     "$ROOT_DIR/scripts/bootstrap-project.sh::$CLAUDE_ROOT/forgevia/bin/bootstrap-project.sh"
     "$ROOT_DIR/scripts/list-change-tasks.sh::$CLAUDE_ROOT/forgevia/bin/list-change-tasks.sh"
     "$ROOT_DIR/scripts/forgevia-draw.sh::$CLAUDE_ROOT/forgevia/bin/forgevia-draw.sh"
+    "$ROOT_DIR/scripts/validate-openspec-cn.mjs::$CLAUDE_ROOT/forgevia/bin/validate-openspec-cn.mjs"
   )
 
   for pair in "${managed_pairs[@]}"
