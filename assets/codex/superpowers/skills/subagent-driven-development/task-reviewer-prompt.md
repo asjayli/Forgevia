@@ -49,8 +49,9 @@ Subagent (general-purpose):
     change. The diff's context lines ARE the changed files: do not Read a
     changed file separately unless a hunk you must judge is cut off
     mid-function — and say so in your report. Do not re-run git commands.
-    If the diff file is missing, fetch the diff yourself:
-    `git diff --stat [BASE_SHA]..[HEAD_SHA]` and `git diff [BASE_SHA]..[HEAD_SHA]`.
+    If the diff file is missing or unreadable, stop without issuing a verdict
+    and return `REVIEW_PACKAGE_UNAVAILABLE: [DIFF_FILE]`. Do not reconstruct a missing package with `git diff BASE..HEAD`; that would lose uncommitted and
+    untracked task changes. The controller must regenerate the package from the same task baseline and apply its bounded infrastructure retry policy.
     Do not crawl the broader codebase. Inspect code outside the diff only
     to evaluate a concrete risk you can name — one focused check per named
     risk, and name both the risk and what you checked in your report.
@@ -92,6 +93,7 @@ Subagent (general-purpose):
     - `ESCALATE` only when missing authorization or critical information is required to reach the already-authorized terminal condition. A plan conflict qualifies only when it makes that terminal condition indeterminate.
 
     A standalone read-only envelope returns `REVISE` findings without escalating merely because repair is unauthorized. Ordinary defects and missing tests are `REVISE`, not requests for user confirmation.
+    The only non-verdict output is `REVIEW_PACKAGE_UNAVAILABLE` for this infrastructure failure.
 
     ## Part 1: Spec Compliance
 
@@ -133,8 +135,8 @@ Subagent (general-purpose):
     "yes." A tight report that cites lines gives the controller everything
     it needs.
 
-    Your final message is the report itself: begin directly with the
-    controller verdict. Every line is a verdict, a finding with
+    Except for `REVIEW_PACKAGE_UNAVAILABLE`, your final message is the report
+    itself: begin directly with the controller verdict. Every line is a verdict, a finding with
     file:line, or a check you ran — no preamble, no process narration,
     no closing summary.
 
@@ -202,8 +204,9 @@ Subagent (general-purpose):
 - `[BASE_SHA]` — commit before this task
 - `[HEAD_SHA]` — current commit
 - `[DIFF_FILE]` — REQUIRED: the path the controller wrote the review
-  package to (`scripts/review-package BASE HEAD` prints the unique path it
-  wrote; the package never enters the controller's context)
+  package to (`scripts/review-package BASE HEAD` or
+  `scripts/review-package TASK_TREE WORKTREE` prints the unique path; the
+  package never enters the controller's context)
 
 **Reviewer returns:** Controller verdict (`APPROVE`/`REVISE`/`ESCALATE`), Spec
 Compliance verdict (✅/❌/⚠️), Strengths, Issues (Critical/Important/Minor),
