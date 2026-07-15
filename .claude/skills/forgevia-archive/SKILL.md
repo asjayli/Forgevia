@@ -13,6 +13,17 @@ Use this skill only when the user explicitly names a change to archive.
 
 ## Behavior
 
+**Independent review contract:** Every reviewer receives one review package containing:
+
+- Objective: the authorized outcome.
+- Scope: the allowed repositories, changes, files, and systems.
+- Constraints: the binding process, architecture, safety, and platform rules.
+- Authorized effects: the writes and side effects allowed to the controller.
+- Terminal condition: the state at which this workflow must stop.
+- The candidate producer identity, candidate artifacts, action, or diff, verification evidence, assumptions and risks.
+
+If a reviewer fails to start, times out, crashes, or returns an invalid verdict, reuse the unchanged review package with at most two new independent review agents. If both retries fail, return `ESCALATE` with the collected infrastructure evidence; never infer `APPROVE`. The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.
+
 - Verify the change exists.
 - Verify the change is not already archived.
 - Treat the explicit archive command as authorization to sync the named change's delta specs and perform the local archive move; it does not authorize push, release, or history rewriting.

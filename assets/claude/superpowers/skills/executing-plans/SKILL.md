@@ -58,10 +58,11 @@ Report completed work and verification as non-blocking progress, recompute depen
 
 ### Step 5: Complete Development
 
-After all tasks complete and verified:
-- Announce: "I'm using the finishing-a-development-branch skill to complete this work."
-- **REQUIRED SUB-SKILL:** Use superpowers:finishing-a-development-branch
-- Follow that skill to verify tests, present options, execute choice
+After all tasks complete and verified, obtain the final independent review. A final `REVISE` triggers authorized repair, full verification, and a fresh final review; without repair authorization, return the findings unchanged. A final `ESCALATE` uses the same substantive boundaries as task review.
+
+Use a commit-bounded review package when checkpoints were authorized. If changes remain uncommitted, use the SDD `review-package BASE WORKTREE` mode so the reviewer receives committed, staged, unstaged, and untracked files.
+
+After the final `APPROVE`, read the objective authorization envelope. Forgevia implement and a complete Forgevia workflow default to a completion summary with the change still active. If the envelope does not separately and explicitly authorize the relevant merge, push, or cleanup effect, return that summary without branch-finishing options. Only when the envelope contains that explicit authorization may you invoke `superpowers:finishing-a-development-branch`.
 
 ## Recovery and Escalation Boundaries
 
@@ -93,4 +94,5 @@ Re-run plan review only when a real contradiction or updated instruction changes
 **Required workflow skills:**
 - **superpowers:using-git-worktrees** - Ensures isolated workspace (creates one or verifies existing)
 - **superpowers:writing-plans** - Creates the plan this skill executes
-- **superpowers:finishing-a-development-branch** - Complete development after all tasks
+- **superpowers:requesting-code-review** - Performs the final independent review
+- **superpowers:finishing-a-development-branch** - Perform only explicitly authorized branch-finishing effects after final review

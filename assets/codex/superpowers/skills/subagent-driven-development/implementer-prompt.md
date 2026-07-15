@@ -17,6 +17,17 @@ Subagent (general-purpose):
 
     [Scene-setting: where this fits, dependencies, architectural context]
 
+    ## Objective Authorization Envelope
+
+    **Objective:** [OBJECTIVE]
+    **Scope:** [SCOPE]
+    **Constraints:** [CONSTRAINTS]
+    **Authorized effects:** [AUTHORIZED_EFFECTS]
+    **Terminal condition:** [TERMINAL_CONDITION]
+
+    Stay within every field of this envelope. It governs edits, tests,
+    commits, and all other side effects.
+
     ## Before You Begin
 
     Resolve ordinary questions from the task brief, supplied context, and
@@ -30,7 +41,7 @@ Subagent (general-purpose):
     1. Implement exactly what the task specifies
     2. Write tests (following TDD if task says to)
     3. Verify implementation works
-    4. Commit your work
+    4. Create a commit only when authorized effects explicitly allow it and the current branch policy permits it. Otherwise leave the working-tree changes uncommitted and explain that in the report.
     5. Self-review (see below)
     6. Report back
 
@@ -118,7 +129,7 @@ Subagent (general-purpose):
     Then report back with ONLY (under 15 lines — the detail lives in the
     report file):
     - **Status:** DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
-    - Commits created (short SHA + subject)
+    - Commits created: short SHA + subject, or `none` with the authorization or branch-policy reason
     - One-line test summary (e.g. "14/14 passing, output pristine")
     - Your concerns, if any
     - The report file path

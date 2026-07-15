@@ -34,13 +34,23 @@ Forgevia should behave like an explicit command router. The user is expected to 
 
 ## Autonomous Execution Contract
 
-At entry, resolve an objective authorization envelope from the user's objective, named scope, repository rules, authorized effects, and terminal condition. Continue inside that envelope until the terminal condition is met, a real blocker requires new user input, or the user interrupts. Phase boundaries, progress reports, warnings, and ordinary recoverable failures are observations, not confirmation gates.
+At entry, resolve an objective authorization envelope with these fields:
 
-Use an independent review agent different from the agent that produced the candidate. On Codex, dispatch that reviewer with `spawn_agent`. Give it the objective authorization envelope, relevant OpenSpec artifacts, candidate action or diff, verification evidence, assumptions, and risk classification. Accept only these evidence-backed verdicts:
+- Objective: the authorized outcome.
+- Scope: the allowed repositories, changes, files, and systems.
+- Constraints: the binding process, architecture, safety, and platform rules.
+- Authorized effects: the writes and side effects allowed to the controller.
+- Terminal condition: the state at which this workflow must stop.
+
+Continue inside that envelope until the terminal condition is met, a real blocker requires new user input, or the user interrupts. Phase boundaries, progress reports, warnings, and ordinary recoverable failures are observations, not confirmation gates.
+
+Use an independent review agent different from the agent that produced the candidate. On Codex, dispatch that reviewer with `spawn_agent`. Every review package includes the candidate producer identity, relevant OpenSpec and candidate artifacts, action, or diff, verification evidence, assumptions and risks. Accept only these evidence-backed verdicts:
 
 - `APPROVE`: record the reviewed result and automatically continue to the next in-scope work unit.
 - `REVISE`: when the envelope authorizes fixes, diagnose, fix, re-run the matching verification, and request another independent review; standalone read-only review and verify-web commands return findings instead.
 - `ESCALATE`: combine the unresolved decisions, evidence, recommended default, option impacts, and reason automation cannot continue into one user request.
+
+If a reviewer fails to start, times out, crashes, or returns an invalid verdict, reuse the unchanged review package with at most two new independent review agents. If both retries fail, return `ESCALATE` with the collected infrastructure evidence; never infer `APPROVE`. The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.
 
 Only ESCALATE pauses the workflow for user input. Escalation is limited to a critical ambiguity that cannot be reasonably inferred, a required scope expansion, a conflicting higher-priority rule, an unauthorized external or irreversible effect, unavailable review capability after its retry policy, or a repair loop that no longer makes verifiable progress.
 

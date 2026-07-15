@@ -15,7 +15,18 @@ Archive a completed change in the experimental workflow.
 
 **Input**: Optionally specify a change name. If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
-**Review protocol:** An explicit archive request authorizes the named change's spec sync and local archive move. Use `Task` for an independent review agent different from the candidate producer, and provide the objective and authorized scope, change identity, relevant artifacts, proposed action or diff, verification evidence, warnings, and risks. Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE`. On `APPROVE`, continue automatically. On `REVISE`, repair the sync plan, sync result, or archive package, revalidate, and review again. Only `ESCALATE` pauses for user input, and only for unresolved data-loss risk, goal or rule conflict, missing authorization, a critical ambiguity, or an unavailable required capability.
+**Independent review contract:** An explicit archive request authorizes the named change's spec sync and local archive move. Use `Task` for an independent reviewer different from the candidate producer. Every review package contains:
+
+- Objective: the authorized outcome.
+- Scope: the allowed repositories, changes, files, and systems.
+- Constraints: the binding process, architecture, safety, and platform rules.
+- Authorized effects: the writes and side effects allowed to the controller.
+- Terminal condition: the state at which this workflow must stop.
+- The change identity, candidate producer identity, candidate artifacts, action, or diff, verification evidence, warnings, assumptions and risks.
+
+Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE`. On `APPROVE`, continue automatically. On `REVISE`, repair the sync plan, sync result, or archive package, revalidate, and review again. Only `ESCALATE` pauses for user input, and only for unresolved data-loss risk, goal or rule conflict, missing authorization, a critical ambiguity, or an unavailable required capability.
+
+If a reviewer fails to start, times out, crashes, or returns an invalid verdict, reuse the unchanged review package with at most two new independent review agents. If both retries fail, return `ESCALATE` with the collected infrastructure evidence; never infer `APPROVE`. The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.
 
 **Steps**
 

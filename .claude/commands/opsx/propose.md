@@ -20,7 +20,18 @@ When ready to implement, use Forgevia Implement
 
 **Input**: The argument after `/opsx:propose` is the change name (kebab-case), OR a description of what the user wants to build.
 
-**Review protocol:** Use `Task` for an independent review agent different from the artifact producer. Provide the objective and authorized scope, source requirements, relevant repository evidence, candidate artifacts, validation evidence, assumptions, and risks. Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE`. On `APPROVE`, continue automatically to the next dependency-ready artifact. On `REVISE`, repair the planning artifact, revalidate it, and request another independent review. Only `ESCALATE` pauses for user input, and only for a consequential ambiguity that cannot be reasonably inferred, a required scope or authorization expansion, a conflicting rule, or an unavailable required capability.
+**Independent review contract:** Use `Task` for an independent reviewer different from the candidate producer. Every review package contains:
+
+- Objective: the authorized outcome.
+- Scope: the allowed repositories, changes, files, and systems.
+- Constraints: the binding process, architecture, safety, and platform rules.
+- Authorized effects: the writes and side effects allowed to the controller.
+- Terminal condition: the state at which this workflow must stop.
+- The source requirements, repository evidence, candidate producer identity, candidate artifacts, action, or diff, verification evidence, assumptions and risks.
+
+Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE`. On `APPROVE`, continue automatically to the next dependency-ready artifact. On `REVISE`, repair the planning artifact, revalidate it, and request another independent review. Only `ESCALATE` pauses for user input, and only for a consequential ambiguity that cannot be reasonably inferred, a required scope or authorization expansion, a conflicting rule, or an unavailable required capability.
+
+If a reviewer fails to start, times out, crashes, or returns an invalid verdict, reuse the unchanged review package with at most two new independent review agents. If both retries fail, return `ESCALATE` with the collected infrastructure evidence; never infer `APPROVE`. The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.
 
 **Steps**
 
@@ -69,6 +80,7 @@ When ready to implement, use Forgevia Implement
       - Read any completed dependency files for context
       - Create the artifact file using `template` as the structure and write it to `resolvedOutputPath`
       - Apply `context` and `rules` as constraints - but do NOT copy them into the file
+      - Validate the current planning package before dispatching its reviewer. If validation fails, repair only the matching planning artifact type and rerun the same validation. Dispatch an independent review only after that planning validation passes.
       - Independently review the proposal/design/specs package before tasks, and independently review the tasks package before declaring the change apply-ready
       - Show brief progress: "Created <artifact-id>"
 
@@ -81,7 +93,11 @@ When ready to implement, use Forgevia Implement
       - Infer reasonable details from the objective, dependencies, and repository evidence
       - If multiple materially different outcomes remain, return `ESCALATE` through the review protocol with evidence and a recommended default
 
-5. **Show final status**
+5. **Run final strict validation**
+
+   After all apply-required artifacts are complete, run `openspec validate "<name>" --strict --no-interactive` for the complete change, preserving `--store <id>` when applicable. If strict validation fails, repair the indicated proposal, design, specs, or tasks and rerun strict validation. Independently review every package changed by strict-validation repair before reporting the proposal apply-ready.
+
+6. **Show final status**
    ```bash
    openspec status --change "<name>"
    ```
