@@ -15,17 +15,17 @@ This is an **agent-driven** operation - you will read delta specs and directly e
 
 **Store selection:** If the user names a store (a store is a standalone OpenSpec repo registered on this machine) or the work lives in one, run `openspec store list --json` to discover registered store ids, then pass `--store <id>` on the commands that read or write specs and changes (`new change`, `status`, `instructions`, `list`, `show`, `validate`, `archive`, `doctor`, `context`). Other commands do not take the flag. Hints printed by commands already carry the flag; keep it on follow-ups. Without a store, commands act on the nearest local `openspec/` root.
 
-**Input**: Optionally specify a change name. If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
+**Input**: Optionally specify a change name. Auto-select if only one active change exists. When multiple active changes remain equally plausible after checking conversation and repository evidence, present those candidates for one substantive selection.
+
+**Review protocol:** A sync request authorizes updates to the named change's corresponding main specs, but not archive, commit, push, or release. Use `spawn_agent` for an independent review agent different from the sync result producer. Provide the objective and authorized scope, change identity, delta and main specs, proposed merge or diff, validation evidence, preservation checks, assumptions, and risks. Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE`. On `APPROVE`, continue automatically to the completion summary and leave the change active. On `REVISE`, repair only the sync plan or result, revalidate it, and request another independent review. Only `ESCALATE` pauses for user input, and only for an equally plausible change selection, an unresolved content-preservation risk, missing authorization, a conflicting rule, or an unavailable required capability.
 
 **Steps**
 
-1. **If no change name provided, prompt for selection**
+1. **Resolve the change**
 
-   Run `openspec list --json` to get available changes, then let the user select.
+   If no change name is provided, run `openspec list --json` and filter to active changes that have delta specs. Use conversation and repository evidence first. Auto-select if only one active change exists or the evidence identifies one unique target.
 
-   Show changes that have delta specs (under `specs/` directory).
-
-   **IMPORTANT**: Do NOT guess or auto-select a change. Always let the user choose.
+   If multiple candidates remain equally plausible, return `ESCALATE` with the candidates, evidence, recommended default, option impacts, and why the sync cannot continue without a selection.
 
 2. **Resolve change context**
 
@@ -83,7 +83,13 @@ This is an **agent-driven** operation - you will read delta specs and directly e
       - Add Purpose section (can be brief, mark as TBD)
       - Add Requirements section with the ADDED requirements
 
-5. **Show summary**
+5. **Validate and independently review the sync result**
+
+   - Run the repository's strict spec validation and verify the merge is idempotent and preserves main-spec content not changed by the delta.
+   - Dispatch the independent review with the sync diff and validation evidence.
+   - On `APPROVE`, continue to the summary. On `REVISE`, repair the sync result, rerun the same validation, and dispatch a fresh independent review. Only `ESCALATE` pauses for user input.
+
+6. **Show summary**
 
    After applying all changes, summarize:
    - Which capabilities were updated
@@ -146,6 +152,6 @@ Main specs are now updated. The change remains active - archive when implementat
 **Guardrails**
 - Read both delta and main specs before making changes
 - Preserve existing content not mentioned in delta
-- If something is unclear, ask for clarification
+- Route ordinary merge uncertainty through independent review; use `ESCALATE` only at the stated substantive boundaries
 - Show what you're changing as you go
 - The operation should be idempotent - running twice should give same result

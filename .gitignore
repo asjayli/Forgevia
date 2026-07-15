@@ -1,4 +1,6 @@
 /.idea/
 .DS_Store
-/docs/
+/docs/plans/
 /openspec/
+/.forgevia/
+/.superpowers/
