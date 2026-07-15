@@ -118,8 +118,10 @@ done
 for path in "${REVIEWER_PROMPTS[@]}"; do
   contents="$(<"$path")"
   assert_contains "$contents" '**Verdict:** [APPROVE | REVISE | ESCALATE]'
-  assert_contains "$contents" '`REVISE` for actionable findings'
-  assert_contains "$contents" '`ESCALATE` only for a genuine plan conflict or missing authorization'
+  assert_contains "$contents" '`REVISE` for every ordinary actionable finding, regardless of whether the controller is authorized to repair it.'
+  assert_contains "$contents" 'A standalone read-only envelope returns `REVISE` findings without escalating merely because repair is unauthorized.'
+  assert_contains "$contents" 'The controller uses the authorization envelope to either dispatch an authorized repair or return the findings unchanged.'
+  assert_contains "$contents" '`ESCALATE` only when missing authorization or critical information is required to reach the already-authorized terminal condition.'
   assert_contains "$contents" '## Objective Authorization Envelope'
   assert_contains "$contents" '**Objective:** [OBJECTIVE]'
   assert_contains "$contents" '**Scope:** [SCOPE]'
@@ -127,6 +129,7 @@ for path in "${REVIEWER_PROMPTS[@]}"; do
   assert_contains "$contents" '**Authorized effects:** [AUTHORIZED_EFFECTS]'
   assert_contains "$contents" '**Terminal condition:** [TERMINAL_CONDITION]'
   assert_not_contains "$contents" 'confirm whether the deviation was intentional'
+  assert_not_contains "$contents" 'actionable findings that can be repaired without changing the plan or authorization envelope'
 done
 
 repo_dir="$tmp_dir/repo"

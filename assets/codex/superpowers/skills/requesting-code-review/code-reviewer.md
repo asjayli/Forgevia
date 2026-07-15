@@ -28,8 +28,8 @@ Subagent (general-purpose):
     **Authorized effects:** [AUTHORIZED_EFFECTS]
     **Terminal condition:** [TERMINAL_CONDITION]
 
-    Use this envelope to classify findings and whether repair is authorized.
-    The reviewer remains read-only and must not perform any authorized effect.
+    The controller uses the authorization envelope to either dispatch an authorized repair or return the findings unchanged.
+    The reviewer reports findings and remains read-only; it must not perform any authorized effect.
 
     ## Git Range to Review
 
@@ -89,8 +89,10 @@ Subagent (general-purpose):
 
     Return exactly one controller verdict:
     - `APPROVE` only when the branch is ready for its next authorized workflow step.
-    - `REVISE` for actionable findings that can be repaired without changing the plan or authorization envelope.
-    - `ESCALATE` only for a genuine plan conflict or missing authorization that prevents a safe repair. Ordinary code or test defects are `REVISE`, not requests for user confirmation.
+    - `REVISE` for every ordinary actionable finding, regardless of whether the controller is authorized to repair it.
+    - `ESCALATE` only when missing authorization or critical information is required to reach the already-authorized terminal condition. A plan conflict qualifies only when it makes that terminal condition indeterminate.
+
+    A standalone read-only envelope returns `REVISE` findings without escalating merely because repair is unauthorized. Ordinary code or test defects are `REVISE`, not requests for user confirmation.
 
     ## Output Format
 
