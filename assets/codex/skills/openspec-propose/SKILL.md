@@ -6,7 +6,7 @@ compatibility: Requires openspec CLI.
 metadata:
   author: openspec
   version: "1.0"
-  generatedBy: "1.2.0"
+  generatedBy: "1.5.0"
 ---
 
 Propose a new change - create the change and generate all artifacts in one step.
@@ -16,9 +16,11 @@ I'll create a change with artifacts:
 - design.md (how)
 - tasks.md (implementation steps)
 
-When ready to implement, invoke the openspec-apply-change skill
+When ready to implement, use Forgevia Implement
 
 ---
+
+**Store selection:** If the user names a store (a store is a standalone OpenSpec repo registered on this machine) or the work lives in one, run `openspec store list --json` to discover registered store ids, then pass `--store <id>` on the commands that read or write specs and changes (`new change`, `status`, `instructions`, `list`, `show`, `validate`, `archive`, `doctor`, `context`). Other commands do not take the flag. Hints printed by commands already carry the flag; keep it on follow-ups. Without a store, commands act on the nearest local `openspec/` root.
 
 **Input**: The user's request should include a change name (kebab-case) OR a description of what they want to build.
 
@@ -50,7 +52,7 @@ When ready to implement, invoke the openspec-apply-change skill
 
 4. **Create artifacts in sequence until apply-ready**
 
-   Track progress through the artifacts (maintain a todo list).
+   Track progress through the artifacts with the client's available planning mechanism.
 
    Loop through artifacts in dependency order (artifacts with no pending dependencies first):
 
@@ -91,7 +93,7 @@ After completing all artifacts, summarize:
 - Change name and location
 - List of artifacts created with brief descriptions
 - What's ready: "All artifacts created! Ready for implementation."
-- Prompt: "Invoke the `openspec-apply-change` skill or ask me to implement to start working on the tasks."
+- Prompt: "Use Forgevia Implement to start implementation."
 
 **Artifact Creation Guidelines**
 

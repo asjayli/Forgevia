@@ -78,4 +78,33 @@ assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-explore/SKILL.md" "
 assert_file_contains "$ROOT_DIR/assets/codex/skills/forgevia/SKILL.md" "changeRoot"
 assert_file_contains "$ROOT_DIR/.claude/skills/forgevia/SKILL.md" "changeRoot"
 
+for path in \
+  "$ROOT_DIR/.claude/commands/opsx/sync.md" \
+  "$ROOT_DIR/.claude/skills/openspec-sync-specs/SKILL.md" \
+  "$ROOT_DIR/.codex/skills/openspec-sync-specs/SKILL.md" \
+  "$ROOT_DIR/assets/codex/skills/openspec-sync-specs/SKILL.md"
+do
+  assert_file_contains "$path" "planningHome.root"
+  assert_file_contains "$path" '<planningHome.root>/openspec/specs/<capability>/spec.md'
+  assert_file_not_contains "$path" "For each repo-local capability"
+done
+
+for path in \
+  "$ROOT_DIR/.claude/commands/opsx/archive.md" \
+  "$ROOT_DIR/.claude/skills/openspec-archive-change/SKILL.md" \
+  "$ROOT_DIR/.codex/skills/openspec-archive-change/SKILL.md" \
+  "$ROOT_DIR/assets/codex/skills/openspec-archive-change/SKILL.md"
+do
+  assert_file_contains "$path" '<planningHome.root>/openspec/specs/<capability>/spec.md'
+  assert_file_not_contains "$path" 'at `openspec/specs/<capability>/spec.md`'
+done
+
+for root in "$ROOT_DIR/.codex/skills" "$ROOT_DIR/assets/codex/skills"; do
+  while IFS= read -r path; do
+    assert_file_not_contains "$path" "AskUserQuestion"
+    assert_file_not_contains "$path" "TodoWrite"
+    assert_file_not_contains "$path" "Task tool"
+  done < <(find "$root" -mindepth 2 -maxdepth 2 -path '*/openspec-*/SKILL.md' -type f | sort)
+done
+
 echo "chinese OpenSpec workflow integration test passed"

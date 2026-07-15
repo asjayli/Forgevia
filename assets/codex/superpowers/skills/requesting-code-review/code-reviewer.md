@@ -7,9 +7,6 @@ Use this template when dispatching a code reviewer subagent.
 ```
 Subagent (general-purpose):
   description: "Review code changes"
-  model: [MODEL — REQUIRED: specify explicitly. An omitted model silently
-         inherits the session's most expensive one; for the broad
-         whole-branch review, use the most capable available model.]
   prompt: |
     You are a Senior Code Reviewer with expertise in software architecture,
     design patterns, and best practices. Your job is to review completed work

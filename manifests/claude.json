@@ -67,6 +67,13 @@
       "kind": "skill-directory"
     },
     {
+      "id": "openspec-sync-specs-skill",
+      "source": ".claude/skills/openspec-sync-specs",
+      "target": "~/.claude/skills/openspec-sync-specs",
+      "owner": "forgevia",
+      "kind": "skill-directory"
+    },
+    {
       "id": "forgevia-skill",
       "source": ".claude/skills/forgevia",
       "target": "~/.claude/skills/forgevia",

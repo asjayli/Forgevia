@@ -62,6 +62,14 @@ cat > "$project_dir/openspec/specs/main/spec.md" <<'EOF'
 #### Scenario: 处理中文强制词
 - **WHEN** 需求正文使用必须
 - **THEN** 校验通过
+
+### Requirement: 多行中文主规格
+系统提供以下能力：
+系统必须在后续正文行中保留强制词。
+
+#### Scenario: 处理多行需求正文
+- **WHEN** 强制词位于正文的非首行
+- **THEN** 校验通过
 EOF
 
 cat > "$project_dir/openspec/changes/change/specs/capability/spec.md" <<'EOF'
@@ -89,6 +97,7 @@ cat > "$bin_dir/openspec" <<EOF
 set -euo pipefail
 echo "\$*" >> "$log_file"
 grep -q '^MUST 系统必须保留中文正文' openspec/specs/main/spec.md
+grep -q '^MUST 系统必须在后续正文行中保留强制词' openspec/specs/main/spec.md
 grep -q '^MUST 系统不得修改源规格文件' openspec/changes/change/specs/capability/spec.md
 grep -q '^MUST 系统应当保留现有需求结构' openspec/changes/change/specs/capability/spec.md
 if [[ "\${FAKE_OPENSPEC_FAIL_ON:-}" == "\$1 \$2" ]]; then
@@ -99,7 +108,7 @@ chmod +x "$bin_dir/openspec"
 mkdir -p "$tmp_dir/staging"
 
 set +e
-output="$(TMPDIR="$tmp_dir/staging" PATH="$bin_dir:$PATH" node "$VALIDATOR" --root "$project_dir" 2>&1)"
+_output="$(TMPDIR="$tmp_dir/staging" PATH="$bin_dir:$PATH" node "$VALIDATOR" --root "$project_dir" 2>&1)"
 status=$?
 set -e
 
@@ -143,7 +152,7 @@ cat > "$archived_change_project/openspec/changes/archive/old-change/specs/legacy
 EOF
 
 set +e
-archived_change_output="$(TMPDIR="$tmp_dir/staging" PATH="$bin_dir:$PATH" node "$VALIDATOR" --root "$archived_change_project" 2>&1)"
+_archived_change_output="$(TMPDIR="$tmp_dir/staging" PATH="$bin_dir:$PATH" node "$VALIDATOR" --root "$archived_change_project" 2>&1)"
 archived_change_status=$?
 set -e
 
@@ -154,7 +163,7 @@ cp -R "$project_dir" "$quoted_schema_project"
 printf 'schema: "spec-driven" # supported YAML scalar\n' > "$quoted_schema_project/openspec/config.yaml"
 
 set +e
-quoted_schema_output="$(TMPDIR="$tmp_dir/staging" PATH="$bin_dir:$PATH" node "$VALIDATOR" --root "$quoted_schema_project" 2>&1)"
+_quoted_schema_output="$(TMPDIR="$tmp_dir/staging" PATH="$bin_dir:$PATH" node "$VALIDATOR" --root "$quoted_schema_project" 2>&1)"
 quoted_schema_status=$?
 set -e
 
@@ -168,7 +177,7 @@ schema: >-
 EOF
 
 set +e
-block_schema_output="$(TMPDIR="$tmp_dir/staging" PATH="$bin_dir:$PATH" node "$VALIDATOR" --root "$block_schema_project" 2>&1)"
+_block_schema_output="$(TMPDIR="$tmp_dir/staging" PATH="$bin_dir:$PATH" node "$VALIDATOR" --root "$block_schema_project" 2>&1)"
 block_schema_status=$?
 set -e
 
@@ -179,7 +188,7 @@ cp -R "$project_dir" "$tagged_schema_project"
 printf 'schema: !!str spec-driven\n' > "$tagged_schema_project/openspec/config.yaml"
 
 set +e
-tagged_schema_output="$(TMPDIR="$tmp_dir/staging" PATH="$bin_dir:$PATH" node "$VALIDATOR" --root "$tagged_schema_project" 2>&1)"
+_tagged_schema_output="$(TMPDIR="$tmp_dir/staging" PATH="$bin_dir:$PATH" node "$VALIDATOR" --root "$tagged_schema_project" 2>&1)"
 tagged_schema_status=$?
 set -e
 
@@ -222,7 +231,7 @@ assert_exit_code "$unsupported_schema_status" "1"
 assert_contains "$unsupported_schema_output" "仅支持 spec-driven schema"
 
 set +e
-native_failure_output="$(TMPDIR="$tmp_dir/staging" FAKE_OPENSPEC_FAIL_ON='validate --changes' PATH="$bin_dir:$PATH" node "$VALIDATOR" --root "$project_dir" 2>&1)"
+_native_failure_output="$(TMPDIR="$tmp_dir/staging" FAKE_OPENSPEC_FAIL_ON='validate --changes' PATH="$bin_dir:$PATH" node "$VALIDATOR" --root "$project_dir" 2>&1)"
 native_failure_status=$?
 set -e
 

@@ -8,6 +8,10 @@ CLAUDE_SCRIPTS="$ROOT_DIR/assets/claude/superpowers/skills/subagent-driven-devel
 TASK_BRIEF="$CODEX_SCRIPTS/task-brief"
 REVIEW_PACKAGE="$CODEX_SCRIPTS/review-package"
 SDD_WORKSPACE="$CODEX_SCRIPTS/sdd-workspace"
+CODEX_SDD_SKILL="$ROOT_DIR/assets/codex/superpowers/skills/subagent-driven-development/SKILL.md"
+CODEX_IMPLEMENTER_PROMPT="$ROOT_DIR/assets/codex/superpowers/skills/subagent-driven-development/implementer-prompt.md"
+CODEX_REVIEWER_PROMPT="$ROOT_DIR/assets/codex/superpowers/skills/subagent-driven-development/task-reviewer-prompt.md"
+CODEX_BRANCH_REVIEWER_PROMPT="$ROOT_DIR/assets/codex/superpowers/skills/requesting-code-review/code-reviewer.md"
 
 assert_contains() {
   local haystack="$1"
@@ -44,6 +48,12 @@ trap 'rm -rf "$tmp_dir"' EXIT
 for script_name in task-brief review-package sdd-workspace; do
   cmp "$CODEX_SCRIPTS/$script_name" "$CLAUDE_SCRIPTS/$script_name"
 done
+
+assert_contains "$(<"$CODEX_SDD_SKILL")" "does not expose model selection"
+assert_not_contains "$(<"$CODEX_SDD_SKILL")" "Always specify the model explicitly"
+assert_not_contains "$(<"$CODEX_IMPLEMENTER_PROMPT")" "model: [MODEL"
+assert_not_contains "$(<"$CODEX_REVIEWER_PROMPT")" "model: [MODEL"
+assert_not_contains "$(<"$CODEX_BRANCH_REVIEWER_PROMPT")" "model: [MODEL"
 
 repo_dir="$tmp_dir/repo"
 mkdir -p "$repo_dir"

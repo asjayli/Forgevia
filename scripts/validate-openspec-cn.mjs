@@ -53,13 +53,14 @@ function sectionRanges(lines, mainSpec) {
 }
 
 function findRequirementBody(lines, headerIndex, end) {
+  const body = [];
   for (let index = headerIndex + 1; index < end; index += 1) {
     const text = lines[index].trim();
-    if (SCENARIO_HEADER_PATTERN.test(text) || REQUIREMENT_HEADER_PATTERN.test(text)) return undefined;
+    if (SCENARIO_HEADER_PATTERN.test(text) || REQUIREMENT_HEADER_PATTERN.test(text)) break;
     if (!text || METADATA_PATTERN.test(text)) continue;
-    return { index, text };
+    body.push({ index, text });
   }
-  return undefined;
+  return body;
 }
 
 function findUnsupportedStructure(lines) {
@@ -87,17 +88,19 @@ function inspectSpec(root, filePath, mainSpec) {
     for (let index = start + 1; index < end; index += 1) {
       if (!REQUIREMENT_HEADER_PATTERN.test(lines[index])) continue;
       const body = findRequirementBody(lines, index, end);
-      if (!body) {
+      if (body.length === 0) {
         issues.push(`${relativePath}:${index + 1} Requirement 缺少需求正文`);
         continue;
       }
-      const hasEnglishModal = ENGLISH_MODAL_PATTERN.test(body.text);
-      const hasChineseModal = CHINESE_MODAL_PATTERN.test(body.text);
+      const englishModal = body.find(entry => ENGLISH_MODAL_PATTERN.test(entry.text));
+      const chineseModal = body.find(entry => CHINESE_MODAL_PATTERN.test(entry.text));
+      const hasEnglishModal = Boolean(englishModal);
+      const hasChineseModal = Boolean(chineseModal);
       if (!hasEnglishModal && !hasChineseModal) {
-        issues.push(`${relativePath}:${body.index + 1} Requirement 缺少强制词（SHALL、MUST、必须、不得、禁止或应当）`);
+        issues.push(`${relativePath}:${body[0].index + 1} Requirement 缺少强制词（SHALL、MUST、必须、不得、禁止或应当）`);
         continue;
       }
-      if (!hasEnglishModal && hasChineseModal) injections.push(body.index);
+      if (!hasEnglishModal && chineseModal) injections.push(chineseModal.index);
     }
   }
   return { issues, injections };
