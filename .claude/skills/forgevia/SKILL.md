@@ -32,6 +32,20 @@ If required pieces are missing, stop and tell the user which installation or doc
 
 Forgevia should behave like an explicit command router. The user is expected to name the Forgevia action they want.
 
+## Autonomous Execution Contract
+
+At entry, resolve an objective authorization envelope from the user's objective, named scope, repository rules, authorized effects, and terminal condition. Continue inside that envelope until the terminal condition is met, a real blocker requires new user input, or the user interrupts. Phase boundaries, progress reports, warnings, and ordinary recoverable failures are observations, not confirmation gates.
+
+Use an independent review agent different from the agent that produced the candidate. On Claude Code, dispatch that reviewer with `Task`. Give it the objective authorization envelope, relevant OpenSpec artifacts, candidate action or diff, verification evidence, assumptions, and risk classification. Accept only these evidence-backed verdicts:
+
+- `APPROVE`: record the reviewed result and automatically continue to the next in-scope work unit.
+- `REVISE`: when the envelope authorizes fixes, diagnose, fix, re-run the matching verification, and request another independent review; standalone read-only review and verify-web commands return findings instead.
+- `ESCALATE`: combine the unresolved decisions, evidence, recommended default, option impacts, and reason automation cannot continue into one user request.
+
+Only ESCALATE pauses the workflow for user input. Escalation is limited to a critical ambiguity that cannot be reasonably inferred, a required scope expansion, a conflicting higher-priority rule, an unauthorized external or irreversible effect, unavailable review capability after its retry policy, or a repair loop that no longer makes verifiable progress.
+
+Command names fix the terminal condition and do not grant unrelated effects. A complete Forgevia delivery ends after proposal, implementation, relevant verification, and final review with the change still active; it does not authorize archive, push, merge, or release. Standalone think and propose do not authorize implementation. Implement may edit and test, update its OpenSpec task facts, and create local task checkpoints only when branch policy permits; it does not authorize spec sync or archive. Archive authorizes spec sync and the local archive move, but not push or release.
+
 ## Commands
 
 ### `Forgevia init`
@@ -82,6 +96,8 @@ Behavior:
 - explicitly invoke `superpowers:test-driven-development` during implementation rather than treating TDD as implicit
 - prefer `subagent-driven-development` or `executing-plans` based on the task structure
 - use `requesting-code-review` at dependency-ready checkpoints
+- diagnose and repair in-scope design issues, first test failures, and review findings before considering escalation
+- after each `APPROVE`, continue to the next dependency-ready task without a stage confirmation
 
 Do not guess the change from conversation context when this command is used.
 
@@ -95,7 +111,8 @@ Purpose:
 Behavior:
 - verify the named change exists and is not already archived
 - sync the change's delta specs into the main specs first
-- only then route to the archive flow
+- independently review the sync plan, sync result, and archive package
+- on `APPROVE`, route directly to the next sync or archive action without another confirmation
 - do not auto-select a change
 
 ### `Forgevia tasks`
@@ -116,8 +133,8 @@ Purpose:
 Behavior:
 - create or reuse `openspec/think/` for think artifacts
 - restate the requirement and current understanding first
-- wait for explicit user confirmation before moving into proposal or implementation
-- write the confirmed think result to a dated Markdown file under `openspec/think/`
+- independently review the restated understanding and boundaries
+- on `APPROVE`, write the reviewed think result to a dated Markdown file under `openspec/think/` without waiting for user confirmation
 - version repeated iterations of the same requirement with `-v2`, `-v3`, and so on
 - use the requirement input, related notes, and `.mmd` design flow as the exploration prompt when available
 
@@ -131,6 +148,7 @@ Behavior:
 - accept either direct user description or a specified file as requirement input
 - use an explicit user-provided change name when available
 - otherwise derive a kebab-case change name from the requirement source
+- independently review the planning artifacts and continue until the change is apply-ready
 
 ### `Forgevia review`
 
@@ -188,6 +206,8 @@ Use `requesting-code-review` at the intended checkpoints:
 
 Do not silently skip review because a change looks small.
 
+Treat review as an internal control signal: `APPROVE` advances, authorized `REVISE` enters the matching repair loop, and only `ESCALATE` requests a user decision. The main agent validates verdict identity, structure, authorization, and evidence itself; it does not recursively dispatch another reviewer to review the verdict.
+
 ### 4. Trigger Playwright only when relevant
 
 If the change affects web behavior, UI, interaction flow, or visual output, require `playwright-interactive` before final completion claims.
@@ -200,7 +220,7 @@ When implementation is complete:
 
 - ensure review checkpoints are satisfied
 - ensure verification has run
-- hand off to archive flow when the user wants to close the change
+- stop with the change active unless the user separately authorized archive
 
 ### 6. Respect project ownership boundaries
 

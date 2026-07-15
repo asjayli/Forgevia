@@ -20,5 +20,8 @@ Use this skill when the user explicitly wants Forgevia to produce a new OpenSpec
 - Otherwise derive an appropriate kebab-case change name from the requirement source.
 - Treat the provided file as requirement input, not as implementation output.
 - Stop and clarify if the file does not exist or the requirement source is too incomplete to produce a meaningful change.
+- Independently review the proposal/design/specs package and the tasks package. Require `APPROVE`, `REVISE`, or `ESCALATE`; automatically repair an authorized `REVISE`, revalidate, and review again.
+- Continue through all apply-ready planning artifacts after `APPROVE`; only `ESCALATE` may request a critical decision that cannot be inferred.
+- Proposal completion does not authorize implementation, commit, sync, archive, push, merge, or release.
 - When writing Chinese requirements, use one of `必须、不得、禁止、应当` in the requirement body. Keep OpenSpec structure keywords in English, including `## Requirements` and `### Requirement:`.
 - After creating the change artifacts, run `"${CLAUDE_HOME:-$HOME/.claude}/forgevia/bin/forgevia" validate --root <project-root>`. Do not report the proposal as strictly valid if this command fails.

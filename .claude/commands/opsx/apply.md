@@ -69,22 +69,22 @@ Implement tasks from an OpenSpec change.
    - Show which task is being worked on
    - Make the code changes required
    - Keep changes minimal and focused
-   - Mark task complete in the tasks file: `- [ ]` → `- [x]`
-   - Continue to next task
+   - Run the task's targeted verification
+   - Use `Task` to dispatch an independent review agent different from the candidate producer. Give it the objective and authorized scope, relevant artifacts, diff, verification evidence, assumptions, and risks.
+   - Require one evidence-backed verdict: `APPROVE`, `REVISE`, or `ESCALATE`.
+   - On `APPROVE`, mark the task complete in the tasks file (`- [ ]` → `- [x]`) and continue to the next task.
+   - On `REVISE`, diagnose, fix, run targeted verification, and dispatch a fresh independent review. A design issue or first test failure starts this repair loop; it is not a user confirmation gate.
+   - On `ESCALATE`, combine the blocking evidence, recommended default, option impacts, and reason the workflow cannot continue into one user decision request.
 
-   **Pause if:**
-   - Task is unclear → ask for clarification
-   - Implementation reveals a design issue → suggest updating artifacts
-   - Error or blocker encountered → report and wait for guidance
-   - User interrupts
+   Only `ESCALATE` pauses for user input. Use it only for a critical ambiguity that cannot be reasonably inferred, a required scope or authorization expansion, a conflicting rule, an unavailable required capability, or a repair loop with no verifiable progress. The user may also interrupt explicitly.
 
-7. **On completion or pause, show status**
+7. **On completion or escalation, show status**
 
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
    - If all done: suggest archive
-   - If paused: explain why and wait for guidance
+   - If escalated: report the consolidated decision request and its evidence
 
 **Output During Implementation**
 
@@ -117,34 +117,34 @@ Working on task 4/7: <task description>
 All tasks complete! You can archive this change with `/opsx:archive`.
 ```
 
-**Output On Pause (Issue Encountered)**
+**Output On Escalation (User Decision Required)**
 
 ```
-## Implementation Paused
+## Implementation Escalated
 
 **Change:** <change-name>
 **Schema:** <schema-name>
 **Progress:** 4/7 tasks complete
 
-### Issue Encountered
-<description of the issue>
+### Blocking Decision
+<evidence, unresolved decision, and why it cannot be inferred>
 
 **Options:**
-1. <option 1>
+1. <recommended default and impact>
 2. <option 2>
-3. Other approach
 
-What would you like to do?
+No further in-scope action can proceed without this decision.
 ```
 
 **Guardrails**
 - Keep going through tasks until done or blocked
 - Always read context files before starting (from the apply instructions output)
-- If task is ambiguous, pause and ask before implementing
-- If implementation reveals issues, pause and suggest artifact updates
+- Infer ordinary implementation details from the objective, artifacts, and repository evidence; escalate only a consequential ambiguity with multiple materially different outcomes
+- If implementation reveals issues, update authorized artifacts or code, then re-run the matching verification and independent review
 - Keep code changes minimal and scoped to each task
-- Update task checkbox immediately after completing each task
-- Pause on errors, blockers, or unclear requirements - don't guess
+- Update a task checkbox only after targeted verification and an independent `APPROVE`
+- Diagnose the first test failure and other recoverable errors before escalation
+- Only `ESCALATE` pauses for user input
 - Use contextFiles from CLI output, don't assume specific file names
 
 **Fluid Workflow Integration**
