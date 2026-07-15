@@ -84,6 +84,8 @@ for path in "${EXECUTING_PLAN_SKILLS[@]}"; do
   assert_contains "$contents" '`REVISE` triggers repair only inside the active authorization envelope'
   assert_contains "$contents" 'three consecutive repair cycles'
   assert_contains "$contents" '`tasks.md`, Git history, and `.superpowers/sdd/progress.md`'
+  assert_contains "$contents" 'use the unchanged review package with a fresh independent reviewer for at most two infrastructure retries'
+  assert_contains "$contents" 'If both retries fail, `ESCALATE` once with the collected infrastructure evidence; never infer `APPROVE`.'
   assert_not_contains "$contents" 'Ready for feedback.'
   assert_not_contains "$contents" 'Between dependency checkpoints: just report and wait'
   assert_not_contains "$contents" 'Verification fails repeatedly'
@@ -97,7 +99,11 @@ for path in "${SDD_SKILLS[@]}"; do
   assert_contains "$contents" 'three consecutive repair cycles'
   assert_contains "$contents" 'at most two infrastructure retries'
   assert_contains "$contents" '`tasks.md`, Git history, and `.superpowers/sdd/progress.md`'
+  assert_contains "$contents" 'Pass an explicit objective authorization envelope containing objective, scope, constraints, authorized effects, and terminal condition to every task and final reviewer.'
+  assert_contains "$contents" 'Treat each ledger completion line as evidence, not an unconditional DONE state.'
+  assert_contains "$contents" 'If tasks, Git, and progress disagree, inspect the actual diff and verification evidence before deciding whether to continue, repair bookkeeping, or `ESCALATE`.'
   assert_not_contains "$contents" 'Dispatch fix subagents for Critical and Important findings.'
+  assert_not_contains "$contents" 'Tasks listed there as complete are DONE'
 done
 
 for path in "${IMPLEMENTER_PROMPTS[@]}"; do
@@ -114,6 +120,12 @@ for path in "${REVIEWER_PROMPTS[@]}"; do
   assert_contains "$contents" '**Verdict:** [APPROVE | REVISE | ESCALATE]'
   assert_contains "$contents" '`REVISE` for actionable findings'
   assert_contains "$contents" '`ESCALATE` only for a genuine plan conflict or missing authorization'
+  assert_contains "$contents" '## Objective Authorization Envelope'
+  assert_contains "$contents" '**Objective:** [OBJECTIVE]'
+  assert_contains "$contents" '**Scope:** [SCOPE]'
+  assert_contains "$contents" '**Constraints:** [CONSTRAINTS]'
+  assert_contains "$contents" '**Authorized effects:** [AUTHORIZED_EFFECTS]'
+  assert_contains "$contents" '**Terminal condition:** [TERMINAL_CONDITION]'
   assert_not_contains "$contents" 'confirm whether the deviation was intentional'
 done
 

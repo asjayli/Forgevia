@@ -48,6 +48,8 @@ After each task group, obtain an independent structured verdict and validate its
 - `REVISE` triggers repair only inside the active authorization envelope, followed by targeted verification and independent re-review. Without repair authorization, return the findings without editing or converting them into a confirmation request.
 - `ESCALATE` pauses for user input only when the evidence identifies a genuine plan conflict, missing authorization, or an unrecoverable engineering blocker.
 
+If a reviewer fails to start, times out, crashes, or returns an invalid verdict, use the unchanged review package with a fresh independent reviewer for at most two infrastructure retries. If both retries fail, `ESCALATE` once with the collected infrastructure evidence; never infer `APPROVE`.
+
 Do not escalate an ordinary error or the first failing check. Diagnose it, repair it within scope, run targeted verification, and continue. Escalate a repair loop only after the same substantive issue has made no verified progress for three consecutive repair cycles; progress means fewer important findings, fewer failing checks, or an unblocked dependency.
 
 ### Step 4: Report and Continue

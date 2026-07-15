@@ -23,6 +23,17 @@ Subagent (general-purpose):
 
     [PLAN_OR_REQUIREMENTS]
 
+    ## Objective Authorization Envelope
+
+    **Objective:** [OBJECTIVE]
+    **Scope:** [SCOPE]
+    **Constraints:** [CONSTRAINTS]
+    **Authorized effects:** [AUTHORIZED_EFFECTS]
+    **Terminal condition:** [TERMINAL_CONDITION]
+
+    Use this envelope to classify findings and whether repair is authorized.
+    The reviewer remains read-only and must not perform any authorized effect.
+
     ## Git Range to Review
 
     **Base:** [BASE_SHA]
@@ -137,6 +148,11 @@ Subagent (general-purpose):
 **Placeholders:**
 - `[DESCRIPTION]` — brief summary of what was built
 - `[PLAN_OR_REQUIREMENTS]` — what it should do (plan file path, task text, or requirements)
+- `[OBJECTIVE]` — the outcome authorized by the user's instruction
+- `[SCOPE]` — repositories, changes, files, and systems inside the objective
+- `[CONSTRAINTS]` — binding process, architecture, safety, and platform limits
+- `[AUTHORIZED_EFFECTS]` — allowed writes and side effects for the controller
+- `[TERMINAL_CONDITION]` — the authorized end state at which execution stops
 - `[BASE_SHA]` — starting commit
 - `[HEAD_SHA]` — ending commit
 

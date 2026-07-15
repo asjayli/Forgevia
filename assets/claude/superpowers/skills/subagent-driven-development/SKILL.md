@@ -203,6 +203,7 @@ final whole-branch review. When you fill a reviewer template:
   Y"). The reviewer's template already carries the process rules (YAGNI,
   test hygiene, review method) — the constraints block is for what THIS
   project's spec demands.
+- Pass an explicit objective authorization envelope containing objective, scope, constraints, authorized effects, and terminal condition to every task and final reviewer.
 - Hand the reviewer its diff as a file: run this skill's
   `scripts/review-package BASE HEAD` and pass the reviewer the file path
   it prints (or, without bash: `git log --oneline`, `git diff --stat`,
@@ -230,8 +231,9 @@ final whole-branch review. When you fill a reviewer template:
 - The final whole-branch review gets a package too: run
   `scripts/review-package MERGE_BASE HEAD` (MERGE_BASE = the commit the
   branch started from, e.g. `git merge-base main HEAD`) and include the
-  printed path in the final review dispatch, so the final reviewer reads
-  one file instead of re-deriving the branch diff with git commands.
+  printed path and the objective authorization envelope in the final review
+  dispatch, so the final reviewer reads one file instead of re-deriving the
+  branch diff with git commands and can classify repair authorization.
 - Every fix dispatch carries the implementer contract: the fix subagent
   re-runs the tests covering its change and reports the results. Name the
   covering test files in the dispatch — a one-line fix does not need the
@@ -266,8 +268,8 @@ and is re-read on every later turn. Hand artifacts over as files:
   the dispatch prompt. The implementer writes the full report there and
   returns only status, commits, a one-line test summary, and concerns.
 - **Reviewer inputs:** the task reviewer gets three paths — the same brief
-  file, the report file, and the review package — plus the global
-  constraints that bind the task.
+  file, the report file, and the review package — plus the global constraints
+  and the objective authorization envelope fields that bind the task.
 - Fix dispatches append their fix report (with test results) to the same
   report file and return a short summary; re-reviews read the updated file.
 
@@ -282,15 +284,20 @@ a ledger file, not only in todos.
   `tasks.md`, Git history, and `.superpowers/sdd/progress.md`. Check for the
   ledger in the SDD workspace (the directory
   `scripts/sdd-workspace` resolves): `cat "$(git rev-parse --show-toplevel)/.superpowers/sdd/progress.md" 2>/dev/null`.
-  An empty result means no ledger yet — start fresh. Tasks listed there
-  as complete are DONE — do not re-dispatch them; resume at the first task
-  not marked complete.
+  An empty result means no ledger yet — start fresh. Treat each ledger completion line as evidence, not an unconditional DONE state. A task is
+  complete only when the tasks checklist, named Git commits/diff, and
+  review/verification evidence corroborate it; resume at the first task whose
+  completion cannot be established from those facts.
+- If tasks, Git, and progress disagree, inspect the actual diff and verification evidence before deciding whether to continue, repair bookkeeping, or `ESCALATE`.
+  Repair bookkeeping only to reflect a completion state proven by repository
+  evidence. Escalate when an external or irreversible side effect cannot be
+  determined safely; never guess or replay it blindly.
 - When a task's review comes back clean, append one line to the ledger in
   the same message as your other bookkeeping:
   `Task N: complete (commits <base7>..<head7>, review clean)`.
-- The ledger is your recovery map: the commits it names exist in git even
-  when your context no longer remembers creating them. After compaction,
-  trust the ledger and `git log` over your own recollection.
+- The ledger is one recovery map: verify that its named commits exist and
+  match the task diff and review evidence after compaction. Do not prefer it
+  over conflicting tasks or Git facts.
 - `git clean -fdx` will destroy the ledger (it's git-ignored scratch); if
   that happens, recover from `git log`.
 
