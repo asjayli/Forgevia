@@ -37,12 +37,7 @@ Subagent (general-purpose):
     **Head:** [HEAD_SHA]
     **Review package:** [DIFF_FILE]
 
-    A supplied package is the authoritative change view and may represent either `BASE..HEAD` or `BASE..WORKTREE`. When a package is supplied, read it once instead of re-deriving the diff with Git. If no package is supplied, inspect the commit range directly:
-
-    ```bash
-    git diff --stat [BASE_SHA]..[HEAD_SHA]
-    git diff [BASE_SHA]..[HEAD_SHA]
-    ```
+    A supplied package is the authoritative change view and may represent either `BASE..HEAD` or `BASE..WORKTREE`. When a package is supplied, read it once instead of re-deriving the diff with Git. If the review package is missing or unreadable, stop without issuing a verdict and return `REVIEW_PACKAGE_UNAVAILABLE: [DIFF_FILE]`. Do not reconstruct a missing WORKTREE package from BASE..HEAD. The controller must regenerate the package from the same baseline and apply the bounded infrastructure retry policy.
 
     ## Read-Only Review
 
@@ -96,6 +91,7 @@ Subagent (general-purpose):
     - `ESCALATE` only when missing authorization or critical information is required to reach the already-authorized terminal condition. A plan conflict qualifies only when it makes that terminal condition indeterminate.
 
     A standalone read-only envelope returns `REVISE` findings without escalating merely because repair is unauthorized. Ordinary code or test defects are `REVISE`, not requests for user confirmation.
+    The only non-verdict output is `REVIEW_PACKAGE_UNAVAILABLE` for this infrastructure failure.
 
     ## Output Format
 

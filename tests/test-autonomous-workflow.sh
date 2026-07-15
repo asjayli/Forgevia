@@ -166,6 +166,16 @@ for skill_name in forgevia-review forgevia-verify-web; do
   done
 done
 
+for path in \
+  "$ROOT_DIR/assets/codex/skills/forgevia-review/SKILL.md" \
+  "$ROOT_DIR/.claude/skills/forgevia-review/SKILL.md"
+do
+  assert_file_contains "$path" 'Generate the review package before routing to `requesting-code-review`.'
+  assert_file_contains "$path" '`review-package BASE HEAD`'
+  assert_file_contains "$path" '`review-package BASE WORKTREE`'
+  assert_file_contains "$path" 'Pass the printed path as `DIFF_FILE`.'
+done
+
 assert_file_contains "$ROOT_DIR/assets/codex/skills/forgevia/SKILL.md" '`spawn_agent`'
 assert_file_contains "$ROOT_DIR/.claude/skills/forgevia/SKILL.md" '`Task`'
 

@@ -166,7 +166,11 @@ that implementer. Single-file mechanical fixes also take the cheapest tier.
 
 Implementer subagents report one of four statuses. Handle each appropriately:
 
-**DONE:** Generate the review package from this skill's directory, then dispatch the task reviewer with the printed path. If the task created authorized commits, run `scripts/review-package BASE HEAD`. If commit authorization or branch policy kept the task uncommitted, run `scripts/review-package BASE WORKTREE`; that mode includes committed, staged, unstaged, and untracked task changes in a unique package. BASE is the commit recorded before dispatch — never `HEAD~1`, which silently drops earlier task changes.
+Before the initial implementer dispatch for each task, record a task-specific review baseline. Run `scripts/review-package --snapshot`, record its output as TASK_TREE and the current commit as BASE, then write `Task N: in_progress (base <base>, tree <task-tree>)` to the progress ledger. Keep the same BASE and TASK_TREE throughout that task's repair and re-review cycles. Capture the next task snapshot only after the previous task reaches `APPROVE`. Never reuse a commit SHA or an earlier task snapshot as the baseline for a later uncommitted task.
+
+**DONE:** Generate the review package, then dispatch the task reviewer. Use BASE..HEAD only when the candidate is fully committed; if any task change remains outside HEAD, use TASK_TREE..WORKTREE. Run `scripts/review-package BASE HEAD` for the first case and `scripts/review-package TASK_TREE WORKTREE` for the second. The snapshot mode includes staged, unstaged, and untracked task changes without including earlier uncommitted tasks.
+
+Verify that the review package exists and is readable before dispatch. If it is absent, regenerate it from the same BASE or TASK_TREE baseline; a regeneration failure enters the bounded review-infrastructure retry path and never falls back to an inferred commit diff.
 
 **DONE_WITH_CONCERNS:** The implementer completed the work but flagged doubts. Read the concerns before proceeding. If the concerns are about correctness or scope, address them before review. If they're observations (e.g., "this file is getting large"), note them and proceed to review.
 
@@ -215,11 +219,9 @@ final whole-branch review. When you fill a reviewer template:
 - Pass the five authorization-envelope fields to every implementer and fix dispatch, not only to reviewers.
 - Hand the reviewer its diff as a file: run this skill's
   `scripts/review-package BASE HEAD` for committed work or
-  `scripts/review-package BASE WORKTREE` when commits were not authorized,
-  then pass the reviewer the file path
-  it prints (or, without bash: `git log --oneline`, `git diff --stat`,
-  and `git diff -U10` for the range, redirected to one uniquely named
-  file). The output never enters your own context, and the reviewer sees
+  `scripts/review-package TASK_TREE WORKTREE` when commits were not authorized,
+  then pass the reviewer the file path it prints. The output never enters
+  your own context, and the reviewer sees
   the commit list, stat summary, and full diff with context in one Read
   call. Use the BASE you recorded before dispatching the implementer —
   never `HEAD~1`, which silently truncates multi-commit tasks.
@@ -442,7 +444,7 @@ Done!
   dispatch prompt ("treat it as Minor at most") — the plan's example code is
   a starting point, not evidence that its weaknesses were chosen
 - Dispatch a task reviewer without a diff file — generate it first
-  (`scripts/review-package BASE HEAD` or `BASE WORKTREE`) and name the printed path in the
+  (`scripts/review-package BASE HEAD` or `TASK_TREE WORKTREE`) and name the printed path in the
   prompt
 - Move to next task while the review has open Critical/Important issues
 - Re-dispatch a task the progress ledger already marks complete — check

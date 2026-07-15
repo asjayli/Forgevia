@@ -4,82 +4,120 @@
 # call. Using the recorded per-task BASE (not HEAD~1) keeps multi-commit
 # tasks intact.
 #
-# Usage: review-package BASE HEAD|WORKTREE [OUTFILE]
+# Usage: review-package --snapshot
+#        review-package BASE HEAD|WORKTREE [OUTFILE]
 # Default OUTFILE: <repo-root>/.superpowers/sdd/review-<base7>..<head7>.diff
-# WORKTREE packages use a unique generated suffix and include committed,
-# staged, unstaged, and untracked task changes.
+# WORKTREE packages compare a task-start tree snapshot with a fresh tree
+# snapshot, isolating consecutive uncommitted tasks without touching the real
+# index or worktree.
 set -euo pipefail
 
+repo_root=$(git rev-parse --show-toplevel)
+script_dir=$(cd "$(dirname "$0")" && pwd)
+workspace=$("$script_dir/sdd-workspace")
+
+snapshot_tree() (
+  exclude=${1:-}
+  index=$(mktemp "$workspace/review-index.XXXXXX")
+  trap 'rm -f "$index"' EXIT
+  rm -f "$index"
+
+  GIT_INDEX_FILE="$index" git -C "$repo_root" read-tree HEAD
+  GIT_INDEX_FILE="$index" git -C "$repo_root" add -A
+  if [ -n "$exclude" ]; then
+    GIT_INDEX_FILE="$index" git -C "$repo_root" rm --cached -q --ignore-unmatch -- "$exclude"
+  fi
+  GIT_INDEX_FILE="$index" git -C "$repo_root" write-tree
+)
+
+if [ $# -eq 1 ] && [ "$1" = "--snapshot" ]; then
+  snapshot_tree
+  exit 0
+fi
+
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
-  echo "usage: review-package BASE HEAD|WORKTREE [OUTFILE]" >&2
+  echo "usage: review-package --snapshot | BASE HEAD|WORKTREE [OUTFILE]" >&2
   exit 2
 fi
 
 base=$1
 head=$2
 
-git rev-parse --verify --quiet "$base" >/dev/null || { echo "bad BASE: $base" >&2; exit 2; }
+git -C "$repo_root" cat-file -e "${base}^{tree}" 2>/dev/null || { echo "bad BASE tree: $base" >&2; exit 2; }
 if [ "$head" != "WORKTREE" ]; then
-  git rev-parse --verify --quiet "$head" >/dev/null || { echo "bad HEAD: $head" >&2; exit 2; }
+  git -C "$repo_root" cat-file -e "${base}^{commit}" 2>/dev/null || { echo "BASE is not a commit: $base" >&2; exit 2; }
+  git -C "$repo_root" cat-file -e "${head}^{commit}" 2>/dev/null || { echo "bad HEAD commit: $head" >&2; exit 2; }
 fi
 
-repo_root=$(git rev-parse --show-toplevel)
 if [ $# -eq 3 ]; then
   case $3 in
     /*) out=$3 ;;
     *) out="$(pwd)/$3" ;;
   esac
 else
-  dir=$("$(cd "$(dirname "$0")" && pwd)/sdd-workspace")
   if [ "$head" = "WORKTREE" ]; then
-    out=$(mktemp "$dir/review-$(git rev-parse --short "$base")..worktree.XXXXXX")
+    out=$(mktemp "$workspace/review-$(git -C "$repo_root" rev-parse --short "$base")..worktree.XXXXXX")
   else
-    out="$dir/review-$(git rev-parse --short "$base")..$(git rev-parse --short "$head").diff"
+    out="$workspace/review-$(git -C "$repo_root" rev-parse --short "$base")..$(git -C "$repo_root" rev-parse --short "$head").diff"
   fi
 fi
 
-cd "$repo_root"
+out_dir=$(dirname "$out")
+[ -d "$out_dir" ] || { echo "missing OUTFILE directory: $out_dir" >&2; exit 2; }
+[ ! -L "$out" ] || { echo "OUTFILE must not be a symlink: $out" >&2; exit 2; }
+out=$(cd "$out_dir" && pwd -P)/$(basename "$out")
+
+exclude=
+case $out in
+  "$repo_root"/*)
+    exclude=${out#"$repo_root"/}
+    if git -C "$repo_root" ls-files --error-unmatch -- "$exclude" >/dev/null 2>&1; then
+      echo "OUTFILE must not overwrite a tracked file: $exclude" >&2
+      exit 2
+    fi
+    ;;
+esac
 
 if [ "$head" = "WORKTREE" ]; then
+  current_tree=$(snapshot_tree "$exclude")
+  diff_pathspec=()
+  if [ -n "$exclude" ]; then
+    diff_pathspec=(-- . ":(top,exclude,literal)$exclude")
+  fi
   {
     echo "# Review package: ${base}..WORKTREE"
     echo
     echo "## Commits"
-    git log --oneline "${base}..HEAD"
+    if git -C "$repo_root" cat-file -e "${base}^{commit}" 2>/dev/null; then
+      git -C "$repo_root" log --oneline "${base}..HEAD"
+    else
+      echo "Task baseline is worktree tree ${base}"
+    fi
     echo
     echo "## Files changed"
-    git diff --stat "$base"
-    git ls-files --others --exclude-standard | sed 's/$/ (untracked)/'
+    git -C "$repo_root" diff --stat "$base" "$current_tree" "${diff_pathspec[@]}"
     echo
     echo "## Diff"
-    git diff -U10 "$base"
-    while IFS= read -r -d '' file; do
-      echo
-      git diff --no-index -U10 -- /dev/null "$file" || {
-        status=$?
-        [ "$status" -eq 1 ] || exit "$status"
-      }
-    done < <(git ls-files --others --exclude-standard -z)
+    git -C "$repo_root" diff -U10 "$base" "$current_tree" "${diff_pathspec[@]}"
   } > "$out"
 else
   {
     echo "# Review package: ${base}..${head}"
     echo
     echo "## Commits"
-    git log --oneline "${base}..${head}"
+    git -C "$repo_root" log --oneline "${base}..${head}"
     echo
     echo "## Files changed"
-    git diff --stat "${base}..${head}"
+    git -C "$repo_root" diff --stat "${base}..${head}"
     echo
     echo "## Diff"
-    git diff -U10 "${base}..${head}"
+    git -C "$repo_root" diff -U10 "${base}..${head}"
   } > "$out"
 fi
 
 if [ "$head" = "WORKTREE" ]; then
-  commits=$(git rev-list --count "${base}..HEAD")
-  echo "wrote ${out}: ${commits} commit(s) + worktree, $(wc -c < "$out" | tr -d ' ') bytes"
+  echo "wrote ${out}: worktree snapshot diff, $(wc -c < "$out" | tr -d ' ') bytes"
 else
-  commits=$(git rev-list --count "${base}..${head}")
+  commits=$(git -C "$repo_root" rev-list --count "${base}..${head}")
   echo "wrote ${out}: ${commits} commit(s), $(wc -c < "$out" | tr -d ' ') bytes"
 fi

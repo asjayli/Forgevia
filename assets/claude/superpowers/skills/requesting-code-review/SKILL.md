@@ -23,25 +23,32 @@ Dispatch a code reviewer subagent to catch issues before they cascade. The revie
 
 ## How to Request
 
-**1. Get git SHAs:**
-```bash
-BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
-HEAD_SHA=$(git rev-parse HEAD)
-```
+**1. Resolve the review range:**
 
-Use explicit commit IDs whenever possible. Avoid vague review scopes like "latest changes" if a precise commit range is available.
+Set BASE to the recorded start of the complete candidate range, such as the task baseline or branch merge base, and set HEAD to the current commit. Never substitute `HEAD~1` for a known multi-commit baseline.
 
-**2. Dispatch code reviewer subagent:**
+**2. Generate the authoritative review package:**
+
+- If the candidate has no staged, unstaged, or untracked changes, run `review-package BASE HEAD`.
+- If the candidate contains staged, unstaged, or untracked changes, run `review-package BASE WORKTREE` so the package includes the current working tree.
+- Pass the printed path as `[DIFF_FILE]`. Do not dispatch a reviewer unless the package exists and is readable.
+- If package generation fails or the file disappears, regenerate it from the same BASE. Treat repeated failure as review infrastructure failure; never fall back to an empty commit range or infer `APPROVE`.
+
+Use the `review-package` script from the sibling `subagent-driven-development/scripts/` directory. Explicit baselines and generated packages replace vague scopes such as "latest changes."
+
+**3. Dispatch code reviewer subagent:**
 
 Dispatch a `general-purpose` subagent, filling the template at [code-reviewer.md](code-reviewer.md)
 
 **Placeholders:**
 - `[DESCRIPTION]` - Brief summary of what you built
 - `[PLAN_OR_REQUIREMENTS]` - What it should do
+- `[OBJECTIVE]`, `[SCOPE]`, `[CONSTRAINTS]`, `[AUTHORIZED_EFFECTS]`, `[TERMINAL_CONDITION]` - Objective authorization envelope
 - `[BASE_SHA]` - Starting commit
 - `[HEAD_SHA]` - Ending commit
+- `[DIFF_FILE]` - Printed commit or WORKTREE review-package path
 
-**3. Act on feedback:**
+**4. Act on feedback:**
 - Fix Critical issues immediately
 - Fix Important issues before proceeding
 - Note Minor issues for later
@@ -56,12 +63,14 @@ You: Let me request code review before proceeding.
 
 BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
 HEAD_SHA=$(git rev-parse HEAD)
+DIFF_FILE=$(subagent-driven-development/scripts/review-package "$BASE_SHA" "$HEAD_SHA" | sed -n 's/^wrote \([^:]*\):.*/\1/p')
 
 [Dispatch code reviewer subagent]
   DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
   PLAN_OR_REQUIREMENTS: Task 2 from openspec/changes/<change-name>/tasks.md
   BASE_SHA: a7981ec
   HEAD_SHA: 3df7661
+  DIFF_FILE: /project/.superpowers/sdd/review-a7981ec..3df7661.diff
 
 [Subagent returns]:
   Strengths: Clean architecture, real tests
@@ -95,6 +104,7 @@ You: [Fix verifyIndex to report corrupted entries]
 - Skip review because "it's simple"
 - Ignore Critical issues
 - Proceed with unfixed Important issues
+- Dispatch a reviewer without a readable commit or WORKTREE review package
 - Argue with valid technical feedback
 
 **If reviewer wrong:**
