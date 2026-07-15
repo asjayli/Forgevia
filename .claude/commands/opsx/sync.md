@@ -13,7 +13,9 @@ This is an **agent-driven** operation - you will read delta specs and directly e
 
 **Input**: Optionally specify a change name after `/opsx:sync` (e.g., `/opsx:sync add-auth`). Auto-select if only one active change exists. When multiple active changes remain equally plausible after checking conversation and repository evidence, present those candidates for one substantive selection.
 
-**Review protocol:** A sync request authorizes updates to the named change's corresponding main specs, but not archive, commit, push, or release. Use `Task` for an independent review agent different from the sync result producer. Provide the objective and authorized scope, change identity, delta and main specs, proposed merge or diff, validation evidence, preservation checks, assumptions, and risks. Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE`. On `APPROVE`, continue automatically to the completion summary and leave the change active. On `REVISE`, repair only the sync plan or result, revalidate it, and request another independent review. Only `ESCALATE` pauses for user input, and only for an equally plausible change selection, an unresolved content-preservation risk, missing authorization, a conflicting rule, or an unavailable required capability.
+**Review protocol:** A sync request authorizes updates to the named change's corresponding main specs, but not archive, commit, push, or release. Use `Task` for an independent review agent different from the plan or sync-result producer. Provide the objective and authorized scope, change identity, delta and main specs, proposed plan or diff, validation evidence, preservation checks, assumptions, and risks. Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE`. A plan `APPROVE` authorizes applying that reviewed plan; a result `APPROVE` continues to the completion summary and leaves the change active. A `REVISE` repairs and revalidates only the current sync plan or result before a fresh review. Only `ESCALATE` pauses for user input, and only for an equally plausible change selection, an unresolved content-preservation risk, missing authorization, a conflicting rule, or an unavailable required capability.
+
+For either review, if the independent review agent fails to start, times out, crashes, or returns an invalid verdict, reuse the same review package and dispatch a new independent review agent, with at most two new independent review agents. If both retries fail, return `ESCALATE` with the collected infrastructure evidence; never infer `APPROVE`.
 
 **Steps**
 
@@ -46,9 +48,20 @@ This is an **agent-driven** operation - you will read delta specs and directly e
 
    If no delta specs found, inform user and stop.
 
-4. **For each delta spec, apply changes to main specs**
+4. **Build, validate, and review the sync plan**
 
-   For each capability delta spec path returned by the CLI:
+   Review the sync plan before editing main specs. Do not modify a main spec during this step.
+
+   - Read every delta spec and corresponding main spec, then record the delta-to-target mapping, content preservation, applicability, and idempotency preconditions for each planned operation.
+   - Validate that every delta operation resolves to one target, preserves content outside its intent, can be applied to the current main spec, and is expected to be idempotent.
+   - After validation passes, dispatch an independent review with the plan and its validation evidence.
+   - If sync-plan validation fails or the plan review returns `REVISE`, repair the sync plan, rerun the same validation, and dispatch a fresh independent review. Use `ESCALATE` only at the substantive boundaries in the review protocol.
+
+5. **Apply the approved sync plan to main specs**
+
+   Apply changes only after the sync-plan review returns `APPROVE`.
+
+   For each capability delta spec path in the approved plan:
 
    a. **Read the delta spec** to understand the intended changes
 
@@ -79,13 +92,14 @@ This is an **agent-driven** operation - you will read delta specs and directly e
       - Add Purpose section (can be brief, mark as TBD)
       - Add Requirements section with the ADDED requirements
 
-5. **Validate and independently review the sync result**
+6. **Validate, repair, and independently review the sync result**
 
-   - Run the repository's strict spec validation and verify the merge is idempotent and preserves main-spec content not changed by the delta.
-   - Dispatch the independent review with the sync diff and validation evidence.
-   - On `APPROVE`, continue to the summary. On `REVISE`, repair the sync result, rerun the same validation, and dispatch a fresh independent review. Only `ESCALATE` pauses for user input.
+   - Run the repository's strict spec validation and verify the applied merge is idempotent and preserves main-spec content not changed by the delta.
+   - If strict validation, idempotency, or content-preservation verification fails, repair the sync result, rerun the same failed validation, and only then dispatch the result review.
+   - After all result validation passes, dispatch the independent review with the sync diff and validation evidence.
+   - On `APPROVE`, continue to the summary. On `REVISE`, repair the sync result, rerun all result validation, and dispatch a fresh independent review. Only `ESCALATE` pauses for user input.
 
-6. **Show summary**
+7. **Show summary**
 
    After applying all changes, summarize:
    - Which capabilities were updated
