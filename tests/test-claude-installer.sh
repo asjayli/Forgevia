@@ -40,6 +40,17 @@ test_path_not_exists() {
   fi
 }
 
+assert_paths_equal() {
+  local expected="$1"
+  local actual="$2"
+
+  if ! diff -qr "$expected" "$actual" >/dev/null; then
+    echo "expected installed source mirror to match: $expected $actual" >&2
+    diff -qr "$expected" "$actual" >&2 || true
+    exit 1
+  fi
+}
+
 test_file_exists "$MANIFEST"
 test_file_exists "$INSTALLER"
 test_file_exists "$DOCTOR"
@@ -111,6 +122,10 @@ assert_contains "$installer_output" "✅ Detected Claude superpowers plugin at $
 assert_contains "$installer_output" "✅ Applied Forgevia-managed Claude superpowers overrides"
 assert_contains "$installer_output" "💾 Backed up"
 assert_contains "$installer_output" "🎉 Forgevia Claude install complete"
+
+for mirror_path in .claude assets scripts manifests; do
+  assert_paths_equal "$ROOT_DIR/$mirror_path" "$CLAUDE_HOME/forgevia/$mirror_path"
+done
 
 test_path_not_exists "$CLAUDE_HOME/skills/forgevia-think.forgevia.bak"
 test_path_not_exists "$superpowers_root/skills/brainstorming/SKILL.md.forgevia.bak"

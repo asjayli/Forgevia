@@ -70,7 +70,7 @@ Current behavior of the Claude Forgevia layer:
 
 - keeps the same Forgevia command surface as Codex
 - routes proposal, implementation, review, verification, drawing, and archive requests through the same Forgevia skill boundaries
-- keeps `forgevia-think` on the same artifact, confirmation, and versioning rules
+- keeps `forgevia-think` on the same artifact, independent-review, and versioning rules
 - installs the support skills those Forgevia commands depend on
 
 Current behavior of the Claude superpowers overrides:

@@ -40,6 +40,17 @@ test_path_not_exists() {
   fi
 }
 
+assert_paths_equal() {
+  local expected="$1"
+  local actual="$2"
+
+  if ! diff -qr "$expected" "$actual" >/dev/null; then
+    echo "expected installed source mirror to match: $expected $actual" >&2
+    diff -qr "$expected" "$actual" >&2 || true
+    exit 1
+  fi
+}
+
 assert_exit_code() {
   local actual="$1"
   local expected="$2"
@@ -94,6 +105,10 @@ assert_contains "$installer_output" "✅ Applied openspec override"
 assert_contains "$installer_output" "✅ Applied Forgevia-managed Codex assets"
 assert_contains "$installer_output" "💾 Backed up"
 assert_contains "$installer_output" "🎉 Forgevia Codex install complete"
+
+for mirror_path in .claude assets scripts manifests; do
+  assert_paths_equal "$ROOT_DIR/$mirror_path" "$CODEX_HOME/forgevia/$mirror_path"
+done
 
 test_path_not_exists "$CODEX_HOME/superpowers/skills/brainstorming/SKILL.md.forgevia.bak"
 test_path_not_exists "$CODEX_HOME/superpowers/skills/test-driven-development/SKILL.md.forgevia.bak"

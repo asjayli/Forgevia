@@ -28,6 +28,16 @@ assert_file_not_contains() {
   fi
 }
 
+assert_files_equal() {
+  local expected="$1"
+  local actual="$2"
+
+  if ! cmp -s "$expected" "$actual"; then
+    echo "expected managed mirror files to match: $expected $actual" >&2
+    exit 1
+  fi
+}
+
 assert_occurrences_at_least() {
   local path="$1"
   local needle="$2"
@@ -199,11 +209,81 @@ assert_file_contains "$ROOT_DIR/.codex/skills/openspec-propose/SKILL.md" '`spawn
 assert_file_contains "$ROOT_DIR/.claude/skills/openspec-propose/SKILL.md" '`Task`'
 assert_file_contains "$ROOT_DIR/.claude/commands/opsx/propose.md" '`Task`'
 
+openspec_sync_paths=(
+  "$ROOT_DIR/assets/codex/skills/openspec-sync-specs/SKILL.md"
+  "$ROOT_DIR/.codex/skills/openspec-sync-specs/SKILL.md"
+  "$ROOT_DIR/.claude/skills/openspec-sync-specs/SKILL.md"
+  "$ROOT_DIR/.claude/commands/opsx/sync.md"
+)
+
+for path in "${openspec_sync_paths[@]}"; do
+  assert_file_contains "$path" "Auto-select if only one active change exists"
+  assert_file_contains "$path" "independent review"
+  assert_file_contains "$path" '`APPROVE`'
+  assert_file_contains "$path" '`REVISE`'
+  assert_file_contains "$path" '`ESCALATE`'
+  assert_file_contains "$path" 'Only `ESCALATE` pauses for user input'
+  assert_file_not_contains "$path" "Always let the user choose"
+  assert_file_not_contains "$path" "If something is unclear, ask for clarification"
+done
+
+assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-sync-specs/SKILL.md" '`spawn_agent`'
+assert_file_contains "$ROOT_DIR/.codex/skills/openspec-sync-specs/SKILL.md" '`spawn_agent`'
+assert_file_contains "$ROOT_DIR/.claude/skills/openspec-sync-specs/SKILL.md" '`Task`'
+assert_file_contains "$ROOT_DIR/.claude/commands/opsx/sync.md" '`Task`'
+assert_file_not_contains "$ROOT_DIR/INSTALL.claude.md" "artifact, confirmation, and versioning rules"
+assert_file_contains "$ROOT_DIR/INSTALL.claude.md" "artifact, independent-review, and versioning rules"
+
 propose_template="$ROOT_DIR/assets/openspec/dist/core/templates/workflows/propose.js"
 assert_occurrences_at_least "$propose_template" "independent review" 2
 assert_occurrences_at_least "$propose_template" '\`APPROVE\`' 2
 assert_occurrences_at_least "$propose_template" '\`REVISE\`' 2
 assert_occurrences_at_least "$propose_template" '\`ESCALATE\`' 2
 assert_occurrences_at_least "$propose_template" 'Only \`ESCALATE\` pauses for user input' 2
+
+for skill_name in \
+  openspec-apply-change \
+  openspec-archive-change \
+  openspec-explore \
+  openspec-propose \
+  openspec-sync-specs
+do
+  assert_files_equal \
+    "$ROOT_DIR/assets/codex/skills/$skill_name/SKILL.md" \
+    "$ROOT_DIR/.codex/skills/$skill_name/SKILL.md"
+done
+
+tracked_internal_planning="$(git -C "$ROOT_DIR" ls-files -- \
+  'openspec/**' \
+  'docs/plans/**' \
+  '.forgevia/**' \
+  '.superpowers/**')"
+if [[ -n "$tracked_internal_planning" ]]; then
+  echo "repository-local planning or runtime artifacts must not be tracked:" >&2
+  echo "$tracked_internal_planning" >&2
+  exit 1
+fi
+
+for internal_path in openspec/ docs/plans/ .forgevia/ .superpowers/; do
+  if ! git -C "$ROOT_DIR" check-ignore -q "$internal_path"; then
+    echo "expected repository-local path to be ignored: $internal_path" >&2
+    exit 1
+  fi
+done
+
+tracked_openspec_assets="$(git -C "$ROOT_DIR" ls-files -- 'assets/openspec/**')"
+if [[ -z "$tracked_openspec_assets" ]]; then
+  echo "expected product OpenSpec assets to remain tracked" >&2
+  exit 1
+fi
+
+assert_file_contains "$ROOT_DIR/AGENTS.md" '不得使用 `git add -f`'
+assert_file_contains "$ROOT_DIR/AGENTS.md" 'Codex 与 Claude Code 共同支持的能力交集'
+assert_file_not_contains "$ROOT_DIR/README.md" "等你确认后"
+assert_file_contains "$ROOT_DIR/README.md" "独立审查"
+assert_file_contains "$ROOT_DIR/README.md" "无需逐步确认"
+assert_file_not_contains "$ROOT_DIR/README_EN.md" "waits for your confirmation"
+assert_file_contains "$ROOT_DIR/README_EN.md" "independent review"
+assert_file_contains "$ROOT_DIR/README_EN.md" "without step-by-step confirmation"
 
 echo "autonomous workflow contract test passed"
