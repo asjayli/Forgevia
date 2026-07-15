@@ -76,11 +76,17 @@ Subagent (general-purpose):
     helps the implementer trust the rest of the feedback.
 
     If you find significant deviations from the plan, flag them specifically
-    so the implementer can confirm whether the deviation was intentional.
-    If you find issues with the plan itself rather than the implementation,
-    say so.
+    with evidence. If you find issues with the plan itself rather than the
+    implementation, identify the exact conflict for controller routing.
+
+    Return exactly one controller verdict:
+    - `APPROVE` only when the branch is ready for its next authorized workflow step.
+    - `REVISE` for actionable findings that can be repaired without changing the plan or authorization envelope.
+    - `ESCALATE` only for a genuine plan conflict or missing authorization that prevents a safe repair. Ordinary code or test defects are `REVISE`, not requests for user confirmation.
 
     ## Output Format
+
+    **Verdict:** [APPROVE | REVISE | ESCALATE]
 
     ### Strengths
     [What's well done? Be specific.]
@@ -134,11 +140,13 @@ Subagent (general-purpose):
 - `[BASE_SHA]` — starting commit
 - `[HEAD_SHA]` — ending commit
 
-**Reviewer returns:** Strengths, Issues (Critical / Important / Minor), Recommendations, Assessment
+**Reviewer returns:** Controller verdict (`APPROVE`/`REVISE`/`ESCALATE`), Strengths, Issues (Critical / Important / Minor), Recommendations, Assessment
 
 ## Example Output
 
 ```
+**Verdict:** REVISE
+
 ### Strengths
 - Clean database schema with proper migrations (db.ts:15-42)
 - Comprehensive test coverage (18 tests, all edge cases)

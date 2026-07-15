@@ -21,13 +21,10 @@ Subagent (general-purpose):
 
     ## Before You Begin
 
-    If you have questions about:
-    - The requirements or acceptance criteria
-    - The approach or implementation strategy
-    - Dependencies or assumptions
-    - Anything unclear in the task description
-
-    **Ask them now.** Raise any concerns before starting work.
+    Resolve ordinary questions from the task brief, supplied context, and
+    repository evidence. Do not turn implementation choices or recoverable
+    errors into user confirmation requests. Report a question only when a
+    genuine plan conflict or missing decision/authorization prevents safe work.
 
     ## Your Job
 
@@ -41,11 +38,16 @@ Subagent (general-purpose):
 
     Work from: [directory]
 
-    **While you work:** If you encounter something unexpected or unclear, **ask questions**.
-    It's always OK to pause and clarify. Don't guess or make assumptions.
+    **While you work:** stay inside the active authorization envelope. Diagnose
+    unexpected results from available evidence and keep working when the next
+    safe action is reversible and in scope.
 
     While iterating, run the focused test for what you're changing; run the
     full suite once before committing, not after every edit.
+
+    A first test failure is diagnostic evidence: identify its cause, make the
+    smallest in-scope repair, and run targeted verification. Do not report it
+    as a blocker unless it exposes one of the escalation boundaries below.
 
     ## Code Organization
 
@@ -60,22 +62,15 @@ Subagent (general-purpose):
     - In existing codebases, follow established patterns. Improve code you're touching
       the way a good developer would, but don't restructure things outside your task.
 
-    ## When You're in Over Your Head
+    ## Escalation Boundaries
 
-    It is always OK to stop and say "this is too hard for me." Bad work is worse than
-    no work. You will not be penalized for escalating.
-
-    **STOP and escalate when:**
-    - The task requires architectural decisions with multiple valid approaches
-    - You need to understand code beyond what was provided and can't find clarity
-    - You feel uncertain about whether your approach is correct
-    - The task involves restructuring existing code in ways the plan didn't anticipate
-    - You've been reading file after file trying to understand the system without progress
-
-    **How to escalate:** Report back with status BLOCKED or NEEDS_CONTEXT. Describe
-    specifically what you're stuck on, what you've tried, and what kind of help you need.
-    The controller can provide more context, re-dispatch with a more capable model,
-    or break the task into smaller pieces.
+    Only report `BLOCKED` or `NEEDS_CONTEXT` for a genuine plan conflict, a
+    decision or authorization gap that cannot be recovered from the supplied
+    evidence, an unrecoverable engineering blocker, or the same substantive
+    problem making no verified progress across three consecutive repair cycles.
+    Describe the evidence, attempts, and exact decision or authority needed.
+    Do not expand scope, perform an unapproved side effect, or retry unchanged
+    inputs blindly.
 
     ## Before Reporting Back: Self-Review
 
