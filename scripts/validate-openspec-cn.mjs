@@ -159,10 +159,50 @@ function collectInspections(root) {
   ].map(entry => ({ ...entry, ...inspectSpec(root, entry.filePath, entry.mainSpec) }));
 }
 
+function isPathInside(child, parent) {
+  const relative = path.relative(parent, child);
+  return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
+}
+
+function copyTreeDereferenced(src, dst) {
+  const srcStat = fs.lstatSync(src);
+  if (srcStat.isSymbolicLink()) {
+    const resolved = fs.realpathSync(src);
+    return copyTreeDereferenced(resolved, dst);
+  }
+  if (srcStat.isDirectory()) {
+    fs.mkdirSync(dst, { recursive: true });
+    for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+      copyTreeDereferenced(path.join(src, entry.name), path.join(dst, entry.name));
+    }
+    return;
+  }
+  if (srcStat.isFile()) {
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    fs.copyFileSync(src, dst);
+    return;
+  }
+  throw new Error(`unsupported file type at ${src}`);
+}
+
+function safeStagingFile(stagingRoot, root, filePath) {
+  const stagingFile = path.join(stagingRoot, path.relative(root, filePath));
+  const realStagingFile = fs.realpathSync(stagingFile);
+  const realStagingRoot = fs.realpathSync(stagingRoot);
+  if (!isPathInside(realStagingFile, realStagingRoot)) {
+    throw new Error(`staging file escapes staging root: ${realStagingFile}`);
+  }
+  const stat = fs.lstatSync(realStagingFile);
+  if (!stat.isFile() || stat.isSymbolicLink()) {
+    throw new Error(`staging path is not a regular file: ${realStagingFile}`);
+  }
+  return realStagingFile;
+}
+
 function injectNativeModals(stagingRoot, root, inspections) {
   for (const inspection of inspections) {
     if (inspection.injections.length === 0) continue;
-    const stagingFile = path.join(stagingRoot, path.relative(root, inspection.filePath));
+    const stagingFile = safeStagingFile(stagingRoot, root, inspection.filePath);
     const lines = fs.readFileSync(stagingFile, 'utf8').split(/\r?\n/);
     for (const index of inspection.injections) lines[index] = `MUST ${lines[index]}`;
     fs.writeFileSync(stagingFile, lines.join('\n'));
@@ -198,7 +238,7 @@ function main() {
 
   const stagingRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'forgevia-openspec-cn-'));
   try {
-    fs.cpSync(path.join(root, 'openspec'), path.join(stagingRoot, 'openspec'), { recursive: true });
+    copyTreeDereferenced(path.join(root, 'openspec'), path.join(stagingRoot, 'openspec'));
     injectNativeModals(stagingRoot, root, inspections);
     return runNativeValidation(stagingRoot);
   } finally {

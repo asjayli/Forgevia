@@ -325,4 +325,27 @@ assert_contains "$missing_plugin_output" "choose:"
 assert_contains "$missing_plugin_output" "user"
 assert_contains "$missing_plugin_output" "CLAUDE_SUPERPOWERS_ROOT"
 
+bad_root_dir="$(mktemp -d)"
+trap 'rm -rf "$tmp_dir" "$missing_openspec_dir" "$missing_plugin_dir" "$bad_root_dir"' EXIT
+
+set +e
+bad_root_output="$(CLAUDE_HOME="$bad_root_dir" "$INSTALLER" 2>&1)"
+bad_root_status=$?
+set -e
+if [[ "$bad_root_status" != "1" ]]; then
+  echo "expected bad root exit code 1 but got $bad_root_status" >&2
+  exit 1
+fi
+assert_contains "$bad_root_output" "must end with .claude"
+
+set +e
+bad_openspec_output="$(CLAUDE_HOME="$CLAUDE_HOME" OPENSPEC_ROOT=/ "$INSTALLER" 2>&1)"
+bad_openspec_status=$?
+set -e
+if [[ "$bad_openspec_status" != "1" ]]; then
+  echo "expected bad openspec root exit code 1 but got $bad_openspec_status" >&2
+  exit 1
+fi
+assert_contains "$bad_openspec_output" "root path must not be /"
+
 echo "claude installer smoke test passed"

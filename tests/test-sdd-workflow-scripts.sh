@@ -248,6 +248,24 @@ assert_contains "$brief_contents" "## 1. Prepare workspace"
 assert_contains "$brief_contents" "## 99. This fenced heading belongs to task 1"
 assert_not_contains "$brief_contents" "## 2. Review changes"
 
+outside_brief="$tmp_dir/outside-brief.md"
+if (cd "$repo_dir" && "$TASK_BRIEF" tasks.md 1 "$outside_brief") >/dev/null 2>&1; then
+  echo "expected task-brief to reject an OUTFILE outside the repo" >&2
+  exit 1
+fi
+
+ln -s "$repo_dir/change.txt" "$repo_dir/brief-link.md"
+if (cd "$repo_dir" && "$TASK_BRIEF" tasks.md 1 "$repo_dir/brief-link.md") >/dev/null 2>&1; then
+  echo "expected task-brief to reject a symlink OUTFILE" >&2
+  exit 1
+fi
+rm -f "$repo_dir/brief-link.md"
+
+if compgen -G "$repo_dir/.task-brief.*" >/dev/null; then
+  echo "task-brief left a temporary file in the repo" >&2
+  exit 1
+fi
+
 if (cd "$repo_dir" && "$TASK_BRIEF" tasks.md 3) >/dev/null 2>&1; then
   echo "expected task-brief to reject a missing task group" >&2
   exit 1
@@ -336,6 +354,35 @@ fi
 ln -s "$repo_dir/change.txt" "$repo_dir/review-link.diff"
 if (cd "$repo_dir/nested" && "$REVIEW_PACKAGE" "$task_two_base" WORKTREE "$repo_dir/review-link.diff") >/dev/null 2>&1; then
   echo "expected review-package to reject a symlink OUTFILE" >&2
+  exit 1
+fi
+
+outside_path="$tmp_dir/outside.diff"
+if (cd "$repo_dir/nested" && "$REVIEW_PACKAGE" "$task_two_base" WORKTREE "$outside_path") >/dev/null 2>&1; then
+  echo "expected review-package to reject an OUTFILE outside the repo/workspace" >&2
+  exit 1
+fi
+
+mkdir -p "$tmp_dir/symlink-parent"
+ln -s "$tmp_dir/symlink-parent" "$repo_dir/symlink-parent"
+if (cd "$repo_dir/nested" && "$REVIEW_PACKAGE" "$task_two_base" WORKTREE "$repo_dir/symlink-parent/review.diff") >/dev/null 2>&1; then
+  echo "expected review-package to reject an OUTFILE under a symlinked parent" >&2
+  exit 1
+fi
+
+if compgen -G "$repo_dir/.review-package.*" >/dev/null; then
+  echo "review-package left a temporary file in the repo" >&2
+  exit 1
+fi
+
+symlink_repo="$tmp_dir/symlink-repo"
+mkdir -p "$symlink_repo"
+git -C "$symlink_repo" init -q
+git -C "$symlink_repo" config user.email "test@example.com"
+git -C "$symlink_repo" config user.name "Forgevia Test"
+ln -s "$tmp_dir" "$symlink_repo/.superpowers"
+if (cd "$symlink_repo" && "$SDD_WORKSPACE") >/dev/null 2>&1; then
+  echo "expected sdd-workspace to reject a symlinked .superpowers" >&2
   exit 1
 fi
 

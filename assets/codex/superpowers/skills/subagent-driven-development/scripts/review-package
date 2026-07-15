@@ -16,6 +16,51 @@ repo_root=$(git rev-parse --show-toplevel)
 script_dir=$(cd "$(dirname "$0")" && pwd)
 workspace=$("$script_dir/sdd-workspace")
 
+is_inside() {
+  local child="$1"
+  local parent="$2"
+  case "$child" in
+    "$parent"|"$parent"/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+resolve_outfile() {
+  local raw="$1"
+  local out_dir
+  local real_out
+
+  case "$raw" in
+    /*) ;;
+    *) raw="$(pwd)/$raw" ;;
+  esac
+
+  out_dir=$(dirname "$raw")
+  if [ ! -d "$out_dir" ]; then
+    echo "missing OUTFILE directory: $out_dir" >&2
+    return 1
+  fi
+
+  if [ -L "$raw" ] || [ -L "$out_dir" ]; then
+    echo "OUTFILE path must not contain symlinks: $raw" >&2
+    return 1
+  fi
+
+  real_out=$(cd "$out_dir" && pwd -P)/$(basename "$raw")
+
+  if ! is_inside "$real_out" "$repo_root" && ! is_inside "$real_out" "$workspace"; then
+    echo "OUTFILE must be inside the repository or the SDD workspace: $real_out" >&2
+    return 1
+  fi
+
+  if [ -L "$real_out" ]; then
+    echo "OUTFILE must not be a symlink: $real_out" >&2
+    return 1
+  fi
+
+  printf '%s' "$real_out"
+}
+
 snapshot_tree() (
   exclude=${1:-}
   index=$(mktemp "$workspace/review-index.XXXXXX")
@@ -50,10 +95,7 @@ if [ "$head" != "WORKTREE" ]; then
 fi
 
 if [ $# -eq 3 ]; then
-  case $3 in
-    /*) out=$3 ;;
-    *) out="$(pwd)/$3" ;;
-  esac
+  out=$(resolve_outfile "$3") || exit 2
 else
   if [ "$head" = "WORKTREE" ]; then
     out=$(mktemp "$workspace/review-$(git -C "$repo_root" rev-parse --short "$base")..worktree.XXXXXX")
@@ -64,11 +106,9 @@ fi
 
 out_dir=$(dirname "$out")
 [ -d "$out_dir" ] || { echo "missing OUTFILE directory: $out_dir" >&2; exit 2; }
-[ ! -L "$out" ] || { echo "OUTFILE must not be a symlink: $out" >&2; exit 2; }
-out=$(cd "$out_dir" && pwd -P)/$(basename "$out")
 
 exclude=
-case $out in
+case "$out" in
   "$repo_root"/*)
     exclude=${out#"$repo_root"/}
     if git -C "$repo_root" ls-files --error-unmatch -- "$exclude" >/dev/null 2>&1; then
@@ -77,6 +117,9 @@ case $out in
     fi
     ;;
 esac
+
+tmp_out=$(mktemp "$out_dir/.review-package.XXXXXX")
+trap 'rm -f "$tmp_out"' EXIT
 
 if [ "$head" = "WORKTREE" ]; then
   current_tree=$(snapshot_tree "$exclude")
@@ -99,7 +142,7 @@ if [ "$head" = "WORKTREE" ]; then
     echo
     echo "## Diff"
     git -C "$repo_root" diff -U10 "$base" "$current_tree" "${diff_pathspec[@]}"
-  } > "$out"
+  } > "$tmp_out"
 else
   {
     echo "# Review package: ${base}..${head}"
@@ -112,8 +155,11 @@ else
     echo
     echo "## Diff"
     git -C "$repo_root" diff -U10 "${base}..${head}"
-  } > "$out"
+  } > "$tmp_out"
 fi
+
+mv -f "$tmp_out" "$out"
+trap - EXIT
 
 if [ "$head" = "WORKTREE" ]; then
   echo "wrote ${out}: worktree snapshot diff, $(wc -c < "$out" | tr -d ' ') bytes"

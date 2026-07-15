@@ -16,7 +16,15 @@
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
-dir="$root/.superpowers/sdd"
+powers_dir="$root/.superpowers"
+dir="$powers_dir/sdd"
+
+if [ -L "$powers_dir" ]; then
+  echo ".superpowers must not be a symlink: $powers_dir" >&2
+  exit 2
+fi
+
 mkdir -p "$dir"
+chmod 0700 "$dir"
 printf '*\n' > "$dir/.gitignore"
 cd "$dir" && pwd
