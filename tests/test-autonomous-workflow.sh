@@ -56,6 +56,62 @@ for path in "${forgevia_paths[@]}"; do
   assert_file_contains "$path" "different from the agent that produced the candidate"
 done
 
+forgevia_propose_paths=(
+  "$ROOT_DIR/assets/codex/skills/forgevia-propose/SKILL.md"
+  "$ROOT_DIR/.claude/skills/forgevia-propose/SKILL.md"
+)
+
+for path in "${forgevia_propose_paths[@]}"; do
+  assert_file_contains "$path" '`APPROVE`'
+  assert_file_contains "$path" '`REVISE`'
+  assert_file_contains "$path" '`ESCALATE`'
+  assert_file_contains "$path" "cannot be recovered from the provided input, referenced files, conversation, or repository evidence"
+  assert_file_contains "$path" "the missing evidence, a recommended default, option impacts, and why work cannot continue"
+  assert_file_not_contains "$path" "Stop and clarify"
+done
+
+forgevia_archive_paths=(
+  "$ROOT_DIR/assets/codex/skills/forgevia-archive/SKILL.md"
+  "$ROOT_DIR/.claude/skills/forgevia-archive/SKILL.md"
+)
+
+for path in "${forgevia_archive_paths[@]}"; do
+  assert_file_contains "$path" '`APPROVE`'
+  assert_file_contains "$path" '`REVISE`'
+  assert_file_contains "$path" '`ESCALATE`'
+  assert_file_contains "$path" "Repair only issues in the sync result or archive package that are inside the archive authorization envelope"
+  assert_file_contains "$path" 'For any other validation failure, diagnose it and return `ESCALATE` with evidence instead of editing outside that envelope'
+  assert_file_not_contains "$path" 'automatically repair an authorized `REVISE` or validation failure before review'
+done
+
+forgevia_implement_paths=(
+  "$ROOT_DIR/assets/codex/skills/forgevia-implement/SKILL.md"
+  "$ROOT_DIR/.claude/skills/forgevia-implement/SKILL.md"
+)
+
+for path in "${forgevia_implement_paths[@]}"; do
+  assert_file_contains "$path" '`APPROVE`'
+  assert_file_contains "$path" '`REVISE`'
+  assert_file_contains "$path" '`ESCALATE`'
+  assert_file_contains "$path" "first test failure"
+  assert_file_contains "$path" "automatically continue to the next dependency-ready work unit"
+  assert_file_contains "$path" 'Only `ESCALATE` requests user input'
+done
+
+for skill_name in forgevia-review forgevia-verify-web; do
+  for path in \
+    "$ROOT_DIR/assets/codex/skills/$skill_name/SKILL.md" \
+    "$ROOT_DIR/.claude/skills/$skill_name/SKILL.md"
+  do
+    assert_file_contains "$path" '`APPROVE`'
+    assert_file_contains "$path" '`REVISE`'
+    assert_file_contains "$path" '`ESCALATE`'
+    assert_file_contains "$path" "standalone read-only command"
+    assert_file_contains "$path" 'return `REVISE` findings without'
+    assert_file_contains "$path" 'only `ESCALATE` requests a user decision'
+  done
+done
+
 assert_file_contains "$ROOT_DIR/assets/codex/skills/forgevia/SKILL.md" '`spawn_agent`'
 assert_file_contains "$ROOT_DIR/.claude/skills/forgevia/SKILL.md" '`Task`'
 

@@ -19,7 +19,7 @@ Use this skill when the user explicitly wants Forgevia to produce a new OpenSpec
 - Allow the change name to come from the user when explicitly provided.
 - Otherwise derive an appropriate kebab-case change name from the requirement source.
 - Treat the provided file as requirement input, not as implementation output.
-- Stop and clarify if the file does not exist or the requirement source is too incomplete to produce a meaningful change.
+- If the requirement source cannot be recovered from the provided input, referenced files, conversation, or repository evidence, return `ESCALATE` through the three-state review protocol with the missing evidence, a recommended default, option impacts, and why work cannot continue.
 - Independently review the proposal/design/specs package and the tasks package. Require `APPROVE`, `REVISE`, or `ESCALATE`; automatically repair an authorized `REVISE`, revalidate, and review again.
 - Continue through all apply-ready planning artifacts after `APPROVE`; only `ESCALATE` may request a critical decision that cannot be inferred.
 - Proposal completion does not authorize implementation, commit, sync, archive, push, merge, or release.
