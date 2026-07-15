@@ -14,3 +14,4 @@ Use this skill when the user explicitly wants a review checkpoint.
 - Use the current named change or implementation context already established by the user.
 - Prefer a commit-bounded review request with explicit `BASE_SHA` and `HEAD_SHA`.
 - Require findings to be reported in strict severity order, with `P0` before `P1`.
+- Require the independent reviewer to return `APPROVE`, `REVISE`, or `ESCALATE` with evidence. For this standalone read-only command, return `REVISE` findings without fixing them; only `ESCALATE` requests a user decision.

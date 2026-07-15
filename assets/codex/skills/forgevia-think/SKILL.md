@@ -34,17 +34,22 @@ More detailed input usually produces a more precise think result.
    - Explain your current understanding.
    - Surface scope boundaries, assumptions, risks, and open questions.
 
-4. **Wait for explicit confirmation**
-   - Do not move into proposal or implementation until the user confirms that the restated understanding is correct enough.
+4. **Run an independent review**
+   - Give a reviewer that did not produce the restatement the original request, repository evidence, proposed scope, assumptions, risks, and terminal condition.
+   - Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE` verdict.
+   - On `APPROVE`, write the think artifact without waiting for user confirmation.
+   - On `REVISE`, update the restatement and request another independent review.
+   - On `ESCALATE`, ask once for the critical decision that cannot be inferred, including evidence, a recommendation, and option impacts.
 
-5. **Write the confirmed think artifact**
-   - Save the confirmed result as Markdown under `openspec/think/`.
+5. **Write the reviewed think artifact**
+   - Save the independently approved result as Markdown under `openspec/think/`.
    - Use the file name format `YYYY-MM-DD-<requirement-description>.md`.
    - If the same dated requirement already exists, create the next version as `YYYY-MM-DD-<requirement-description>-v2.md`, then `-v3.md`, and so on.
    - Do not overwrite an earlier iteration of the same requirement.
 
 6. **Recommend the next step**
-   - If the user wants to continue, suggest moving into proposal once the think artifact is confirmed.
+   - If the objective ends at think, return the reviewed artifact and stop.
+   - If the original objective includes later Forgevia phases, continue to proposal after `APPROVE` without a stage confirmation.
    - If the user is still exploring, keep thinking instead of forcing structure too early.
 
 ## Think Output Template
@@ -71,12 +76,13 @@ More detailed input usually produces a more precise think result.
 
 ## Next Step Recommendation
 
-[Recommended next action after confirmation]
+[Recommended next action after independent review]
 ```
 
 ## Guardrails
 
 - Do not implement application code during think
-- Do not skip the confirmation step
+- Do not use a user confirmation as a stage gate
+- Only `ESCALATE` may request user input, and only for a critical ambiguity, scope or authorization expansion, rule conflict, or unavailable required capability
 - Do not overwrite an earlier think artifact for the same requirement
 - Do use `.mmd` diagrams and requirement documents as supporting context when provided

@@ -15,16 +15,16 @@ Archive a completed change in the experimental workflow.
 
 **Input**: Optionally specify a change name. If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
+**Review protocol:** An explicit archive request authorizes the named change's spec sync and local archive move. Use `Task` for an independent review agent different from the candidate producer, and provide the objective and authorized scope, change identity, relevant artifacts, proposed action or diff, verification evidence, warnings, and risks. Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE`. On `APPROVE`, continue automatically. On `REVISE`, repair the sync plan, sync result, or archive package, revalidate, and review again. Only `ESCALATE` pauses for user input, and only for unresolved data-loss risk, goal or rule conflict, missing authorization, a critical ambiguity, or an unavailable required capability.
+
 **Steps**
 
-1. **If no change name provided, prompt for selection**
+1. **Select the change**
 
-   Run `openspec list --json` to get available changes. Use the **AskUserQuestion tool** to let the user select.
+   If a name is provided, use it. Otherwise infer a uniquely identified change from conversation context or run `openspec list --json` and show only active changes with their schema when available.
 
-   Show only active changes (not already archived).
-   Include the schema used for each change if available.
-
-   **IMPORTANT**: Do NOT guess or auto-select a change. Always let the user choose.
+   - Auto-select if only one active change exists.
+   - If multiple changes are equally plausible and repository or conversation evidence cannot distinguish them, use **AskUserQuestion** once for a substantive selection with the candidate differences and a recommended default.
 
 2. **Check artifact completion status**
 
@@ -37,8 +37,7 @@ Archive a completed change in the experimental workflow.
 
    **If any artifacts are not `done`:**
    - Display warning listing incomplete artifacts
-   - Use **AskUserQuestion tool** to confirm user wants to proceed
-   - Proceed if user confirms
+   - Include the warning in the independent archive review; it is not a confirmation gate by itself
 
 3. **Check task completion status**
 
@@ -48,27 +47,24 @@ Archive a completed change in the experimental workflow.
 
    **If incomplete tasks found:**
    - Display warning showing count of incomplete tasks
-   - Use **AskUserQuestion tool** to confirm user wants to proceed
-   - Proceed if user confirms
+   - Include the warning in the independent archive review; escalate only if it creates unresolved data-loss or goal-conflict risk
 
    **If no tasks file exists:** Proceed without task-related warning.
 
 4. **Assess delta spec sync state**
 
-   Use `artifactPaths.specs.existingOutputPaths` from status JSON to check for delta specs. If none exist, proceed without sync prompt.
+   Use `artifactPaths.specs.existingOutputPaths` from status JSON to check for delta specs. If none exist, proceed without sync.
 
    **If delta specs exist:**
    - Compare each delta spec with its corresponding main spec at `<planningHome.root>/openspec/specs/<capability>/spec.md`
    - Determine what changes would be applied (adds, modifications, removals, renames)
-   - Show a combined summary before prompting
+   - Build a combined sync plan and send it through the independent review protocol
+   - On `APPROVE`, sync delta specs by default by using `Task` to invoke openspec-sync-specs for change '<name>' with the reviewed delta spec analysis
+   - Validate the sync result for intended content, preservation, and idempotency, then independently review the result before continuing
 
-   **Prompt options:**
-   - If changes needed: "Sync now (recommended)", "Archive without syncing"
-   - If already synced: "Archive now", "Sync anyway", "Cancel"
+5. **Review and perform the archive**
 
-   If user chooses sync, use Task tool (subagent_type: "general-purpose", prompt: "Use Skill tool to invoke openspec-sync-specs for change '<name>'. Delta spec analysis: <include the analyzed delta spec summary>"). Proceed to archive regardless of choice.
-
-5. **Perform the archive**
+   Build an archive package containing the named change identity, sync status, completion warnings, target path, and preservation evidence. Apply the independent review protocol and proceed only on `APPROVE`.
 
    Create an `archive` directory under `planningHome.changesDir` if it doesn't exist:
    ```bash
@@ -102,16 +98,16 @@ Archive a completed change in the experimental workflow.
 **Change:** <change-name>
 **Schema:** <schema-name>
 **Archived to:** the archive path derived from `planningHome.changesDir`/YYYY-MM-DD-<name>/
-**Specs:** ✓ Synced to main specs (or "No delta specs" or "Sync skipped")
+**Specs:** ✓ Synced to main specs (or "No delta specs")
 
 All artifacts complete. All tasks complete.
 ```
 
 **Guardrails**
-- Always prompt for change selection if not provided
+- Auto-select a uniquely identified change; request selection only for multiple equally plausible candidates
 - Use artifact graph (openspec status --json) for completion checking
-- Don't block archive on warnings - just inform and confirm
+- Don't block archive on ordinary warnings - record and review them
 - Preserve .openspec.yaml when moving to archive (it moves with the directory)
 - Show clear summary of what happened
-- If sync is requested, use openspec-sync-specs approach (agent-driven)
-- If delta specs exist, always run the sync assessment and show the combined summary before prompting
+- If delta specs exist, use the openspec-sync-specs approach (agent-driven) by default
+- Only `ESCALATE` pauses for user input

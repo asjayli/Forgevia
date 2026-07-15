@@ -24,6 +24,8 @@ When ready to implement, use Forgevia Implement
 
 **Input**: The user's request should include a change name (kebab-case) OR a description of what they want to build.
 
+**Review protocol:** Use `spawn_agent` for an independent review agent different from the artifact producer. Provide the objective and authorized scope, source requirements, relevant repository evidence, candidate artifacts, validation evidence, assumptions, and risks. Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE`. On `APPROVE`, continue automatically to the next dependency-ready artifact. On `REVISE`, repair the planning artifact, revalidate it, and request another independent review. Only `ESCALATE` pauses for user input, and only for a consequential ambiguity that cannot be reasonably inferred, a required scope or authorization expansion, a conflicting rule, or an unavailable required capability.
+
 **Steps**
 
 1. **If no clear input provided, ask what they want to build**
@@ -71,6 +73,7 @@ When ready to implement, use Forgevia Implement
       - Read any completed dependency files for context
       - Create the artifact file using `template` as the structure and write it to `resolvedOutputPath`
       - Apply `context` and `rules` as constraints - but do NOT copy them into the file
+      - Independently review the proposal/design/specs package before tasks, and independently review the tasks package before declaring the change apply-ready
       - Show brief progress: "Created <artifact-id>"
 
    b. **Continue until all `applyRequires` artifacts are complete**
@@ -79,8 +82,8 @@ When ready to implement, use Forgevia Implement
       - Stop when all `applyRequires` artifacts are done
 
    c. **If an artifact requires user input** (unclear context):
-      - Ask the user to clarify
-      - Then continue with creation
+      - Infer reasonable details from the objective, dependencies, and repository evidence
+      - If multiple materially different outcomes remain, return `ESCALATE` through the review protocol with evidence and a recommended default
 
 5. **Show final status**
    ```bash
@@ -108,6 +111,7 @@ After completing all artifacts, summarize:
 **Guardrails**
 - Create ALL artifacts needed for implementation (as defined by schema's `apply.requires`)
 - Always read dependency artifacts before creating a new one
-- If context is critically unclear, ask the user - but prefer making reasonable decisions to keep momentum
-- If a change with that name already exists, ask if user wants to continue it or create a new one
+- If context is critically unclear, use `ESCALATE`; ordinary assumptions go through independent review instead of a confirmation gate
+- If a change with that name already exists, inspect its objective and status; continue it when it is the unique match, otherwise use `ESCALATE` for the substantive identity conflict
 - Verify each artifact file exists after writing before proceeding to next
+- Proposal completion does not authorize implementation, commit, sync, archive, push, merge, or release
