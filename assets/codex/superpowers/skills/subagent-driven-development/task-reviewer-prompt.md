@@ -23,6 +23,17 @@ Subagent (general-purpose):
     Global constraints from the spec/design that bind this task:
     [GLOBAL_CONSTRAINTS]
 
+    ## Objective Authorization Envelope
+
+    **Objective:** [OBJECTIVE]
+    **Scope:** [SCOPE]
+    **Constraints:** [CONSTRAINTS]
+    **Authorized effects:** [AUTHORIZED_EFFECTS]
+    **Terminal condition:** [TERMINAL_CONDITION]
+
+    Use this envelope to classify findings and whether repair is authorized.
+    The reviewer remains read-only and must not perform any authorized effect.
+
     ## What the Implementer Claims They Built
 
     Read the implementer's report: [REPORT_FILE]
@@ -173,6 +184,11 @@ Subagent (general-purpose):
 ```
 
 **Placeholders:**
+- `[OBJECTIVE]` — the outcome authorized by the user's instruction
+- `[SCOPE]` — repositories, changes, files, and systems inside the objective
+- `[CONSTRAINTS]` — binding process, architecture, safety, and platform limits
+- `[AUTHORIZED_EFFECTS]` — allowed writes and side effects for the controller
+- `[TERMINAL_CONDITION]` — the authorized end state at which execution stops
 - `[BRIEF_FILE]` — REQUIRED: the task brief file (`scripts/task-brief PLAN N`
   prints the path; same file the implementer worked from)
 - `[GLOBAL_CONSTRAINTS]` — the binding requirements copied verbatim from
