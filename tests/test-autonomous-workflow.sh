@@ -51,6 +51,44 @@ assert_occurrences_at_least() {
   fi
 }
 
+assert_file_in_order() {
+  local path="$1"
+  shift
+  local remaining
+  local needle
+
+  remaining="$(<"$path")"
+  for needle in "$@"; do
+    if [[ "$remaining" != *"$needle"* ]]; then
+      echo "expected $path to contain in order: $needle" >&2
+      exit 1
+    fi
+    remaining="${remaining#*"$needle"}"
+  done
+}
+
+assert_review_contract() {
+  local path="$1"
+
+  assert_file_in_order "$path" \
+    'Objective: the authorized outcome.' \
+    'Scope: the allowed repositories, changes, files, and systems.' \
+    'Constraints: the binding process, architecture, safety, and platform rules.' \
+    'Authorized effects: the writes and side effects allowed to the controller.' \
+    'Terminal condition: the state at which this workflow must stop.' \
+    'candidate producer identity' \
+    'candidate artifacts, action, or diff' \
+    'verification evidence' \
+    'assumptions and risks'
+  assert_file_in_order "$path" \
+    'reviewer fails to start, times out, crashes, or returns an invalid verdict' \
+    'reuse the unchanged review package' \
+    'at most two new independent review agents' \
+    'collected infrastructure evidence' \
+    'never infer `APPROVE`'
+  assert_file_contains "$path" 'The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.'
+}
+
 forgevia_paths=(
   "$ROOT_DIR/assets/codex/skills/forgevia/SKILL.md"
   "$ROOT_DIR/.claude/skills/forgevia/SKILL.md"
@@ -64,6 +102,7 @@ for path in "${forgevia_paths[@]}"; do
   assert_file_contains "$path" "Only ESCALATE pauses the workflow for user input"
   assert_file_contains "$path" "does not authorize archive, push, merge, or release"
   assert_file_contains "$path" "different from the agent that produced the candidate"
+  assert_review_contract "$path"
 done
 
 forgevia_propose_paths=(
@@ -78,6 +117,7 @@ for path in "${forgevia_propose_paths[@]}"; do
   assert_file_contains "$path" "cannot be recovered from the provided input, referenced files, conversation, or repository evidence"
   assert_file_contains "$path" "the missing evidence, a recommended default, option impacts, and why work cannot continue"
   assert_file_not_contains "$path" "Stop and clarify"
+  assert_review_contract "$path"
 done
 
 forgevia_archive_paths=(
@@ -92,6 +132,7 @@ for path in "${forgevia_archive_paths[@]}"; do
   assert_file_contains "$path" "Repair only issues in the sync result or archive package that are inside the archive authorization envelope"
   assert_file_contains "$path" 'For any other validation failure, diagnose it and return `ESCALATE` with evidence instead of editing outside that envelope'
   assert_file_not_contains "$path" 'automatically repair an authorized `REVISE` or validation failure before review'
+  assert_review_contract "$path"
 done
 
 forgevia_implement_paths=(
@@ -106,6 +147,7 @@ for path in "${forgevia_implement_paths[@]}"; do
   assert_file_contains "$path" "first test failure"
   assert_file_contains "$path" "automatically continue to the next dependency-ready work unit"
   assert_file_contains "$path" 'Only `ESCALATE` requests user input'
+  assert_review_contract "$path"
 done
 
 for skill_name in forgevia-review forgevia-verify-web; do
@@ -119,6 +161,8 @@ for skill_name in forgevia-review forgevia-verify-web; do
     assert_file_contains "$path" "standalone read-only command"
     assert_file_contains "$path" 'return `REVISE` findings without'
     assert_file_contains "$path" 'only `ESCALATE` requests a user decision'
+    assert_review_contract "$path"
+    assert_file_contains "$path" 'A `REVISE` verdict returns findings and stops without editing product files, `tasks.md`, or `.superpowers/sdd/progress.md`.'
   done
 done
 
@@ -136,6 +180,7 @@ do
   assert_file_contains "$path" "write the think artifact without waiting for user confirmation"
   assert_file_not_contains "$path" "Wait for explicit confirmation"
   assert_file_not_contains "$path" "Do not skip the confirmation step"
+  assert_review_contract "$path"
 done
 
 openspec_apply_paths=(
@@ -155,6 +200,18 @@ for path in "${openspec_apply_paths[@]}"; do
   assert_file_contains "$path" 'Only `ESCALATE` pauses for user input'
   assert_file_not_contains "$path" "Error or blocker encountered"
   assert_file_not_contains "$path" "Pause on errors, blockers, or unclear requirements"
+  assert_review_contract "$path"
+  assert_file_in_order "$path" \
+    'Complete every task and its task-level review.' \
+    'Run integration and global verification across the complete implementation.' \
+    'Build a commit-bounded full-branch review package covering the complete implementation range, or a WORKTREE package when commit authorization or branch policy left changes uncommitted.' \
+    'Dispatch a fresh full-branch reviewer that is independent from every candidate producer.' \
+    'Only a final `APPROVE` may produce `Implementation Complete`.'
+  assert_file_in_order "$path" \
+    'A final `REVISE` with repair authorization dispatches implementation repair.' \
+    'Rerun integration and global verification.' \
+    'Build a fresh full-branch package and dispatch a fresh independent full-branch reviewer.'
+  assert_file_contains "$path" 'When apply instructions report `state: "all_done"`, resume at integration and global verification; do not congratulate, suggest archive, or report completion yet.'
 done
 
 assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-apply-change/SKILL.md" '`spawn_agent`'
@@ -182,6 +239,7 @@ for path in "${openspec_archive_paths[@]}"; do
   assert_file_not_contains "$path" "Archive without syncing"
   assert_file_not_contains "$path" "Proceed if user confirms"
   assert_file_not_contains "$path" "Do NOT guess or auto-select a change"
+  assert_review_contract "$path"
 done
 
 assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-archive-change/SKILL.md" '`spawn_agent`'
@@ -202,6 +260,14 @@ for path in "${openspec_propose_paths[@]}"; do
   assert_file_contains "$path" '`REVISE`'
   assert_file_contains "$path" '`ESCALATE`'
   assert_file_contains "$path" 'Only `ESCALATE` pauses for user input'
+  assert_review_contract "$path"
+  assert_file_in_order "$path" \
+    'Validate the current planning package before dispatching its reviewer.' \
+    'If validation fails, repair only the matching planning artifact type and rerun the same validation.' \
+    'Dispatch an independent review only after that planning validation passes.' \
+    'After all apply-required artifacts are complete, run `openspec validate "<name>" --strict --no-interactive` for the complete change' \
+    'If strict validation fails, repair the indicated proposal, design, specs, or tasks and rerun strict validation.' \
+    'Independently review every package changed by strict-validation repair before reporting the proposal apply-ready.'
 done
 
 assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-propose/SKILL.md" '`spawn_agent`'
@@ -224,10 +290,11 @@ for path in "${openspec_sync_paths[@]}"; do
   assert_file_contains "$path" 'If sync-plan validation fails or the plan review returns `REVISE`, repair the sync plan, rerun the same validation, and dispatch a fresh independent review'
   assert_file_contains "$path" 'Apply changes only after the sync-plan review returns `APPROVE`'
   assert_file_contains "$path" "If strict validation, idempotency, or content-preservation verification fails, repair the sync result, rerun the same failed validation, and only then dispatch the result review"
-  assert_file_contains "$path" "reuse the same review package"
+  assert_file_contains "$path" "reuse the unchanged review package"
   assert_file_contains "$path" "at most two new independent review agents"
   assert_file_contains "$path" "collected infrastructure evidence"
   assert_file_contains "$path" 'never infer `APPROVE`'
+  assert_review_contract "$path"
   assert_file_contains "$path" '`APPROVE`'
   assert_file_contains "$path" '`REVISE`'
   assert_file_contains "$path" '`ESCALATE`'
@@ -249,6 +316,30 @@ assert_occurrences_at_least "$propose_template" '\`APPROVE\`' 2
 assert_occurrences_at_least "$propose_template" '\`REVISE\`' 2
 assert_occurrences_at_least "$propose_template" '\`ESCALATE\`' 2
 assert_occurrences_at_least "$propose_template" 'Only \`ESCALATE\` pauses for user input' 2
+assert_file_in_order "$propose_template" \
+  'Objective: the authorized outcome.' \
+  'Scope: the allowed repositories, changes, files, and systems.' \
+  'Constraints: the binding process, architecture, safety, and platform rules.' \
+  'Authorized effects: the writes and side effects allowed to the controller.' \
+  'Terminal condition: the state at which this workflow must stop.' \
+  'candidate producer identity' \
+  'candidate artifacts, action, or diff' \
+  'verification evidence' \
+  'assumptions and risks'
+assert_file_in_order "$propose_template" \
+  'reviewer fails to start, times out, crashes, or returns an invalid verdict' \
+  'reuse the unchanged review package' \
+  'at most two new independent review agents' \
+  'collected infrastructure evidence' \
+  'never infer \`APPROVE\`'
+assert_file_contains "$propose_template" 'The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.'
+assert_file_in_order "$propose_template" \
+  'Validate the current planning package before dispatching its reviewer.' \
+  'If validation fails, repair only the matching planning artifact type and rerun the same validation.' \
+  'Dispatch an independent review only after that planning validation passes.' \
+  'After all apply-required artifacts are complete, run \`openspec validate "<name>" --strict --no-interactive\` for the complete change' \
+  'If strict validation fails, repair the indicated proposal, design, specs, or tasks and rerun strict validation.' \
+  'Independently review every package changed by strict-validation repair before reporting the proposal apply-ready.'
 
 for skill_name in \
   openspec-apply-change \

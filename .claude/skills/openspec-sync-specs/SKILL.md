@@ -17,9 +17,18 @@ This is an **agent-driven** operation - you will read delta specs and directly e
 
 **Input**: Optionally specify a change name. Auto-select if only one active change exists. When multiple active changes remain equally plausible after checking conversation and repository evidence, present those candidates for one substantive selection.
 
-**Review protocol:** A sync request authorizes updates to the named change's corresponding main specs, but not archive, commit, push, or release. Use `Task` for an independent review agent different from the plan or sync-result producer. Provide the objective and authorized scope, change identity, delta and main specs, proposed plan or diff, validation evidence, preservation checks, assumptions, and risks. Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE`. A plan `APPROVE` authorizes applying that reviewed plan; a result `APPROVE` continues to the completion summary and leaves the change active. A `REVISE` repairs and revalidates only the current sync plan or result before a fresh review. Only `ESCALATE` pauses for user input, and only for an equally plausible change selection, an unresolved content-preservation risk, missing authorization, a conflicting rule, or an unavailable required capability.
+**Review protocol:** A sync request authorizes updates to the named change's corresponding main specs, but not archive, commit, push, or release. Use `Task` for an independent reviewer different from the plan or sync-result producer. Every review package contains:
 
-For either review, if the independent review agent fails to start, times out, crashes, or returns an invalid verdict, reuse the same review package and dispatch a new independent review agent, with at most two new independent review agents. If both retries fail, return `ESCALATE` with the collected infrastructure evidence; never infer `APPROVE`.
+- Objective: the authorized outcome.
+- Scope: the allowed repositories, changes, files, and systems.
+- Constraints: the binding process, architecture, safety, and platform rules.
+- Authorized effects: the writes and side effects allowed to the controller.
+- Terminal condition: the state at which this workflow must stop.
+- The change identity, delta and main specs, candidate producer identity, candidate artifacts, action, or diff, verification evidence, preservation checks, assumptions and risks.
+
+Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE`. A plan `APPROVE` authorizes applying that reviewed plan; a result `APPROVE` continues to the completion summary and leaves the change active. A `REVISE` repairs and revalidates only the current sync plan or result before a fresh review. Only `ESCALATE` pauses for user input, and only for an equally plausible change selection, an unresolved content-preservation risk, missing authorization, a conflicting rule, or an unavailable required capability.
+
+For either review, if the reviewer fails to start, times out, crashes, or returns an invalid verdict, reuse the unchanged review package with at most two new independent review agents. If both retries fail, return `ESCALATE` with the collected infrastructure evidence; never infer `APPROVE`. The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.
 
 **Steps**
 

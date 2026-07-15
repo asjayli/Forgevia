@@ -15,6 +15,17 @@ Implement tasks from an OpenSpec change.
 
 **Input**: Optionally specify a change name. If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
+**Independent review contract:** Every task and full-branch reviewer receives the same structured fields:
+
+- Objective: the authorized outcome.
+- Scope: the allowed repositories, changes, files, and systems.
+- Constraints: the binding process, architecture, safety, and platform rules.
+- Authorized effects: the writes and side effects allowed to the controller.
+- Terminal condition: the state at which this workflow must stop.
+- The candidate producer identity, candidate artifacts, action, or diff, verification evidence, assumptions and risks.
+
+If a reviewer fails to start, times out, crashes, or returns an invalid verdict, reuse the unchanged review package with at most two new independent review agents. If both retries fail, return `ESCALATE` with the collected infrastructure evidence; never infer `APPROVE`. The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.
+
 **Steps**
 
 1. **Select the change**
@@ -49,7 +60,7 @@ Implement tasks from an OpenSpec change.
 
    **Handle states:**
    - If `state: "blocked"` (missing artifacts): show message, suggest using openspec-continue-change
-   - If `state: "all_done"`: congratulate, suggest archive
+   - When apply instructions report `state: "all_done"`, resume at integration and global verification; do not congratulate, suggest archive, or report completion yet.
    - Otherwise: proceed to implementation
 
 4. **Read context files**
@@ -82,12 +93,18 @@ Implement tasks from an OpenSpec change.
 
    Only `ESCALATE` pauses for user input. Use it only for a critical ambiguity that cannot be reasonably inferred, a required scope or authorization expansion, a conflicting rule, an unavailable required capability, or a repair loop with no verifiable progress. The user may also interrupt explicitly.
 
-7. **On completion or escalation, show status**
+7. **Run final integration verification and full-branch review**
+
+   Complete every task and its task-level review. Run integration and global verification across the complete implementation. Build a commit-bounded full-branch review package covering the complete implementation range, or a WORKTREE package when commit authorization or branch policy left changes uncommitted. Dispatch a fresh full-branch reviewer that is independent from every candidate producer. Only a final `APPROVE` may produce `Implementation Complete`.
+
+   A final `REVISE` with repair authorization dispatches implementation repair. Rerun integration and global verification. Build a fresh full-branch package and dispatch a fresh independent full-branch reviewer. Without repair authorization, return the findings unchanged. A final `ESCALATE` is limited to the substantive boundaries in the independent review contract.
+
+8. **On completion or escalation, show status**
 
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - If all done: suggest archive
+   - If all done and the final review approved: report completion and keep the change active
    - If escalated: report the consolidated decision request and its evidence
 
 **Output During Implementation**
@@ -118,7 +135,7 @@ Working on task 4/7: <task description>
 - [x] Task 2
 ...
 
-All tasks complete! Ready to archive this change.
+All tasks and final integration review complete. The change remains active.
 ```
 
 **Output On Escalation (User Decision Required)**

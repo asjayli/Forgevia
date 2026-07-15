@@ -53,7 +53,7 @@ digraph process {
         "Dispatch implementer subagent (./implementer-prompt.md)" [shape=box];
         "Implementer subagent asks questions?" [shape=diamond];
         "Answer questions, provide context" [shape=box];
-        "Implementer subagent implements, tests, commits, self-reviews" [shape=box];
+        "Implementer subagent implements, tests, conditionally commits, self-reviews" [shape=box];
         "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)" [shape=box];
         "Task reviewer verdict?" [shape=diamond];
         "Repair authorized?" [shape=diamond];
@@ -69,14 +69,17 @@ digraph process {
     "Final reviewer verdict?" [shape=diamond];
     "Final repair authorized?" [shape=diamond];
     "Dispatch one final fix subagent" [shape=box];
-    "Use superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
+    "Read objective authorization envelope" [shape=box];
+    "Branch-finishing effects explicitly authorized?" [shape=diamond];
+    "Return completion summary; keep change active" [shape=box style=filled fillcolor=lightgreen];
+    "Invoke finishing-a-development-branch only for explicitly authorized effects" [shape=box style=filled fillcolor=lightgreen];
 
     "Read plan, note context and global constraints, create todos" -> "Dispatch implementer subagent (./implementer-prompt.md)";
     "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
     "Answer questions, provide context" -> "Dispatch implementer subagent (./implementer-prompt.md)";
-    "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, commits, self-reviews" [label="no"];
-    "Implementer subagent implements, tests, commits, self-reviews" -> "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)";
+    "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, conditionally commits, self-reviews" [label="no"];
+    "Implementer subagent implements, tests, conditionally commits, self-reviews" -> "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)";
     "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)" -> "Task reviewer verdict?";
     "Task reviewer verdict?" -> "Repair authorized?" [label="REVISE"];
     "Repair authorized?" -> "Dispatch fix subagent for Critical/Important findings" [label="yes"];
@@ -88,7 +91,10 @@ digraph process {
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
     "More tasks remain?" -> "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" [label="no"];
     "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" -> "Final reviewer verdict?";
-    "Final reviewer verdict?" -> "Use superpowers:finishing-a-development-branch" [label="APPROVE"];
+    "Final reviewer verdict?" -> "Read objective authorization envelope" [label="APPROVE"];
+    "Read objective authorization envelope" -> "Branch-finishing effects explicitly authorized?";
+    "Branch-finishing effects explicitly authorized?" -> "Invoke finishing-a-development-branch only for explicitly authorized effects" [label="yes"];
+    "Branch-finishing effects explicitly authorized?" -> "Return completion summary; keep change active" [label="no"];
     "Final reviewer verdict?" -> "Final repair authorized?" [label="REVISE"];
     "Final reviewer verdict?" -> "Escalate with evidence" [label="ESCALATE"];
     "Final repair authorized?" -> "Dispatch one final fix subagent" [label="yes"];
@@ -106,6 +112,8 @@ digraph process {
 Ordinary errors and the first failing check are diagnostic inputs. Diagnose and repair them within scope, then run targeted verification. Escalate the same substantive issue only after three consecutive repair cycles make no verified progress; progress means fewer Important/Critical findings, fewer failing checks, or an unblocked dependency. Explanations, repeated commands, and unrelated diffs do not count.
 
 If a reviewer fails to start, times out, crashes, or returns an invalid verdict, use the unchanged review package with a fresh independent reviewer for at most two infrastructure retries. If both retries fail, `ESCALATE` once with the collected infrastructure evidence; never infer `APPROVE`.
+
+After final `APPROVE`, read the authorization envelope. Forgevia implement and a complete Forgevia workflow default to a completion summary with the change active. Invoke `finishing-a-development-branch` only when the envelope separately and explicitly authorizes the relevant merge, push, or cleanup effects.
 
 ## Pre-Flight Plan Review
 
@@ -162,7 +170,7 @@ that implementer. Single-file mechanical fixes also take the cheapest tier.
 
 Implementer subagents report one of four statuses. Handle each appropriately:
 
-**DONE:** Generate the review package (`scripts/review-package BASE HEAD`, from this skill's directory — it prints the unique file path it wrote; BASE is the commit you recorded before dispatching the implementer — never `HEAD~1`, which silently drops all but the last commit of a multi-commit task), then dispatch the task reviewer with the printed path.
+**DONE:** Generate the review package from this skill's directory, then dispatch the task reviewer with the printed path. If the task created authorized commits, run `scripts/review-package BASE HEAD`. If commit authorization or branch policy kept the task uncommitted, run `scripts/review-package BASE WORKTREE`; that mode includes committed, staged, unstaged, and untracked task changes in a unique package. BASE is the commit recorded before dispatch — never `HEAD~1`, which silently drops earlier task changes.
 
 **DONE_WITH_CONCERNS:** The implementer completed the work but flagged doubts. Read the concerns before proceeding. If the concerns are about correctness or scope, address them before review. If they're observations (e.g., "this file is getting large"), note them and proceed to review.
 
@@ -208,8 +216,11 @@ final whole-branch review. When you fill a reviewer template:
   test hygiene, review method) — the constraints block is for what THIS
   project's spec demands.
 - Pass an explicit objective authorization envelope containing objective, scope, constraints, authorized effects, and terminal condition to every task and final reviewer.
+- Pass the five authorization-envelope fields to every implementer and fix dispatch, not only to reviewers.
 - Hand the reviewer its diff as a file: run this skill's
-  `scripts/review-package BASE HEAD` and pass the reviewer the file path
+  `scripts/review-package BASE HEAD` for committed work or
+  `scripts/review-package BASE WORKTREE` when commits were not authorized,
+  then pass the reviewer the file path
   it prints (or, without bash: `git log --oneline`, `git diff --stat`,
   and `git diff -U10` for the range, redirected to one uniquely named
   file). The output never enters your own context, and the reviewer sees
@@ -233,7 +244,8 @@ final whole-branch review. When you fill a reviewer template:
   Do not dismiss the finding because the plan mandates it, and do not
   dispatch a fix that contradicts the plan without asking.
 - The final whole-branch review gets a package too: run
-  `scripts/review-package MERGE_BASE HEAD` (MERGE_BASE = the commit the
+  `scripts/review-package MERGE_BASE HEAD`, or use `WORKTREE` instead of HEAD
+  when authorized changes remain uncommitted (MERGE_BASE = the commit the
   branch started from, e.g. `git merge-base main HEAD`) and include the
   printed path and the objective authorization envelope in the final review
   dispatch, so the final reviewer reads one file instead of re-deriving the
@@ -297,8 +309,10 @@ a ledger file, not only in todos.
   evidence. Escalate when an external or irreversible side effect cannot be
   determined safely; never guess or replay it blindly.
 - When a task's review comes back clean, append one line to the ledger in
-  the same message as your other bookkeeping:
-  `Task N: complete (commits <base7>..<head7>, review clean)`.
+  the same message as your other bookkeeping. Use
+  `Task N: complete (commits <base7>..<head7>, review clean)` for committed
+  work, or name the unique WORKTREE review package when commits were not
+  authorized.
 - The ledger is one recovery map: verify that its named commits exist and
   match the task diff and review evidence after compaction. Do not prefer it
   over conflicting tasks or Git facts.
@@ -432,7 +446,7 @@ Done!
   dispatch prompt ("treat it as Minor at most") — the plan's example code is
   a starting point, not evidence that its weaknesses were chosen
 - Dispatch a task reviewer without a diff file — generate it first
-  (`scripts/review-package BASE HEAD`) and name the printed path in the
+  (`scripts/review-package BASE HEAD` or `BASE WORKTREE`) and name the printed path in the
   prompt
 - Move to next task while the review has open Critical/Important issues
 - Re-dispatch a task the progress ledger already marks complete — check
@@ -463,7 +477,7 @@ Done!
 - **superpowers:using-git-worktrees** - Ensures isolated workspace (creates one or verifies existing)
 - **superpowers:writing-plans** - Creates the plan this skill executes
 - **superpowers:requesting-code-review** - Code review template for the final whole-branch review
-- **superpowers:finishing-a-development-branch** - Complete development after all tasks
+- **superpowers:finishing-a-development-branch** - Perform only explicitly authorized branch-finishing effects after final review
 
 **Subagents should use:**
 - **superpowers:test-driven-development** - Subagents follow TDD for each task

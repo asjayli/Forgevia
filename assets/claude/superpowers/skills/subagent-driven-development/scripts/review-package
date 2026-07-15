@@ -4,13 +4,14 @@
 # call. Using the recorded per-task BASE (not HEAD~1) keeps multi-commit
 # tasks intact.
 #
-# Usage: review-package BASE HEAD [OUTFILE]
+# Usage: review-package BASE HEAD|WORKTREE [OUTFILE]
 # Default OUTFILE: <repo-root>/.superpowers/sdd/review-<base7>..<head7>.diff
-# (named per range, so a re-review after fixes gets a distinct fresh file).
+# WORKTREE packages use a unique generated suffix and include committed,
+# staged, unstaged, and untracked task changes.
 set -euo pipefail
 
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
-  echo "usage: review-package BASE HEAD [OUTFILE]" >&2
+  echo "usage: review-package BASE HEAD|WORKTREE [OUTFILE]" >&2
   exit 2
 fi
 
@@ -18,27 +19,67 @@ base=$1
 head=$2
 
 git rev-parse --verify --quiet "$base" >/dev/null || { echo "bad BASE: $base" >&2; exit 2; }
-git rev-parse --verify --quiet "$head" >/dev/null || { echo "bad HEAD: $head" >&2; exit 2; }
-
-if [ $# -eq 3 ]; then
-  out=$3
-else
-  dir=$("$(cd "$(dirname "$0")" && pwd)/sdd-workspace")
-  out="$dir/review-$(git rev-parse --short "$base")..$(git rev-parse --short "$head").diff"
+if [ "$head" != "WORKTREE" ]; then
+  git rev-parse --verify --quiet "$head" >/dev/null || { echo "bad HEAD: $head" >&2; exit 2; }
 fi
 
-{
-  echo "# Review package: ${base}..${head}"
-  echo
-  echo "## Commits"
-  git log --oneline "${base}..${head}"
-  echo
-  echo "## Files changed"
-  git diff --stat "${base}..${head}"
-  echo
-  echo "## Diff"
-  git diff -U10 "${base}..${head}"
-} > "$out"
+repo_root=$(git rev-parse --show-toplevel)
+if [ $# -eq 3 ]; then
+  case $3 in
+    /*) out=$3 ;;
+    *) out="$(pwd)/$3" ;;
+  esac
+else
+  dir=$("$(cd "$(dirname "$0")" && pwd)/sdd-workspace")
+  if [ "$head" = "WORKTREE" ]; then
+    out=$(mktemp "$dir/review-$(git rev-parse --short "$base")..worktree.XXXXXX")
+  else
+    out="$dir/review-$(git rev-parse --short "$base")..$(git rev-parse --short "$head").diff"
+  fi
+fi
 
-commits=$(git rev-list --count "${base}..${head}")
-echo "wrote ${out}: ${commits} commit(s), $(wc -c < "$out" | tr -d ' ') bytes"
+cd "$repo_root"
+
+if [ "$head" = "WORKTREE" ]; then
+  {
+    echo "# Review package: ${base}..WORKTREE"
+    echo
+    echo "## Commits"
+    git log --oneline "${base}..HEAD"
+    echo
+    echo "## Files changed"
+    git diff --stat "$base"
+    git ls-files --others --exclude-standard | sed 's/$/ (untracked)/'
+    echo
+    echo "## Diff"
+    git diff -U10 "$base"
+    while IFS= read -r -d '' file; do
+      echo
+      git diff --no-index -U10 -- /dev/null "$file" || {
+        status=$?
+        [ "$status" -eq 1 ] || exit "$status"
+      }
+    done < <(git ls-files --others --exclude-standard -z)
+  } > "$out"
+else
+  {
+    echo "# Review package: ${base}..${head}"
+    echo
+    echo "## Commits"
+    git log --oneline "${base}..${head}"
+    echo
+    echo "## Files changed"
+    git diff --stat "${base}..${head}"
+    echo
+    echo "## Diff"
+    git diff -U10 "${base}..${head}"
+  } > "$out"
+fi
+
+if [ "$head" = "WORKTREE" ]; then
+  commits=$(git rev-list --count "${base}..HEAD")
+  echo "wrote ${out}: ${commits} commit(s) + worktree, $(wc -c < "$out" | tr -d ' ') bytes"
+else
+  commits=$(git rev-list --count "${base}..${head}")
+  echo "wrote ${out}: ${commits} commit(s), $(wc -c < "$out" | tr -d ' ') bytes"
+fi
