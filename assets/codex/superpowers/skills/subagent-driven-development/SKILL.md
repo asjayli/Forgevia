@@ -98,6 +98,10 @@ conflicts that only emerge from implementation.
 
 ## Model Selection
 
+Apply this section only when the subagent interface exposes model selection.
+If it does not expose model selection, use the available interface and skip
+the role-based model directives below.
+
 Use the least powerful model that can handle each role to conserve cost and increase speed.
 
 **Mechanical implementation tasks** (isolated functions, clear specs, 1-2 files): use a fast, cheap model. Most implementation tasks are mechanical when the plan is well-specified.
@@ -112,9 +116,9 @@ capable available model, not the session default.
 diff's size, complexity, and risk. A small mechanical diff does not need the
 most capable model; a subtle concurrency change does.
 
-**Always specify the model explicitly when dispatching a subagent.** An
-omitted model inherits your session's model — often the most capable and
-most expensive — which silently defeats this section.
+**When the platform supports model selection, specify the model explicitly
+when dispatching a subagent.** Otherwise use the available subagent interface
+without inventing unsupported parameters.
 
 **Turn count beats token price.** Wall-clock and context cost scale with how
 many turns a subagent takes, and the cheapest models routinely take 2-3× the
@@ -141,11 +145,11 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 
 **BLOCKED:** The implementer cannot complete the task. Assess the blocker:
 1. If it's a context problem, provide more context and re-dispatch with the same model
-2. If the task requires more reasoning, re-dispatch with a more capable model
+2. If the task requires more reasoning, provide more context or break it into smaller pieces; when supported, use a more capable model
 3. If the task is too large, break it into smaller pieces
 4. If the plan itself is wrong, escalate to the human
 
-**Never** ignore an escalation or force the same model to retry without changes. If the implementer said it's stuck, something needs to change.
+**Never** ignore an escalation or retry with the same inputs and setup. If the implementer said it's stuck, something needs to change.
 
 ## Handling Reviewer ⚠️ Items
 

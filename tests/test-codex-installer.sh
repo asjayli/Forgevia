@@ -53,6 +53,13 @@ test_file_exists "$MANIFEST"
 test_file_exists "$INSTALLER"
 test_file_exists "$DOCTOR"
 
+manifest_skill_sources="$(node -e 'const m=require(process.argv[1]); console.log(m.managedAssets.filter(a => a.kind === "skill-directory" && a.source.startsWith("assets/codex/skills/")).map(a => a.source).sort().join("\n"))' "$MANIFEST")"
+scanned_skill_sources="$(find "$ROOT_DIR/assets/codex/skills" -mindepth 1 -maxdepth 1 -type d -printf 'assets/codex/skills/%f\n' | sort)"
+if [[ "$manifest_skill_sources" != "$scanned_skill_sources" ]]; then
+  echo "Codex manifest skill assets do not match assets/codex/skills" >&2
+  exit 1
+fi
+
 installer_help="$("$INSTALLER" --help)"
 doctor_help="$("$DOCTOR" --help)"
 
@@ -109,6 +116,14 @@ test_file_exists "$CODEX_HOME/skills/openspec-propose/SKILL.md"
 test_file_exists "$CODEX_HOME/skills/openspec-apply-change/SKILL.md"
 test_file_exists "$CODEX_HOME/skills/openspec-archive-change/SKILL.md"
 test_file_exists "$CODEX_HOME/skills/openspec-explore/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/openspec-sync-specs/SKILL.md"
+
+for skill_name in openspec-propose openspec-apply-change openspec-archive-change openspec-explore openspec-sync-specs; do
+  cmp "$ROOT_DIR/assets/codex/skills/$skill_name/SKILL.md" "$CODEX_HOME/skills/$skill_name/SKILL.md"
+  assert_contains "$(<"$CODEX_HOME/skills/$skill_name/SKILL.md")" 'generatedBy: "1.5.0"'
+done
+
+assert_contains "$(<"$MANIFEST")" '"id": "openspec-sync-specs-skill"'
 
 # Superpowers overrides: whole-directory overlays (subagent-driven-development,
 # requesting-code-review) must land their extra files alongside SKILL.md, and
@@ -146,6 +161,7 @@ assert_contains "$doctor_output" "$OPENSPEC_ROOT/dist/core/config-prompts.js"
 assert_contains "$doctor_output" "$OPENSPEC_ROOT/dist/core/templates/workflows/propose.js"
 assert_contains "$doctor_output" "$CODEX_HOME/skills/openspec-propose"
 assert_contains "$doctor_output" "$CODEX_HOME/skills/openspec-apply-change"
+assert_contains "$doctor_output" "$CODEX_HOME/skills/openspec-sync-specs"
 
 expected_openspec_config="$(cat "$ROOT_DIR/assets/openspec/dist/core/config-prompts.js")"
 actual_openspec_config="$(cat "$OPENSPEC_ROOT/dist/core/config-prompts.js")"
@@ -156,7 +172,7 @@ assert_contains "$actual_openspec_propose" "$expected_openspec_propose"
 expected_openspec_propose_skill="$(cat "$ROOT_DIR/assets/codex/skills/openspec-propose/SKILL.md")"
 actual_openspec_propose_skill="$(cat "$CODEX_HOME/skills/openspec-propose/SKILL.md")"
 assert_contains "$actual_openspec_propose_skill" "$expected_openspec_propose_skill"
-assert_contains "$actual_openspec_propose_skill" "invoke the openspec-apply-change skill"
+assert_contains "$actual_openspec_propose_skill" "Use Forgevia Implement"
 assert_contains "$actual_openspec_propose" "Use Forgevia Implement to start implementation."
 
 echo "drift" >> "$CODEX_HOME/superpowers/skills/brainstorming/SKILL.md"

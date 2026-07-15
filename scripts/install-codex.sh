@@ -152,6 +152,7 @@ overlay_assets() {
   sync_path "$ASSETS_DIR/skills/openspec-apply-change" "$CODEX_ROOT/skills/openspec-apply-change"
   sync_path "$ASSETS_DIR/skills/openspec-archive-change" "$CODEX_ROOT/skills/openspec-archive-change"
   sync_path "$ASSETS_DIR/skills/openspec-explore" "$CODEX_ROOT/skills/openspec-explore"
+  sync_path "$ASSETS_DIR/skills/openspec-sync-specs" "$CODEX_ROOT/skills/openspec-sync-specs"
   sync_path "$ASSETS_DIR/skills/forgevia" "$CODEX_ROOT/skills/forgevia"
   sync_path "$ASSETS_DIR/skills/forgevia-init" "$CODEX_ROOT/skills/forgevia-init"
   sync_path "$ASSETS_DIR/skills/forgevia-doctor" "$CODEX_ROOT/skills/forgevia-doctor"

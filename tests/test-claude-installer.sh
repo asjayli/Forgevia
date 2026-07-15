@@ -44,6 +44,13 @@ test_file_exists "$MANIFEST"
 test_file_exists "$INSTALLER"
 test_file_exists "$DOCTOR"
 
+manifest_skill_sources="$(node -e 'const m=require(process.argv[1]); console.log(m.managedAssets.filter(a => a.kind === "skill-directory" && a.source.startsWith(".claude/skills/")).map(a => a.source).sort().join("\n"))' "$MANIFEST")"
+scanned_skill_sources="$(find "$ROOT_DIR/.claude/skills" -mindepth 1 -maxdepth 1 -type d -printf '.claude/skills/%f\n' | sort)"
+if [[ "$manifest_skill_sources" != "$scanned_skill_sources" ]]; then
+  echo "Claude manifest skill assets do not match .claude/skills" >&2
+  exit 1
+fi
+
 installer_help="$("$INSTALLER" --help)"
 doctor_help="$("$DOCTOR" --help)"
 assert_contains "$installer_help" "Install Forgevia Claude assets"
@@ -114,6 +121,7 @@ test_path_not_exists "$OPENSPEC_ROOT/dist/core/templates/workflows/propose.js.fo
 test_file_exists "$CLAUDE_HOME/skills/forgevia-think/SKILL.md"
 test_file_exists "$CLAUDE_HOME/skills/forgevia/SKILL.md"
 test_file_exists "$CLAUDE_HOME/skills/openspec-propose/SKILL.md"
+test_file_exists "$CLAUDE_HOME/skills/openspec-sync-specs/SKILL.md"
 test_file_exists "$CLAUDE_HOME/skills/mermaid-diagram-specialist/SKILL.md"
 test_file_exists "$CLAUDE_HOME/skills/playwright-interactive/SKILL.md"
 test_file_exists "$CLAUDE_HOME/commands/opsx/propose.md"
@@ -166,6 +174,7 @@ assert_contains "$actual_sdd" "$expected_sdd"
 expected_command="$(cat "$ROOT_DIR/.claude/commands/opsx/propose.md")"
 actual_command="$(cat "$CLAUDE_HOME/commands/opsx/propose.md")"
 assert_contains "$actual_command" "$expected_command"
+assert_contains "$(<"$MANIFEST")" '"id": "openspec-sync-specs-skill"'
 expected_openspec_config="$(cat "$ROOT_DIR/assets/openspec/dist/core/config-prompts.js")"
 actual_openspec_config="$(cat "$OPENSPEC_ROOT/dist/core/config-prompts.js")"
 assert_contains "$actual_openspec_config" "$expected_openspec_config"

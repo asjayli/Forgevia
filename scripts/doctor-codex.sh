@@ -186,6 +186,7 @@ main() {
     "$ASSETS_DIR/skills/openspec-apply-change::$CODEX_ROOT/skills/openspec-apply-change" \
     "$ASSETS_DIR/skills/openspec-archive-change::$CODEX_ROOT/skills/openspec-archive-change" \
     "$ASSETS_DIR/skills/openspec-explore::$CODEX_ROOT/skills/openspec-explore" \
+    "$ASSETS_DIR/skills/openspec-sync-specs::$CODEX_ROOT/skills/openspec-sync-specs" \
     "$ASSETS_DIR/skills/forgevia::$CODEX_ROOT/skills/forgevia" \
     "$ASSETS_DIR/skills/forgevia-init::$CODEX_ROOT/skills/forgevia-init" \
     "$ASSETS_DIR/skills/forgevia-doctor::$CODEX_ROOT/skills/forgevia-doctor" \
