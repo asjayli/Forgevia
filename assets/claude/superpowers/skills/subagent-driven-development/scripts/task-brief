@@ -13,6 +13,53 @@
 # (per worktree; concurrent runs in the same working tree share it).
 set -euo pipefail
 
+repo_root=$(git rev-parse --show-toplevel)
+
+is_inside() {
+  local child="$1"
+  local parent="$2"
+  case "$child" in
+    "$parent"|"$parent"/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+resolve_outfile() {
+  local raw="$1"
+  local out_dir
+  local real_out
+
+  case "$raw" in
+    /*) ;;
+    *) raw="$(pwd)/$raw" ;;
+  esac
+
+  out_dir=$(dirname "$raw")
+  if [ ! -d "$out_dir" ]; then
+    echo "missing OUTFILE directory: $out_dir" >&2
+    return 1
+  fi
+
+  if [ -L "$raw" ] || [ -L "$out_dir" ]; then
+    echo "OUTFILE path must not contain symlinks: $raw" >&2
+    return 1
+  fi
+
+  real_out=$(cd "$out_dir" && pwd -P)/$(basename "$raw")
+
+  if ! is_inside "$real_out" "$repo_root"; then
+    echo "OUTFILE must be inside the repository: $real_out" >&2
+    return 1
+  fi
+
+  if [ -L "$real_out" ]; then
+    echo "OUTFILE must not be a symlink: $real_out" >&2
+    return 1
+  fi
+
+  printf '%s' "$real_out"
+}
+
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
   echo "usage: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]" >&2
   exit 2
@@ -23,11 +70,17 @@ n=$2
 [ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
 
 if [ $# -eq 3 ]; then
-  out=$3
+  out=$(resolve_outfile "$3") || exit 2
 else
   dir=$("$(cd "$(dirname "$0")" && pwd)/sdd-workspace")
   out="$dir/task-${n}-brief.md"
 fi
+
+out_dir=$(dirname "$out")
+[ -d "$out_dir" ] || { echo "missing OUTFILE directory: $out_dir" >&2; exit 2; }
+
+tmp_out=$(mktemp "$out_dir/.task-brief.XXXXXX")
+trap 'rm -f "$tmp_out"' EXIT
 
 awk -v n="$n" '
   /^```/ { infence = !infence }
@@ -35,11 +88,14 @@ awk -v n="$n" '
     intask = ($0 ~ ("^#+[ \t]+" n "[ \t]*[.]"))
   }
   intask { print }
-' "$plan" > "$out"
+' "$plan" > "$tmp_out"
 
-if [ ! -s "$out" ]; then
+if [ ! -s "$tmp_out" ]; then
   echo "task group ${n} not found in ${plan} (no heading matching '${n}. <Group>')" >&2
   exit 3
 fi
+
+mv -f "$tmp_out" "$out"
+trap - EXIT
 
 echo "wrote ${out}: $(wc -l < "$out" | tr -d ' ') lines"

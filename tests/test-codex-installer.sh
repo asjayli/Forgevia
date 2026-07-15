@@ -241,4 +241,21 @@ assert_contains "$command_repair_output" "$CODEX_HOME/forgevia/bin/forgevia"
 test_file_executable "$CODEX_HOME/forgevia/bin/forgevia"
 cmp "$ROOT_DIR/scripts/forgevia.sh" "$CODEX_HOME/forgevia/bin/forgevia"
 
+bad_root_dir="$(mktemp -d)"
+trap 'rm -rf "$tmp_dir" "$bad_root_dir"' EXIT
+
+set +e
+bad_root_output="$(CODEX_HOME="$bad_root_dir" "$INSTALLER" 2>&1)"
+bad_root_status=$?
+set -e
+assert_exit_code "$bad_root_status" "1"
+assert_contains "$bad_root_output" "must end with .codex"
+
+set +e
+bad_openspec_output="$(CODEX_HOME="$CODEX_HOME" OPENSPEC_ROOT=/ "$INSTALLER" 2>&1)"
+bad_openspec_status=$?
+set -e
+assert_exit_code "$bad_openspec_status" "1"
+assert_contains "$bad_openspec_output" "root path must not be /"
+
 echo "codex installer smoke test passed"

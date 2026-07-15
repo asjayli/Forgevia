@@ -65,13 +65,16 @@ print_status() {
 
 resolve_openspec_root() {
   if [[ -n "$OPENSPEC_ROOT" ]]; then
+    validate_root "$OPENSPEC_ROOT" ""
     echo "$OPENSPEC_ROOT"
     return
   fi
 
   local npm_global_root
   npm_global_root="$(npm root -g)"
-  echo "$npm_global_root/@fission-ai/openspec"
+  local resolved="$npm_global_root/@fission-ai/openspec"
+  validate_root "$resolved" "@fission-ai/openspec"
+  echo "$resolved"
 }
 
 read_openspec_version() {
@@ -88,8 +91,31 @@ openspec_version_matches() {
   [[ -z "$ver" || "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
 }
 
+validate_root() {
+  local root_path="$1"
+  local expected_suffix="$2"
+
+  if [[ -z "$root_path" ]]; then
+    echo "root path is empty" >&2
+    exit 1
+  fi
+  if [[ "$root_path" != /* ]]; then
+    echo "root path must be absolute: $root_path" >&2
+    exit 1
+  fi
+  if [[ "$root_path" == "/" ]]; then
+    echo "root path must not be /" >&2
+    exit 1
+  fi
+  if [[ -n "$expected_suffix" && "$root_path" != *"$expected_suffix" ]]; then
+    echo "root path must end with $expected_suffix: $root_path" >&2
+    exit 1
+  fi
+}
+
 resolve_superpowers_root() {
   if [[ -n "$CLAUDE_SUPERPOWERS_ROOT" ]]; then
+    validate_root "$CLAUDE_SUPERPOWERS_ROOT" ""
     echo "$CLAUDE_SUPERPOWERS_ROOT"
     return
   fi
@@ -229,6 +255,7 @@ main() {
   local managed_pairs=()
 
   echo "🔎 Forgevia Claude doctor"
+  validate_root "$CLAUDE_ROOT" ".claude"
   if [[ "$repair_requested" == "true" ]]; then
     echo "🛠️ Repairing drifted or missing assets"
   fi

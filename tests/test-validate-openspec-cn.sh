@@ -242,4 +242,26 @@ if compgen -G "$tmp_dir/staging/forgevia-openspec-cn-*" >/dev/null; then
   exit 1
 fi
 
+symlink_project="$tmp_dir/symlink"
+cp -R "$project_dir" "$symlink_project"
+target_file="$tmp_dir/target-spec.md"
+cp "$project_dir/openspec/specs/main/spec.md" "$target_file"
+rm -f "$symlink_project/openspec/specs/main/spec.md"
+ln -s "$target_file" "$symlink_project/openspec/specs/main/spec.md"
+
+set +e
+_symlink_output="$(TMPDIR="$tmp_dir/staging" PATH="$bin_dir:$PATH" node "$VALIDATOR" --root "$symlink_project" 2>&1)"
+symlink_status=$?
+set -e
+
+assert_exit_code "$symlink_status" "0"
+if [[ "$(cat "$target_file")" != *"系统必须保留中文正文"* ]] || [[ "$(cat "$target_file")" == *"^MUST "* ]]; then
+  echo "validator followed a symlink and modified a file outside openspec/" >&2
+  exit 1
+fi
+if grep -q '^MUST ' "$symlink_project/openspec/specs/main/spec.md"; then
+  echo "validator modified the source symlink file" >&2
+  exit 1
+fi
+
 echo "chinese OpenSpec validator test passed"
