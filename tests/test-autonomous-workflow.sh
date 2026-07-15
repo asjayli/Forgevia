@@ -219,6 +219,15 @@ openspec_sync_paths=(
 for path in "${openspec_sync_paths[@]}"; do
   assert_file_contains "$path" "Auto-select if only one active change exists"
   assert_file_contains "$path" "independent review"
+  assert_file_contains "$path" "Review the sync plan before editing main specs"
+  assert_file_contains "$path" "delta-to-target mapping, content preservation, applicability, and idempotency preconditions"
+  assert_file_contains "$path" 'If sync-plan validation fails or the plan review returns `REVISE`, repair the sync plan, rerun the same validation, and dispatch a fresh independent review'
+  assert_file_contains "$path" 'Apply changes only after the sync-plan review returns `APPROVE`'
+  assert_file_contains "$path" "If strict validation, idempotency, or content-preservation verification fails, repair the sync result, rerun the same failed validation, and only then dispatch the result review"
+  assert_file_contains "$path" "reuse the same review package"
+  assert_file_contains "$path" "at most two new independent review agents"
+  assert_file_contains "$path" "collected infrastructure evidence"
+  assert_file_contains "$path" 'never infer `APPROVE`'
   assert_file_contains "$path" '`APPROVE`'
   assert_file_contains "$path" '`REVISE`'
   assert_file_contains "$path" '`ESCALATE`'
