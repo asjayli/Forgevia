@@ -13,6 +13,28 @@ CODEX_IMPLEMENTER_PROMPT="$ROOT_DIR/assets/codex/superpowers/skills/subagent-dri
 CODEX_REVIEWER_PROMPT="$ROOT_DIR/assets/codex/superpowers/skills/subagent-driven-development/task-reviewer-prompt.md"
 CODEX_BRANCH_REVIEWER_PROMPT="$ROOT_DIR/assets/codex/superpowers/skills/requesting-code-review/code-reviewer.md"
 
+EXECUTING_PLAN_SKILLS=(
+  "$ROOT_DIR/assets/codex/superpowers/skills/executing-plans/SKILL.md"
+  "$ROOT_DIR/assets/claude/superpowers/skills/executing-plans/SKILL.md"
+)
+
+SDD_SKILLS=(
+  "$ROOT_DIR/assets/codex/superpowers/skills/subagent-driven-development/SKILL.md"
+  "$ROOT_DIR/assets/claude/superpowers/skills/subagent-driven-development/SKILL.md"
+)
+
+IMPLEMENTER_PROMPTS=(
+  "$ROOT_DIR/assets/codex/superpowers/skills/subagent-driven-development/implementer-prompt.md"
+  "$ROOT_DIR/assets/claude/superpowers/skills/subagent-driven-development/implementer-prompt.md"
+)
+
+REVIEWER_PROMPTS=(
+  "$ROOT_DIR/assets/codex/superpowers/skills/subagent-driven-development/task-reviewer-prompt.md"
+  "$ROOT_DIR/assets/claude/superpowers/skills/subagent-driven-development/task-reviewer-prompt.md"
+  "$ROOT_DIR/assets/codex/superpowers/skills/requesting-code-review/code-reviewer.md"
+  "$ROOT_DIR/assets/claude/superpowers/skills/requesting-code-review/code-reviewer.md"
+)
+
 assert_contains() {
   local haystack="$1"
   local needle="$2"
@@ -54,6 +76,46 @@ assert_not_contains "$(<"$CODEX_SDD_SKILL")" "Always specify the model explicitl
 assert_not_contains "$(<"$CODEX_IMPLEMENTER_PROMPT")" "model: [MODEL"
 assert_not_contains "$(<"$CODEX_REVIEWER_PROMPT")" "model: [MODEL"
 assert_not_contains "$(<"$CODEX_BRANCH_REVIEWER_PROMPT")" "model: [MODEL"
+
+for path in "${EXECUTING_PLAN_SKILLS[@]}"; do
+  contents="$(<"$path")"
+  assert_contains "$contents" '`APPROVE` immediately advances to the next dependency-ready task group'
+  assert_contains "$contents" 'Only after an `APPROVE` verdict, mark the task group complete'
+  assert_contains "$contents" '`REVISE` triggers repair only inside the active authorization envelope'
+  assert_contains "$contents" 'three consecutive repair cycles'
+  assert_contains "$contents" '`tasks.md`, Git history, and `.superpowers/sdd/progress.md`'
+  assert_not_contains "$contents" 'Ready for feedback.'
+  assert_not_contains "$contents" 'Between dependency checkpoints: just report and wait'
+  assert_not_contains "$contents" 'Verification fails repeatedly'
+done
+
+for path in "${SDD_SKILLS[@]}"; do
+  contents="$(<"$path")"
+  assert_contains "$contents" '`APPROVE` records progress and dispatches the next dependency-ready task group'
+  assert_contains "$contents" '`REVISE` triggers repair only inside the active authorization envelope'
+  assert_contains "$contents" 'standalone read-only run returns the findings without editing'
+  assert_contains "$contents" 'three consecutive repair cycles'
+  assert_contains "$contents" 'at most two infrastructure retries'
+  assert_contains "$contents" '`tasks.md`, Git history, and `.superpowers/sdd/progress.md`'
+  assert_not_contains "$contents" 'Dispatch fix subagents for Critical and Important findings.'
+done
+
+for path in "${IMPLEMENTER_PROMPTS[@]}"; do
+  contents="$(<"$path")"
+  assert_contains "$contents" 'first test failure'
+  assert_contains "$contents" 'active authorization envelope'
+  assert_contains "$contents" 'Only report `BLOCKED` or `NEEDS_CONTEXT`'
+  assert_not_contains "$contents" '**Ask them now.**'
+  assert_not_contains "$contents" "It's always OK to pause and clarify."
+done
+
+for path in "${REVIEWER_PROMPTS[@]}"; do
+  contents="$(<"$path")"
+  assert_contains "$contents" '**Verdict:** [APPROVE | REVISE | ESCALATE]'
+  assert_contains "$contents" '`REVISE` for actionable findings'
+  assert_contains "$contents" '`ESCALATE` only for a genuine plan conflict or missing authorization'
+  assert_not_contains "$contents" 'confirm whether the deviation was intentional'
+done
 
 repo_dir="$tmp_dir/repo"
 mkdir -p "$repo_dir"

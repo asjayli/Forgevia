@@ -14,7 +14,7 @@ Execute plan by dispatching a fresh implementer subagent per task, a task review
 **Narration:** between tool calls, narrate at most one short line — the
 ledger and the tool results carry the record.
 
-**Continuous execution:** Do not pause to check in with your human partner between tasks. Execute all tasks from the plan without stopping. The only reasons to stop are: BLOCKED status you cannot resolve, ambiguity that genuinely prevents progress, or all tasks complete. "Should I continue?" prompts and progress summaries waste their time — they asked you to execute the plan, so execute it.
+**Continuous execution:** The main agent remains the sole controller across implementation, review, repair, and the next dependency-ready task group. Progress updates never pause the run. Stop only at an `ESCALATE` boundary, explicit user interruption, or the authorized terminal state.
 
 ## When to Use
 
@@ -55,14 +55,20 @@ digraph process {
         "Answer questions, provide context" [shape=box];
         "Implementer subagent implements, tests, commits, self-reviews" [shape=box];
         "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)" [shape=box];
-        "Task reviewer reports spec ✅ and quality approved?" [shape=diamond];
+        "Task reviewer verdict?" [shape=diamond];
+        "Repair authorized?" [shape=diamond];
         "Dispatch fix subagent for Critical/Important findings" [shape=box];
+        "Return findings without editing" [shape=box];
+        "Escalate with evidence" [shape=box];
         "Mark task complete in todo list and progress ledger" [shape=box];
     }
 
     "Read plan, note context and global constraints, create todos" [shape=box];
     "More tasks remain?" [shape=diamond];
     "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" [shape=box];
+    "Final reviewer verdict?" [shape=diamond];
+    "Final repair authorized?" [shape=diamond];
+    "Dispatch one final fix subagent" [shape=box];
     "Use superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
 
     "Read plan, note context and global constraints, create todos" -> "Dispatch implementer subagent (./implementer-prompt.md)";
@@ -71,16 +77,35 @@ digraph process {
     "Answer questions, provide context" -> "Dispatch implementer subagent (./implementer-prompt.md)";
     "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, commits, self-reviews" [label="no"];
     "Implementer subagent implements, tests, commits, self-reviews" -> "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)";
-    "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)" -> "Task reviewer reports spec ✅ and quality approved?";
-    "Task reviewer reports spec ✅ and quality approved?" -> "Dispatch fix subagent for Critical/Important findings" [label="no"];
+    "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)" -> "Task reviewer verdict?";
+    "Task reviewer verdict?" -> "Repair authorized?" [label="REVISE"];
+    "Repair authorized?" -> "Dispatch fix subagent for Critical/Important findings" [label="yes"];
+    "Repair authorized?" -> "Return findings without editing" [label="no"];
+    "Task reviewer verdict?" -> "Escalate with evidence" [label="ESCALATE"];
     "Dispatch fix subagent for Critical/Important findings" -> "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)" [label="re-review"];
-    "Task reviewer reports spec ✅ and quality approved?" -> "Mark task complete in todo list and progress ledger" [label="yes"];
+    "Task reviewer verdict?" -> "Mark task complete in todo list and progress ledger" [label="APPROVE"];
     "Mark task complete in todo list and progress ledger" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
     "More tasks remain?" -> "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" [label="no"];
-    "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" -> "Use superpowers:finishing-a-development-branch";
+    "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" -> "Final reviewer verdict?";
+    "Final reviewer verdict?" -> "Use superpowers:finishing-a-development-branch" [label="APPROVE"];
+    "Final reviewer verdict?" -> "Final repair authorized?" [label="REVISE"];
+    "Final reviewer verdict?" -> "Escalate with evidence" [label="ESCALATE"];
+    "Final repair authorized?" -> "Dispatch one final fix subagent" [label="yes"];
+    "Final repair authorized?" -> "Return findings without editing" [label="no"];
+    "Dispatch one final fix subagent" -> "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" [label="re-review"];
 }
 ```
+
+## Controller Verdict Routing
+
+- `APPROVE` records progress and dispatches the next dependency-ready task group without requesting checkpoint feedback.
+- `REVISE` triggers repair only inside the active authorization envelope, followed by targeted verification and independent re-review. Without repair authorization, a standalone read-only run returns the findings without editing, updating task state, or converting them into a user decision request.
+- `ESCALATE` requests user input only for a genuine plan conflict, missing authorization, an unrecoverable uncertainty about side effects, or a repair loop that meets the no-progress boundary below.
+
+Ordinary errors and the first failing check are diagnostic inputs. Diagnose and repair them within scope, then run targeted verification. Escalate the same substantive issue only after three consecutive repair cycles make no verified progress; progress means fewer Important/Critical findings, fewer failing checks, or an unblocked dependency. Explanations, repeated commands, and unrelated diffs do not count.
+
+If a reviewer fails to start, times out, crashes, or returns an invalid verdict, use the unchanged review package with a fresh independent reviewer for at most two infrastructure retries. If both retries fail, `ESCALATE` once with the collected infrastructure evidence; never infer `APPROVE`.
 
 ## Pre-Flight Plan Review
 
@@ -195,10 +220,12 @@ final whole-branch review. When you fill a reviewer template:
   later dispatches — a real session's dispatch hit 42k chars of which 99%
   was pasted history. A fresh subagent needs its task, the interfaces it
   touches, and the global constraints. Nothing else.
-- Dispatch fix subagents for Critical and Important findings. Record Minor
-  findings in the progress ledger as you go, and point the final
-  whole-branch review at that list so it can triage which must be fixed
-  before merge. A roll-up nobody reads is a silent discard.
+- For a `REVISE` verdict, first classify every finding against the active
+  authorization envelope. Dispatch a fix subagent for authorized Critical and
+  Important findings. In a standalone read-only run, return all findings
+  without editing. Record Minor findings in the progress ledger only when the
+  run owns that ledger, and point the final whole-branch review at that list so
+  it can triage which must be fixed before merge.
 - A finding labeled plan-mandated — or any finding that conflicts with
   what the plan's text requires — is the human's decision, like any plan
   contradiction: present the finding and the plan text, ask which governs.
@@ -215,8 +242,9 @@ final whole-branch review. When you fill a reviewer template:
   whole suite. Before re-dispatching the reviewer, confirm the fix report
   contains the covering tests, the command run, and the output; dispatch
   the re-review once all three are present.
-- If the final whole-branch review returns findings, dispatch ONE fix
-  subagent with the complete findings list — not one fixer per finding.
+- If the final whole-branch review returns `REVISE` and repair is authorized,
+  dispatch ONE fix subagent with the complete findings list — not one fixer
+  per finding. Without repair authorization, return the findings unchanged.
   Per-finding fixers each rebuild context and re-run suites; a real
   session's final-review fix wave cost more than all its tasks combined.
 
@@ -254,7 +282,9 @@ controllers that lost their place have re-dispatched entire completed task
 sequences — the single most expensive failure observed. Track progress in
 a ledger file, not only in todos.
 
-- At skill start, check for a ledger in the SDD workspace (the directory
+- At skill start and after context compaction, rebuild the recovery view from
+  `tasks.md`, Git history, and `.superpowers/sdd/progress.md`. Check for the
+  ledger in the SDD workspace (the directory
   `scripts/sdd-workspace` resolves): `cat "$(git rev-parse --show-toplevel)/.superpowers/sdd/progress.md" 2>/dev/null`.
   An empty result means no ledger yet — start fresh. Tasks listed there
   as complete are DONE — do not re-dispatch them; resume at the first task
@@ -306,7 +336,7 @@ Implementer: "Got it. Implementing now..."
   - Committed
 
 [Run review-package, dispatch task reviewer with the printed path]
-Task reviewer: Spec ✅ - all requirements met, nothing extra.
+Task reviewer: Verdict: APPROVE. Spec ✅ - all requirements met, nothing extra.
   Strengths: Good test coverage, clean. Issues: None. Task quality: Approved.
 
 [Mark Task 1 complete]
@@ -323,7 +353,7 @@ Implementer:
   - Committed
 
 [Run review-package, dispatch task reviewer with the printed path]
-Task reviewer: Spec ❌:
+Task reviewer: Verdict: REVISE. Spec ❌:
   - Missing: Progress reporting (spec says "report every 100 items")
   - Extra: Added --json flag (not requested)
   Issues (Important): Magic number (100)
@@ -332,7 +362,7 @@ Task reviewer: Spec ❌:
 Fixer: Removed --json flag, added progress reporting, extracted PROGRESS_INTERVAL constant
 
 [Task reviewer reviews again]
-Task reviewer: Spec ✅. Task quality: Approved.
+Task reviewer: Verdict: APPROVE. Spec ✅. Task quality: Approved.
 
 [Mark Task 2 complete]
 
@@ -340,7 +370,7 @@ Task reviewer: Spec ✅. Task quality: Approved.
 
 [After all tasks]
 [Dispatch final code-reviewer]
-Final reviewer: All requirements met, ready to merge
+Final reviewer: Verdict: APPROVE. All requirements met, ready to merge
 
 Done!
 ```
@@ -351,7 +381,7 @@ Done!
 - Subagents follow TDD naturally
 - Fresh context per task (no confusion)
 - Parallel-safe (subagents don't interfere)
-- Subagent can ask questions (before AND during work)
+- Subagent can surface a genuine plan conflict or missing authorization
 
 **vs. Executing Plans:**
 - Same session (no handoff)
@@ -408,13 +438,16 @@ Done!
 - Don't rush them into implementation
 
 **If reviewer finds issues:**
-- Implementer (same subagent) fixes them
-- Reviewer reviews again
-- Repeat until approved
+- Route the verdict against the active authorization envelope
+- For authorized `REVISE`, an implementer fixes the findings and reports targeted tests
+- An independent reviewer reviews again
+- Repeat while verified progress continues; apply the three-cycle no-progress boundary
 - Don't skip the re-review
 
 **If subagent fails task:**
-- Dispatch fix subagent with specific instructions
+- Diagnose the failure and dispatch a fix subagent when repair is authorized
+- Return findings without editing when the run is standalone and read-only
+- Escalate only at a Controller Verdict Routing boundary
 - Don't try to fix manually (context pollution)
 
 ## Integration

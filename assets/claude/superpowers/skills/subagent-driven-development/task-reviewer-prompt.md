@@ -1,8 +1,8 @@
 # Task Reviewer Prompt Template
 
 Use this template when dispatching a task reviewer subagent. The reviewer
-reads the task's diff once and returns two verdicts: spec compliance and
-code quality.
+reads the task's diff once and returns one controller routing verdict plus
+spec-compliance and code-quality judgments.
 
 **Purpose:** Verify one task's implementation matches its requirements (nothing
 more, nothing less) and is well-built (clean, tested, maintainable)
@@ -75,6 +75,13 @@ Subagent (general-purpose):
     Warnings or other noise in the implementer's reported test output are
     findings — test output should be pristine.
 
+    ## Verdict Contract
+
+    Return exactly one controller verdict:
+    - `APPROVE` only when the task is spec compliant and has no blocking quality findings.
+    - `REVISE` for actionable findings that can be repaired without changing the plan or authorization envelope.
+    - `ESCALATE` only for a genuine plan conflict or missing authorization that prevents a safe repair. Ordinary defects and missing tests are `REVISE`, not requests for user confirmation.
+
     ## Part 1: Spec Compliance
 
     Compare the diff against What Was Requested:
@@ -116,7 +123,7 @@ Subagent (general-purpose):
     it needs.
 
     Your final message is the report itself: begin directly with the
-    spec-compliance verdict. Every line is a verdict, a finding with
+    controller verdict. Every line is a verdict, a finding with
     file:line, or a check you ran — no preamble, no process narration,
     no closing summary.
 
@@ -137,6 +144,8 @@ Subagent (general-purpose):
     helps the implementer trust the rest of the feedback.
 
     ## Output Format
+
+    **Verdict:** [APPROVE | REVISE | ESCALATE]
 
     ### Spec Compliance
 
@@ -181,8 +190,9 @@ Subagent (general-purpose):
   package to (`scripts/review-package BASE HEAD` prints the unique path it
   wrote; the package never enters the controller's context)
 
-**Reviewer returns:** Spec Compliance verdict (✅/❌/⚠️), Strengths, Issues
-(Critical/Important/Minor), Task quality verdict
+**Reviewer returns:** Controller verdict (`APPROVE`/`REVISE`/`ESCALATE`), Spec
+Compliance verdict (✅/❌/⚠️), Strengths, Issues (Critical/Important/Minor),
+and Task quality verdict.
 
 A fix dispatch can address spec gaps and quality findings together;
 re-review after fixes covers both verdicts.

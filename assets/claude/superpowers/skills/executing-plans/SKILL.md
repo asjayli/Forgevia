@@ -1,15 +1,15 @@
 ---
 name: executing-plans
-description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
+description: Use when you have a written implementation plan to execute in a separate session
 ---
 
 # Executing Plans
 
 ## Overview
 
-Load plan, review critically, execute OpenSpec tasks by dependency order, report between dependency checkpoints.
+Load the plan, review it critically, and execute OpenSpec task groups by dependency order without turning progress reports into feedback gates.
 
-**Core principle:** Dependency-aware execution with checkpoints for architect review.
+**Core principle:** Dependency-aware execution + independent review + continuous controller ownership.
 
 **Announce at start:** "I'm using the executing-plans skill to implement this plan."
 
@@ -22,8 +22,9 @@ Load plan, review critically, execute OpenSpec tasks by dependency order, report
 3. Parse task groups and dependencies from `Depends on:`
 4. Parse checklist items and classify TDD stage markers (`RED`, `GREEN`, `REFACTOR`) when present
    - If `Depends on:` is absent, execute groups in numeric order
-5. If concerns: Raise them with your human partner before starting
-6. If no concerns: Create todos for the plan items and proceed
+5. Resolve ordinary ambiguity from the plan, conversation, and repository evidence
+6. Escalate only a genuine plan conflict or missing decision/authorization that prevents safe execution
+7. Create todos for the plan items and proceed
 
 ### Step 2: Execute Dependency-Ready Group
 **Default: Execute the first group whose dependencies are complete**
@@ -36,23 +37,22 @@ For each task in the selected group:
    - Complete `GREEN` items next and verify passing tests
    - Complete `REFACTOR` items last and keep tests green
 4. Run verifications as specified
-5. Mark as completed
-6. Immediately sync `openspec/changes/<change-name>/tasks.md`:
-   - Check completed items (`[x]`)
-   - Add blocker note for unfinished blocked items
+5. Keep the task group in progress until independent review returns a valid verdict
 
-### Step 3: Report
-When a dependency-ready group is complete:
-- Show what was implemented
-- Show verification output
-- Say: "Ready for feedback."
+### Step 3: Review and Route
 
-### Step 4: Continue
-Based on feedback:
-- Apply changes if needed
-- Recompute dependency-ready groups
-- Execute next ready group
-- Repeat until complete
+After each task group, obtain an independent structured verdict and validate its evidence:
+
+- `APPROVE` immediately advances to the next dependency-ready task group after progress is recorded.
+- Only after an `APPROVE` verdict, mark the task group complete and sync its checked items to `openspec/changes/<change-name>/tasks.md` together with SDD progress.
+- `REVISE` triggers repair only inside the active authorization envelope, followed by targeted verification and independent re-review. Without repair authorization, return the findings without editing or converting them into a confirmation request.
+- `ESCALATE` pauses for user input only when the evidence identifies a genuine plan conflict, missing authorization, or an unrecoverable engineering blocker.
+
+Do not escalate an ordinary error or the first failing check. Diagnose it, repair it within scope, run targeted verification, and continue. Escalate a repair loop only after the same substantive issue has made no verified progress for three consecutive repair cycles; progress means fewer important findings, fewer failing checks, or an unblocked dependency.
+
+### Step 4: Report and Continue
+
+Report completed work and verification as non-blocking progress, recompute dependency-ready task groups, and continue until the plan is complete or the Step 3 `ESCALATE` boundary is met.
 
 ### Step 5: Complete Development
 
@@ -61,15 +61,12 @@ After all tasks complete and verified:
 - **REQUIRED SUB-SKILL:** Use superpowers:finishing-a-development-branch
 - Follow that skill to verify tests, present options, execute choice
 
-## When to Stop and Ask for Help
+## Recovery and Escalation Boundaries
 
-**STOP executing immediately when:**
-- Hit a blocker mid-group (missing dependency, test fails, instruction unclear)
-- Plan has critical gaps preventing starting
-- You don't understand an instruction
-- Verification fails repeatedly
-
-**Ask for clarification rather than guessing.**
+- At startup, after context compaction, and when resuming later, rebuild progress from `tasks.md`, Git history, and `.superpowers/sdd/progress.md`; resume at the first unfinished dependency-ready group.
+- If those sources disagree, inspect the actual diff and verification evidence before deciding what remains. Do not replay work blindly or create another state store.
+- Escalate only a genuine plan conflict that repository evidence cannot resolve, a missing authorization required to continue, three consecutive repair cycles without verified progress, or an unrecoverable uncertainty about whether a side effect completed.
+- Warnings, ordinary tool failures, and the first test failure are diagnostic inputs, not user decision requests.
 
 ## When to Revisit Earlier Steps
 
@@ -77,15 +74,15 @@ After all tasks complete and verified:
 - Partner updates the plan based on your feedback
 - Fundamental approach needs rethinking
 
-**Don't force through blockers** - stop and ask.
+Re-run plan review only when a real contradiction or updated instruction changes the authorized objective.
 
 ## Remember
 - Review plan critically first
 - Follow plan steps and dependency order exactly
 - Don't skip verifications
 - Reference skills when plan says to
-- Between dependency checkpoints: just report and wait
-- Stop when blocked, don't guess
+- Keep progress reports non-blocking and continue after `APPROVE`
+- Repair authorized `REVISE` findings and re-review before continuing
 - Never start implementation on main/master branch without explicit user consent
 - Keep `tasks.md` synchronized in real time (no end-of-run bulk updates)
 
