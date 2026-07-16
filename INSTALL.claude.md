@@ -106,6 +106,10 @@ After installation:
 - Claude can discover and use the Forgevia command set globally
 - project bootstrap can initialize OpenSpec with `--tools codex,claude` when the repository should support both Forgevia clients
 
+### Symbolic Links
+
+You may use symbolic links to place `~/.claude` or any managed subdirectory on another volume. Forgevia follows those links and synchronizes the resolved target without replacing the user-defined link; `doctor --repair` follows the same behavior.
+
 ## Notes
 
 - This is a Claude-specific install path and does not modify `~/.codex`

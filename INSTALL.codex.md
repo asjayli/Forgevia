@@ -56,6 +56,10 @@ After installation:
 - selected superpowers skill files are replaced with Forgevia-managed copies under `~/.codex/superpowers`
 - Forgevia-managed OpenSpec overrides are applied to the installed OpenSpec package
 
+### Symbolic Links
+
+You may use symbolic links to place `~/.codex` or any managed subdirectory on another volume. Forgevia follows those links and synchronizes the resolved target without replacing the user-defined link; `doctor --repair` follows the same behavior.
+
 ### OpenSpec Override Version Note
 
 Forgevia's OpenSpec override files are snapshots taken against OpenSpec `1.6.0` (recorded in `manifests/codex.json` as `overrideTargetVersion`). The installer and doctor refuse to overlay them onto a different upstream version, to avoid silently downgrading upstream behavior. When OpenSpec advances, update the override snapshot and the fixed version together.
