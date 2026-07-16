@@ -8,6 +8,8 @@ ASSETS_DIR="$ROOT_DIR/assets/claude"
 CLAUDE_SUPERPOWERS_ASSETS_DIR="$ROOT_DIR/assets/claude/superpowers"
 OPENSPEC_ASSETS_DIR="$ROOT_DIR/assets/openspec"
 CLAUDE_ROOT="${CLAUDE_HOME:-$HOME/.claude}"
+FORGEVIA_BIN_DIR="${FORGEVIA_BIN_DIR:-$HOME/.local/bin}"
+GLOBAL_COMMAND_STATE_PATH="$FORGEVIA_BIN_DIR/.forgevia-global-command.sha256"
 CLAUDE_SUPERPOWERS_ROOT="${CLAUDE_SUPERPOWERS_ROOT:-}"
 OPENSPEC_ROOT="${OPENSPEC_ROOT:-}"
 # Forgevia's openspec override files are snapshots taken against this upstream
@@ -29,6 +31,7 @@ Checks:
   - openspec config override
   - Forgevia-managed Claude skills and commands under ~/.claude
   - Forgevia runtime command dispatcher under ~/.claude/forgevia/bin
+  - global forgevia command at ~/.local/bin/forgevia
   - Forgevia-managed Claude superpowers overrides
   - content drift against Forgevia-owned copies
 EOF
@@ -251,6 +254,64 @@ compare_path() {
   return 1
 }
 
+compare_global_command() {
+  local command_path="$FORGEVIA_BIN_DIR/forgevia"
+
+  if [[ ! -e "$command_path" && ! -L "$command_path" ]]; then
+    print_status "MISS" "$command_path"
+    return 1
+  fi
+  if [[ -L "$command_path" ]]; then
+    print_status "DRIFT" "$command_path"
+    return 1
+  fi
+  compare_path "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path"
+}
+
+is_managed_global_command() {
+  local command_path="$1"
+
+  [[ -f "$command_path" && ! -L "$command_path" ]] || return 1
+  cmp -s "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path" && return 0
+  [[ -f "$GLOBAL_COMMAND_STATE_PATH" ]] && [[ "$(<"$GLOBAL_COMMAND_STATE_PATH")" == "$(command_checksum "$command_path")" ]]
+}
+
+command_checksum() {
+  sha256sum "$1" | awk '{print $1}'
+}
+
+write_global_command_state() {
+  command_checksum "$FORGEVIA_BIN_DIR/forgevia" > "$GLOBAL_COMMAND_STATE_PATH"
+}
+
+is_legacy_runtime_link() {
+  local command_path="$1"
+  local target_path
+
+  [[ -L "$command_path" ]] || return 1
+  target_path="$(readlink "$command_path")"
+  [[ "$target_path" == "$CLAUDE_ROOT/forgevia/bin/forgevia" || "$target_path" == "${CODEX_HOME:-$HOME/.codex}/forgevia/bin/forgevia" ]]
+}
+
+repair_global_command() {
+  local command_path="$FORGEVIA_BIN_DIR/forgevia"
+
+  if is_legacy_runtime_link "$command_path"; then
+    rm -f "$command_path"
+    mkdir -p "$FORGEVIA_BIN_DIR"
+    cp "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path"
+    write_global_command_state
+    log_success "Repaired $command_path"
+    return 0
+  fi
+  if [[ ( -e "$command_path" || -L "$command_path" ) ]] && ! is_managed_global_command "$command_path"; then
+    log_info "Cannot repair global command without replacing an existing command: $command_path"
+    return 1
+  fi
+  repair_path "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path"
+  write_global_command_state
+}
+
 backup_target_if_present() {
   local target_path="$1"
   local backup_path="${target_path}.forgevia.bak"
@@ -366,6 +427,11 @@ main() {
 
   echo "🔎 Forgevia Claude doctor"
   validate_root "$CLAUDE_ROOT" ".claude"
+  validate_root "$FORGEVIA_BIN_DIR" ""
+  if ! command -v sha256sum >/dev/null 2>&1; then
+    echo "missing required command: sha256sum" >&2
+    exit 1
+  fi
   if [[ "$repair_requested" == "true" ]]; then
     echo "🛠️ Repairing drifted or missing assets"
   fi
@@ -442,6 +508,14 @@ main() {
 
     unhealthy=1
   done
+
+  if compare_global_command; then
+    ((healthy+=1))
+  elif [[ "$repair_requested" == "true" ]] && repair_global_command; then
+    ((repaired+=1))
+  else
+    unhealthy=1
+  fi
 
   echo "📋 Summary"
   echo "💚 Healthy assets: $healthy"

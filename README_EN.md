@@ -103,10 +103,10 @@ Forgevia turns requirement shaping, structured implementation, review, validatio
 Forgevia provides Chinese-compatible OpenSpec strict validation through `forgevia validate` for requirements whose body uses the Chinese normative terms `必须`, `不得`, `禁止`, or `应当`, without changing source specs. It checks those terms, injects `MUST` only in a temporary copy, and then runs native strict validation:
 
 ```bash
-"${CODEX_HOME:-$HOME/.codex}/forgevia/bin/forgevia" validate --root <project-root>
+forgevia validate --root <project-root>
 ```
 
-For Claude installations, use `${CLAUDE_HOME:-$HOME/.claude}/forgevia/bin/forgevia`. Adding the relevant `forgevia/bin` directory to PATH enables `forgevia validate --root <project-root>`. The command dispatcher also supports `init`, `tasks`, `draw`, `doctor`, and `repair`. The adapter validates main specs and active changes, supports only the `spec-driven` schema, and does not support Chinese section or heading keywords: keep `## Requirements`, `### Requirement:`, and `#### Scenario:` in English.
+The installer places a platform-neutral command at `~/.local/bin/forgevia`; ensure that directory is on PATH to run `forgevia validate --root <project-root>`. The command dispatcher also supports `init`, `tasks`, `draw`, `doctor`, and `repair`. When both Codex and Claude are installed, `doctor` and `repair` inspect both runtimes while other commands prefer the Codex runtime. The adapter validates main specs and active changes, supports only the `spec-driven` schema, and does not support Chinese section or heading keywords: keep `## Requirements`, `### Requirement:`, and `#### Scenario:` in English.
 
 ## Third-Party Assets & Licensing
 

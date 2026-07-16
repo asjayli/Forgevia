@@ -8,6 +8,8 @@ ASSETS_DIR="$ROOT_DIR/assets/claude"
 CLAUDE_SUPERPOWERS_ASSETS_DIR="$ROOT_DIR/assets/claude/superpowers"
 OPENSPEC_ASSETS_DIR="$ROOT_DIR/assets/openspec"
 CLAUDE_ROOT="${CLAUDE_HOME:-$HOME/.claude}"
+FORGEVIA_BIN_DIR="${FORGEVIA_BIN_DIR:-$HOME/.local/bin}"
+GLOBAL_COMMAND_STATE_PATH="$FORGEVIA_BIN_DIR/.forgevia-global-command.sha256"
 CLAUDE_SUPERPOWERS_ROOT="${CLAUDE_SUPERPOWERS_ROOT:-}"
 OPENSPEC_ROOT="${OPENSPEC_ROOT:-}"
 # Forgevia's openspec override files are snapshots taken against this upstream
@@ -30,6 +32,7 @@ Behavior:
   - installs OpenSpec $OPENSPEC_OVERRIDE_VERSION on every run
   - overlays Forgevia-managed openspec customization
   - installs Forgevia-managed Claude skills and commands into ~/.claude
+  - exposes the forgevia command at ~/.local/bin/forgevia
   - overlays selected Forgevia-managed superpowers skill overrides into the installed Claude superpowers plugin
 EOF
 }
@@ -116,6 +119,41 @@ When Claude Code asks for the install scope, choose:
 If the plugin is already installed but stored elsewhere, set CLAUDE_SUPERPOWERS_ROOT manually.
 EOF
   exit 1
+}
+
+validate_global_command_target() {
+  local command_path="$FORGEVIA_BIN_DIR/forgevia"
+
+  validate_root "$FORGEVIA_BIN_DIR" ""
+  if [[ ( -e "$command_path" || -L "$command_path" ) ]] && ! is_managed_global_command "$command_path" && ! is_legacy_runtime_link "$command_path"; then
+    echo "refusing to replace existing command: $command_path" >&2
+    exit 1
+  fi
+}
+
+is_managed_global_command() {
+  local command_path="$1"
+
+  [[ -f "$command_path" && ! -L "$command_path" ]] || return 1
+  cmp -s "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path" && return 0
+  [[ -f "$GLOBAL_COMMAND_STATE_PATH" ]] && [[ "$(<"$GLOBAL_COMMAND_STATE_PATH")" == "$(command_checksum "$command_path")" ]]
+}
+
+command_checksum() {
+  sha256sum "$1" | awk '{print $1}'
+}
+
+write_global_command_state() {
+  command_checksum "$FORGEVIA_BIN_DIR/forgevia" > "$GLOBAL_COMMAND_STATE_PATH"
+}
+
+is_legacy_runtime_link() {
+  local command_path="$1"
+  local target_path
+
+  [[ -L "$command_path" ]] || return 1
+  target_path="$(readlink "$command_path")"
+  [[ "$target_path" == "$CLAUDE_ROOT/forgevia/bin/forgevia" || "$target_path" == "${CODEX_HOME:-$HOME/.codex}/forgevia/bin/forgevia" ]]
 }
 
 validate_root() {
@@ -349,6 +387,19 @@ overlay_runtime_scripts() {
   log_success "Installed Forgevia runtime scripts (forgevia/bootstrap/list-change-tasks/draw/doctor/validate-openspec-cn)"
 }
 
+install_global_command() {
+  local command_path="$FORGEVIA_BIN_DIR/forgevia"
+
+  log_step "Installing Forgevia command at $command_path"
+  mkdir -p "$FORGEVIA_BIN_DIR"
+  if [[ -e "$command_path" || -L "$command_path" ]]; then
+    rm -f "$command_path"
+  fi
+  cp "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path"
+  write_global_command_state
+  log_success "Installed Forgevia command: $command_path"
+}
+
 overlay_forgevia_home() {
   local home_dir="$CLAUDE_ROOT/forgevia"
   log_step "Mirroring Forgevia source into $home_dir (baseline for global doctor/repair)"
@@ -419,6 +470,7 @@ main() {
 
   log_step "Forgevia Claude installer"
   validate_root "$CLAUDE_ROOT" ".claude"
+  validate_global_command_target
   if [[ -n "$CLAUDE_SUPERPOWERS_ROOT" ]]; then
     validate_root "$CLAUDE_SUPERPOWERS_ROOT" ""
   fi
@@ -426,6 +478,7 @@ main() {
   require_command rm
   require_command mkdir
   require_command node
+  require_command sha256sum
   require_command npm
 
   install_openspec
@@ -437,6 +490,7 @@ main() {
   overlay_assets
   overlay_forgevia_home
   overlay_runtime_scripts
+  install_global_command
   local superpowers_root
   superpowers_root="$(resolve_superpowers_root)"
   verify_superpowers_present "$superpowers_root"

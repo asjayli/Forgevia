@@ -259,6 +259,14 @@
       "kind": "runtime-command"
     },
     {
+      "id": "global-forgevia-command",
+      "source": "scripts/forgevia-global.sh",
+      "target": "~/.local/bin/forgevia",
+      "owner": "forgevia",
+      "kind": "global-command",
+      "note": "A platform-neutral command that dispatches to installed Forgevia runtimes."
+    },
+    {
       "id": "forgevia-home-mirror",
       "source": "repo root (assets, scripts, manifests)",
       "target": "~/.codex/forgevia",

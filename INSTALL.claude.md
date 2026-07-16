@@ -65,6 +65,7 @@ The current Claude implementation installs:
   - `playwright-interactive`
 - `~/.claude/commands/opsx`
 - selected overrides into the installed Claude superpowers plugin
+- the platform-neutral `forgevia` command is installed at `~/.local/bin/forgevia`
 
 Current behavior of the Claude Forgevia layer:
 
@@ -104,11 +105,15 @@ After installation:
 - `~/.claude/commands/opsx` exists
 - selected Claude superpowers skill files are replaced with Forgevia-managed copies
 - Claude can discover and use the Forgevia command set globally
+- `forgevia` is available on `PATH` through `~/.local/bin/forgevia`
 - project bootstrap can initialize OpenSpec with `--tools codex,claude` when the repository should support both Forgevia clients
 
 ### Symbolic Links
 
 You may use symbolic links to place `~/.claude` or any managed subdirectory on another volume. Forgevia follows those links and synchronizes the resolved target without replacing the user-defined link; `doctor --repair` follows the same behavior.
+
+The installer replaces only its marked Forgevia global command. It refuses to
+replace another command or a link owned by the user or another installation.
 
 ## Notes
 
