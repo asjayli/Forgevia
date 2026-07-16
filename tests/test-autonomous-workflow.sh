@@ -91,7 +91,7 @@ assert_review_contract() {
 
 forgevia_paths=(
   "$ROOT_DIR/assets/codex/skills/forgevia/SKILL.md"
-  "$ROOT_DIR/.claude/skills/forgevia/SKILL.md"
+  "$ROOT_DIR/assets/claude/skills/forgevia/SKILL.md"
 )
 
 for path in "${forgevia_paths[@]}"; do
@@ -102,12 +102,16 @@ for path in "${forgevia_paths[@]}"; do
   assert_file_contains "$path" "Only ESCALATE pauses the workflow for user input"
   assert_file_contains "$path" "does not authorize archive, push, merge, or release"
   assert_file_contains "$path" "different from the agent that produced the candidate"
+  assert_file_contains "$path" "Implementation runs continuously by default."
+  assert_file_contains "$path" "Before returning a completion summary, confirm every completion gate:"
+  assert_file_contains "$path" 'The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer.'
+  assert_file_contains "$path" 'Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.'
   assert_review_contract "$path"
 done
 
 forgevia_propose_paths=(
   "$ROOT_DIR/assets/codex/skills/forgevia-propose/SKILL.md"
-  "$ROOT_DIR/.claude/skills/forgevia-propose/SKILL.md"
+  "$ROOT_DIR/assets/claude/skills/forgevia-propose/SKILL.md"
 )
 
 for path in "${forgevia_propose_paths[@]}"; do
@@ -122,7 +126,7 @@ done
 
 forgevia_archive_paths=(
   "$ROOT_DIR/assets/codex/skills/forgevia-archive/SKILL.md"
-  "$ROOT_DIR/.claude/skills/forgevia-archive/SKILL.md"
+  "$ROOT_DIR/assets/claude/skills/forgevia-archive/SKILL.md"
 )
 
 for path in "${forgevia_archive_paths[@]}"; do
@@ -137,7 +141,7 @@ done
 
 forgevia_implement_paths=(
   "$ROOT_DIR/assets/codex/skills/forgevia-implement/SKILL.md"
-  "$ROOT_DIR/.claude/skills/forgevia-implement/SKILL.md"
+  "$ROOT_DIR/assets/claude/skills/forgevia-implement/SKILL.md"
 )
 
 for path in "${forgevia_implement_paths[@]}"; do
@@ -147,13 +151,17 @@ for path in "${forgevia_implement_paths[@]}"; do
   assert_file_contains "$path" "first test failure"
   assert_file_contains "$path" "automatically continue to the next dependency-ready work unit"
   assert_file_contains "$path" 'Only `ESCALATE` requests user input'
+  assert_file_contains "$path" "Implementation runs continuously by default."
+  assert_file_contains "$path" "Before returning a completion summary, confirm every completion gate:"
+  assert_file_contains "$path" 'The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer.'
+  assert_file_contains "$path" 'Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.'
   assert_review_contract "$path"
 done
 
 for skill_name in forgevia-review forgevia-verify-web; do
   for path in \
     "$ROOT_DIR/assets/codex/skills/$skill_name/SKILL.md" \
-    "$ROOT_DIR/.claude/skills/$skill_name/SKILL.md"
+    "$ROOT_DIR/assets/claude/skills/$skill_name/SKILL.md"
   do
     assert_file_contains "$path" '`APPROVE`'
     assert_file_contains "$path" '`REVISE`'
@@ -168,7 +176,7 @@ done
 
 for path in \
   "$ROOT_DIR/assets/codex/skills/forgevia-review/SKILL.md" \
-  "$ROOT_DIR/.claude/skills/forgevia-review/SKILL.md"
+  "$ROOT_DIR/assets/claude/skills/forgevia-review/SKILL.md"
 do
   assert_file_contains "$path" 'Generate the review package before routing to `requesting-code-review`.'
   assert_file_contains "$path" '`review-package BASE HEAD`'
@@ -177,11 +185,11 @@ do
 done
 
 assert_file_contains "$ROOT_DIR/assets/codex/skills/forgevia/SKILL.md" '`spawn_agent`'
-assert_file_contains "$ROOT_DIR/.claude/skills/forgevia/SKILL.md" '`Task`'
+assert_file_contains "$ROOT_DIR/assets/claude/skills/forgevia/SKILL.md" '`Task`'
 
 for path in \
   "$ROOT_DIR/assets/codex/skills/forgevia-think/SKILL.md" \
-  "$ROOT_DIR/.claude/skills/forgevia-think/SKILL.md"
+  "$ROOT_DIR/assets/claude/skills/forgevia-think/SKILL.md"
 do
   assert_file_contains "$path" "independent review"
   assert_file_contains "$path" '`APPROVE`'
@@ -195,9 +203,8 @@ done
 
 openspec_apply_paths=(
   "$ROOT_DIR/assets/codex/skills/openspec-apply-change/SKILL.md"
-  "$ROOT_DIR/.codex/skills/openspec-apply-change/SKILL.md"
-  "$ROOT_DIR/.claude/skills/openspec-apply-change/SKILL.md"
-  "$ROOT_DIR/.claude/commands/opsx/apply.md"
+  "$ROOT_DIR/assets/claude/skills/openspec-apply-change/SKILL.md"
+  "$ROOT_DIR/assets/claude/commands/opsx/apply.md"
 )
 
 for path in "${openspec_apply_paths[@]}"; do
@@ -218,22 +225,25 @@ for path in "${openspec_apply_paths[@]}"; do
     'Dispatch a fresh full-branch reviewer that is independent from every candidate producer.' \
     'Only a final `APPROVE` may produce `Implementation Complete`.'
   assert_file_in_order "$path" \
-    'A final `REVISE` with repair authorization dispatches implementation repair.' \
-    'Rerun integration and global verification.' \
-    'Build a fresh full-branch package and dispatch a fresh independent full-branch reviewer.'
+    'On a final authorized `REVISE`, the controller dispatches an implementation repair subagent with the findings,' \
+    'reruns integration and global verification,' \
+    'builds a fresh full-branch package, and dispatches a fresh independent full-branch reviewer.'
   assert_file_contains "$path" 'When apply instructions report `state: "all_done"`, resume at integration and global verification; do not congratulate, suggest archive, or report completion yet.'
+  assert_file_contains "$path" 'Implementation runs continuously by default.'
+  assert_file_contains "$path" 'Before returning a completion summary, confirm every completion gate:'
+  assert_file_contains "$path" '`git diff --check` succeeds'
+  assert_file_contains "$path" 'The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer.'
+  assert_file_contains "$path" 'Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.'
 done
 
 assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-apply-change/SKILL.md" '`spawn_agent`'
-assert_file_contains "$ROOT_DIR/.codex/skills/openspec-apply-change/SKILL.md" '`spawn_agent`'
-assert_file_contains "$ROOT_DIR/.claude/skills/openspec-apply-change/SKILL.md" '`Task`'
-assert_file_contains "$ROOT_DIR/.claude/commands/opsx/apply.md" '`Task`'
+assert_file_contains "$ROOT_DIR/assets/claude/skills/openspec-apply-change/SKILL.md" '`Task`'
+assert_file_contains "$ROOT_DIR/assets/claude/commands/opsx/apply.md" '`Task`'
 
 openspec_archive_paths=(
   "$ROOT_DIR/assets/codex/skills/openspec-archive-change/SKILL.md"
-  "$ROOT_DIR/.codex/skills/openspec-archive-change/SKILL.md"
-  "$ROOT_DIR/.claude/skills/openspec-archive-change/SKILL.md"
-  "$ROOT_DIR/.claude/commands/opsx/archive.md"
+  "$ROOT_DIR/assets/claude/skills/openspec-archive-change/SKILL.md"
+  "$ROOT_DIR/assets/claude/commands/opsx/archive.md"
 )
 
 for path in "${openspec_archive_paths[@]}"; do
@@ -253,15 +263,13 @@ for path in "${openspec_archive_paths[@]}"; do
 done
 
 assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-archive-change/SKILL.md" '`spawn_agent`'
-assert_file_contains "$ROOT_DIR/.codex/skills/openspec-archive-change/SKILL.md" '`spawn_agent`'
-assert_file_contains "$ROOT_DIR/.claude/skills/openspec-archive-change/SKILL.md" '`Task`'
-assert_file_contains "$ROOT_DIR/.claude/commands/opsx/archive.md" '`Task`'
+assert_file_contains "$ROOT_DIR/assets/claude/skills/openspec-archive-change/SKILL.md" '`Task`'
+assert_file_contains "$ROOT_DIR/assets/claude/commands/opsx/archive.md" '`Task`'
 
 openspec_propose_paths=(
   "$ROOT_DIR/assets/codex/skills/openspec-propose/SKILL.md"
-  "$ROOT_DIR/.codex/skills/openspec-propose/SKILL.md"
-  "$ROOT_DIR/.claude/skills/openspec-propose/SKILL.md"
-  "$ROOT_DIR/.claude/commands/opsx/propose.md"
+  "$ROOT_DIR/assets/claude/skills/openspec-propose/SKILL.md"
+  "$ROOT_DIR/assets/claude/commands/opsx/propose.md"
 )
 
 for path in "${openspec_propose_paths[@]}"; do
@@ -281,15 +289,13 @@ for path in "${openspec_propose_paths[@]}"; do
 done
 
 assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-propose/SKILL.md" '`spawn_agent`'
-assert_file_contains "$ROOT_DIR/.codex/skills/openspec-propose/SKILL.md" '`spawn_agent`'
-assert_file_contains "$ROOT_DIR/.claude/skills/openspec-propose/SKILL.md" '`Task`'
-assert_file_contains "$ROOT_DIR/.claude/commands/opsx/propose.md" '`Task`'
+assert_file_contains "$ROOT_DIR/assets/claude/skills/openspec-propose/SKILL.md" '`Task`'
+assert_file_contains "$ROOT_DIR/assets/claude/commands/opsx/propose.md" '`Task`'
 
 openspec_sync_paths=(
   "$ROOT_DIR/assets/codex/skills/openspec-sync-specs/SKILL.md"
-  "$ROOT_DIR/.codex/skills/openspec-sync-specs/SKILL.md"
-  "$ROOT_DIR/.claude/skills/openspec-sync-specs/SKILL.md"
-  "$ROOT_DIR/.claude/commands/opsx/sync.md"
+  "$ROOT_DIR/assets/claude/skills/openspec-sync-specs/SKILL.md"
+  "$ROOT_DIR/assets/claude/commands/opsx/sync.md"
 )
 
 for path in "${openspec_sync_paths[@]}"; do
@@ -314,9 +320,8 @@ for path in "${openspec_sync_paths[@]}"; do
 done
 
 assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-sync-specs/SKILL.md" '`spawn_agent`'
-assert_file_contains "$ROOT_DIR/.codex/skills/openspec-sync-specs/SKILL.md" '`spawn_agent`'
-assert_file_contains "$ROOT_DIR/.claude/skills/openspec-sync-specs/SKILL.md" '`Task`'
-assert_file_contains "$ROOT_DIR/.claude/commands/opsx/sync.md" '`Task`'
+assert_file_contains "$ROOT_DIR/assets/claude/skills/openspec-sync-specs/SKILL.md" '`Task`'
+assert_file_contains "$ROOT_DIR/assets/claude/commands/opsx/sync.md" '`Task`'
 assert_file_not_contains "$ROOT_DIR/INSTALL.claude.md" "artifact, confirmation, and versioning rules"
 assert_file_contains "$ROOT_DIR/INSTALL.claude.md" "artifact, independent-review, and versioning rules"
 
@@ -351,18 +356,6 @@ assert_file_in_order "$propose_template" \
   'If strict validation fails, repair the indicated proposal, design, specs, or tasks and rerun strict validation.' \
   'Independently review every package changed by strict-validation repair before reporting the proposal apply-ready.'
 
-for skill_name in \
-  openspec-apply-change \
-  openspec-archive-change \
-  openspec-explore \
-  openspec-propose \
-  openspec-sync-specs
-do
-  assert_files_equal \
-    "$ROOT_DIR/assets/codex/skills/$skill_name/SKILL.md" \
-    "$ROOT_DIR/.codex/skills/$skill_name/SKILL.md"
-done
-
 tracked_internal_planning="$(git -C "$ROOT_DIR" ls-files -- \
   'openspec/**' \
   'docs/plans/**' \
@@ -371,6 +364,13 @@ tracked_internal_planning="$(git -C "$ROOT_DIR" ls-files -- \
 if [[ -n "$tracked_internal_planning" ]]; then
   echo "repository-local planning or runtime artifacts must not be tracked:" >&2
   echo "$tracked_internal_planning" >&2
+  exit 1
+fi
+
+tracked_local_client_state="$(git -C "$ROOT_DIR" ls-files -- '.claude/**' '.codex/**')"
+if [[ -n "$tracked_local_client_state" ]]; then
+  echo "repository-local Claude and Codex state must not be tracked:" >&2
+  echo "$tracked_local_client_state" >&2
   exit 1
 fi
 

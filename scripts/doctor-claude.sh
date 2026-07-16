@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MANIFEST_PATH="$ROOT_DIR/manifests/claude.json"
-ASSETS_DIR="$ROOT_DIR/.claude"
+ASSETS_DIR="$ROOT_DIR/assets/claude"
 CLAUDE_SUPERPOWERS_ASSETS_DIR="$ROOT_DIR/assets/claude/superpowers"
 OPENSPEC_ASSETS_DIR="$ROOT_DIR/assets/openspec"
 CLAUDE_ROOT="${CLAUDE_HOME:-$HOME/.claude}"

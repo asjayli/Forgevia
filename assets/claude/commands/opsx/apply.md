@@ -22,6 +22,24 @@ Implement tasks from an OpenSpec change.
 
 If a reviewer fails to start, times out, crashes, or returns an invalid verdict, reuse the unchanged review package with at most two new independent review agents. If both retries fail, return `ESCALATE` with the collected infrastructure evidence; never infer `APPROVE`. The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.
 
+## Default Continuous Execution
+
+Implementation runs continuously by default. A completed task group, passing verification, an `APPROVE` verdict, a refactor, or a progress report never ends the workflow or waits for feedback.
+
+Before returning a completion summary, confirm every completion gate:
+
+- `tasks.md` contains no unchecked implementation item.
+- No planned implementation task remains pending or in progress.
+- The required complete verification has succeeded.
+- The change scope has been reviewed and `git diff --check` succeeds.
+- The final independent review is `APPROVE`.
+
+Never use completion language or a final delivery format while any implementation task remains unchecked or in progress.
+
+The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer. That reviewer must not have produced the candidate or any repair in the current cycle.
+
+Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.
+
 **Steps**
 
 1. **Select the change**
@@ -93,7 +111,7 @@ If a reviewer fails to start, times out, crashes, or returns an invalid verdict,
 
    Complete every task and its task-level review. Run integration and global verification across the complete implementation. Build a commit-bounded full-branch review package covering the complete implementation range, or a WORKTREE package when commit authorization or branch policy left changes uncommitted. Dispatch a fresh full-branch reviewer that is independent from every candidate producer. Only a final `APPROVE` may produce `Implementation Complete`.
 
-   A final `REVISE` with repair authorization dispatches implementation repair. Rerun integration and global verification. Build a fresh full-branch package and dispatch a fresh independent full-branch reviewer. Without repair authorization, return the findings unchanged. A final `ESCALATE` is limited to the substantive boundaries in the independent review contract.
+   On a final authorized `REVISE`, the controller dispatches an implementation repair subagent with the findings, reruns integration and global verification, builds a fresh full-branch package, and dispatches a fresh independent full-branch reviewer. Without repair authorization, return the findings unchanged. A final `ESCALATE` is limited to the substantive boundaries in the independent review contract.
 
 8. **On completion or escalation, show status**
 

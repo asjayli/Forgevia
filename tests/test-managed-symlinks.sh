@@ -104,11 +104,11 @@ ln -s "$claude_link_target" "$claude_home/skills/forgevia"
 
 CLAUDE_HOME="$claude_home" OPENSPEC_ROOT="$claude_openspec" FAKE_NPM_ROOT="$tmp_dir/npm-global" PATH="$bin_dir:$PATH" "$CLAUDE_INSTALLER" >/dev/null
 assert_symlink "$claude_home/skills/forgevia"
-assert_paths_equal "$ROOT_DIR/.claude/skills/forgevia" "$claude_link_target"
+assert_paths_equal "$ROOT_DIR/assets/claude/skills/forgevia" "$claude_link_target"
 
 printf 'drift\n' >> "$claude_link_target/SKILL.md"
 CLAUDE_HOME="$claude_home" OPENSPEC_ROOT="$claude_openspec" PATH="$bin_dir:$PATH" "$CLAUDE_DOCTOR" --repair >/dev/null
 assert_symlink "$claude_home/skills/forgevia"
-assert_paths_equal "$ROOT_DIR/.claude/skills/forgevia" "$claude_link_target"
+assert_paths_equal "$ROOT_DIR/assets/claude/skills/forgevia" "$claude_link_target"
 
 echo "managed symlink test passed"

@@ -55,10 +55,10 @@ test_file_exists "$MANIFEST"
 test_file_exists "$INSTALLER"
 test_file_exists "$DOCTOR"
 
-manifest_skill_sources="$(node -e 'const m=require(process.argv[1]); console.log(m.managedAssets.filter(a => a.kind === "skill-directory" && a.source.startsWith(".claude/skills/")).map(a => a.source).sort().join("\n"))' "$MANIFEST")"
-scanned_skill_sources="$(find "$ROOT_DIR/.claude/skills" -mindepth 1 -maxdepth 1 -type d -printf '.claude/skills/%f\n' | sort)"
+manifest_skill_sources="$(node -e 'const m=require(process.argv[1]); console.log(m.managedAssets.filter(a => a.kind === "skill-directory" && a.source.startsWith("assets/claude/skills/")).map(a => a.source).sort().join("\n"))' "$MANIFEST")"
+scanned_skill_sources="$(find "$ROOT_DIR/assets/claude/skills" -mindepth 1 -maxdepth 1 -type d -printf 'assets/claude/skills/%f\n' | sort)"
 if [[ "$manifest_skill_sources" != "$scanned_skill_sources" ]]; then
-  echo "Claude manifest skill assets do not match .claude/skills" >&2
+  echo "Claude manifest skill assets do not match assets/claude/skills" >&2
   exit 1
 fi
 
@@ -159,7 +159,7 @@ assert_contains "$installer_output" "💾 Backed up"
 assert_contains "$installer_output" "🎉 Forgevia Claude install complete"
 assert_contains "$(cat "$npm_log")" "install -g @fission-ai/openspec@1.6.0"
 
-for mirror_path in .claude assets scripts manifests; do
+for mirror_path in assets scripts manifests; do
   assert_paths_equal "$ROOT_DIR/$mirror_path" "$CLAUDE_HOME/forgevia/$mirror_path"
 done
 
@@ -204,10 +204,10 @@ cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CLAUDE_HOME/forgevia/bin/vali
 test_file_executable "$CLAUDE_HOME/forgevia/bin/forgevia"
 cmp "$ROOT_DIR/scripts/forgevia.sh" "$CLAUDE_HOME/forgevia/bin/forgevia"
 
-expected_skill="$(cat "$ROOT_DIR/.claude/skills/forgevia-think/SKILL.md")"
+expected_skill="$(cat "$ROOT_DIR/assets/claude/skills/forgevia-think/SKILL.md")"
 actual_skill="$(cat "$CLAUDE_HOME/skills/forgevia-think/SKILL.md")"
 assert_contains "$actual_skill" "$expected_skill"
-expected_router="$(cat "$ROOT_DIR/.claude/skills/forgevia/SKILL.md")"
+expected_router="$(cat "$ROOT_DIR/assets/claude/skills/forgevia/SKILL.md")"
 actual_router="$(cat "$CLAUDE_HOME/skills/forgevia/SKILL.md")"
 assert_contains "$actual_router" "$expected_router"
 expected_brainstorming="$(cat "$ROOT_DIR/assets/claude/superpowers/skills/brainstorming/SKILL.md")"
@@ -222,7 +222,7 @@ assert_contains "$actual_review_template" "$expected_review_template"
 expected_sdd="$(cat "$ROOT_DIR/assets/claude/superpowers/skills/subagent-driven-development/SKILL.md")"
 actual_sdd="$(cat "$superpowers_root/skills/subagent-driven-development/SKILL.md")"
 assert_contains "$actual_sdd" "$expected_sdd"
-expected_command="$(cat "$ROOT_DIR/.claude/commands/opsx/propose.md")"
+expected_command="$(cat "$ROOT_DIR/assets/claude/commands/opsx/propose.md")"
 actual_command="$(cat "$CLAUDE_HOME/commands/opsx/propose.md")"
 assert_contains "$actual_command" "$expected_command"
 assert_contains "$(<"$MANIFEST")" '"id": "openspec-sync-specs-skill"'

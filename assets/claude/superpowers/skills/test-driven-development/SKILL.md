@@ -279,6 +279,7 @@ Rules:
 - Do not batch status updates at the end.
 - Do not claim progress without reflecting it in `tasks.md`.
 - Keep `tasks.md` as the real-time source of execution truth.
+- Never use completion language or a final delivery format while any OpenSpec task remains unchecked.
 
 ## Red Flags - STOP and Start Over
 

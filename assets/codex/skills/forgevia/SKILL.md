@@ -44,11 +44,27 @@ At entry, resolve an objective authorization envelope with these fields:
 
 Continue inside that envelope until the terminal condition is met, a real blocker requires new user input, or the user interrupts. Phase boundaries, progress reports, warnings, and ordinary recoverable failures are observations, not confirmation gates.
 
+Implementation runs continuously by default. A completed task group, passing verification, an `APPROVE` verdict, a refactor, or a progress report never ends the workflow or waits for feedback.
+
+Before returning a completion summary, confirm every completion gate:
+
+- `tasks.md` contains no unchecked implementation item.
+- No planned implementation task remains pending or in progress.
+- The required complete verification has succeeded.
+- The change scope has been reviewed and `git diff --check` succeeds.
+- The final independent review is `APPROVE`.
+
+Never use completion language or a final delivery format while any implementation task remains unchecked or in progress.
+
 Use an independent review agent different from the agent that produced the candidate. On Codex, dispatch that reviewer with `spawn_agent`. Every review package includes the candidate producer identity, relevant OpenSpec and candidate artifacts, action, or diff, verification evidence, assumptions and risks. Accept only these evidence-backed verdicts:
 
 - `APPROVE`: record the reviewed result and automatically continue to the next in-scope work unit.
-- `REVISE`: when the envelope authorizes fixes, diagnose, fix, re-run the matching verification, and request another independent review; standalone read-only review and verify-web commands return findings instead.
+- `REVISE`: the controller dispatches an authorized repair subagent, requires matching verification, and dispatches a fresh independent reviewer that did not produce the candidate or repair; standalone read-only review and verify-web commands return findings instead.
 - `ESCALATE`: combine the unresolved decisions, evidence, recommended default, option impacts, and reason automation cannot continue into one user request.
+
+The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer.
+
+Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.
 
 If a reviewer fails to start, times out, crashes, or returns an invalid verdict, reuse the unchanged review package with at most two new independent review agents. If both retries fail, return `ESCALATE` with the collected infrastructure evidence; never infer `APPROVE`. The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.
 

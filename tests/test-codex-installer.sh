@@ -142,7 +142,7 @@ assert_contains "$installer_output" "💾 Backed up"
 assert_contains "$installer_output" "🎉 Forgevia Codex install complete"
 assert_contains "$(cat "$npm_log")" "install -g @fission-ai/openspec@1.6.0"
 
-for mirror_path in .claude assets scripts manifests; do
+for mirror_path in assets scripts manifests; do
   assert_paths_equal "$ROOT_DIR/$mirror_path" "$CODEX_HOME/forgevia/$mirror_path"
 done
 
