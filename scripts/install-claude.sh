@@ -154,14 +154,21 @@ read_openspec_version() {
   node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(p.version||"")' "$pkg" 2>/dev/null
 }
 
-# Returns 0 (match) when upstream version is unknown or equals the override
-# snapshot version; returns 1 (mismatch) only on a known version drift, which
-# is the case where overlaying would downgrade upstream.
+is_valid_openspec_package() {
+  local openspec_root="$1"
+  local pkg="$openspec_root/package.json"
+
+  [[ -f "$pkg" ]] || return 1
+  node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.exit(p.name === "@fission-ai/openspec" ? 0 : 1)' "$pkg" 2>/dev/null
+}
+
 openspec_version_matches() {
   local openspec_root="$1"
   local ver
+
+  is_valid_openspec_package "$openspec_root" || return 1
   ver="$(read_openspec_version "$openspec_root")"
-  [[ -z "$ver" || "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
+  [[ "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
 }
 
 copy_path() {
@@ -283,7 +290,12 @@ overlay_openspec_assets() {
 
   if [[ ! -d "$openspec_root" ]]; then
     echo "openspec install root not found: $openspec_root" >&2
-    exit 1
+    return 1
+  fi
+
+  if ! is_valid_openspec_package "$openspec_root"; then
+    echo "OpenSpec package metadata is missing or invalid: $openspec_root/package.json" >&2
+    return 1
   fi
 
   if ! openspec_version_matches "$openspec_root"; then
@@ -291,7 +303,7 @@ overlay_openspec_assets() {
     actual_version="$(read_openspec_version "$openspec_root")"
     log_info "openspec $actual_version detected; Forgevia openspec override targets $OPENSPEC_OVERRIDE_VERSION."
     log_info "Skipping openspec override to avoid downgrading upstream. Pin openspec to $OPENSPEC_OVERRIDE_VERSION or update Forgevia's override."
-    return
+    return 1
   fi
 
   sync_path "$OPENSPEC_ASSETS_DIR/dist/core/config-prompts.js" "$openspec_root/dist/core/config-prompts.js"
@@ -316,6 +328,7 @@ overlay_superpowers_assets() {
 
 main() {
   local should_install_openspec="false"
+  local install_incomplete="false"
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -352,9 +365,12 @@ main() {
   fi
 
   if verify_openspec_present; then
-    overlay_openspec_assets
+    if ! overlay_openspec_assets; then
+      install_incomplete="true"
+    fi
   else
     log_info "openspec not found; skipping Forgevia-managed openspec overrides"
+    install_incomplete="true"
   fi
 
   overlay_assets
@@ -365,6 +381,11 @@ main() {
   verify_superpowers_present "$superpowers_root"
   log_success "Detected Claude superpowers plugin at $superpowers_root"
   overlay_superpowers_assets "$superpowers_root"
+
+  if [[ "$install_incomplete" == "true" ]]; then
+    echo "Forgevia Claude install incomplete: OpenSpec overrides were not applied" >&2
+    exit 1
+  fi
 
   echo "🎉 Forgevia Claude install complete"
 }

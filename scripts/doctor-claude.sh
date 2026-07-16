@@ -84,11 +84,21 @@ read_openspec_version() {
   node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(p.version||"")' "$pkg" 2>/dev/null
 }
 
+is_valid_openspec_package() {
+  local openspec_root="$1"
+  local pkg="$openspec_root/package.json"
+
+  [[ -f "$pkg" ]] || return 1
+  node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.exit(p.name === "@fission-ai/openspec" ? 0 : 1)' "$pkg" 2>/dev/null
+}
+
 openspec_version_matches() {
   local openspec_root="$1"
   local ver
+
+  is_valid_openspec_package "$openspec_root" || return 1
   ver="$(read_openspec_version "$openspec_root")"
-  [[ -z "$ver" || "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
+  [[ "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
 }
 
 validate_root() {
@@ -261,10 +271,21 @@ main() {
   fi
 
   openspec_root="$(resolve_openspec_root)"
-  managed_pairs+=(
-    "$OPENSPEC_ASSETS_DIR/dist/core/config-prompts.js::$openspec_root/dist/core/config-prompts.js"
-    "$OPENSPEC_ASSETS_DIR/dist/core/templates/workflows/propose.js::$openspec_root/dist/core/templates/workflows/propose.js"
-  )
+  if ! is_valid_openspec_package "$openspec_root"; then
+    print_status "MISS" "$openspec_root/package.json"
+    log_info "OpenSpec package is missing or invalid at $openspec_root; install @fission-ai/openspec before repairing its overrides."
+    unhealthy=1
+  elif ! openspec_version_matches "$openspec_root"; then
+    actual_version="$(read_openspec_version "$openspec_root")"
+    print_status "DRIFT" "$openspec_root/package.json"
+    log_info "OpenSpec $actual_version does not match override target $OPENSPEC_OVERRIDE_VERSION; its overrides remain unrepaired to avoid downgrading upstream."
+    unhealthy=1
+  else
+    managed_pairs+=(
+      "$OPENSPEC_ASSETS_DIR/dist/core/config-prompts.js::$openspec_root/dist/core/config-prompts.js"
+      "$OPENSPEC_ASSETS_DIR/dist/core/templates/workflows/propose.js::$openspec_root/dist/core/templates/workflows/propose.js"
+    )
+  fi
 
   superpowers_root="$(resolve_superpowers_root)"
   if [[ -z "$superpowers_root" ]]; then
@@ -294,6 +315,7 @@ main() {
     "$ROOT_DIR/scripts/bootstrap-project.sh::$CLAUDE_ROOT/forgevia/bin/bootstrap-project.sh"
     "$ROOT_DIR/scripts/list-change-tasks.sh::$CLAUDE_ROOT/forgevia/bin/list-change-tasks.sh"
     "$ROOT_DIR/scripts/forgevia-draw.sh::$CLAUDE_ROOT/forgevia/bin/forgevia-draw.sh"
+    "$ROOT_DIR/scripts/doctor-claude.sh::$CLAUDE_ROOT/forgevia/bin/doctor-claude.sh"
     "$ROOT_DIR/scripts/validate-openspec-cn.mjs::$CLAUDE_ROOT/forgevia/bin/validate-openspec-cn.mjs"
     "$ROOT_DIR/scripts/forgevia.sh::$CLAUDE_ROOT/forgevia/bin/forgevia"
   )
@@ -309,11 +331,6 @@ main() {
     fi
 
     if [[ "$repair_requested" == "true" ]]; then
-      if [[ "$target_path" == "$openspec_root"* ]] && ! openspec_version_matches "$openspec_root"; then
-        actual_version="$(read_openspec_version "$openspec_root")"
-        log_info "Skipping repair of $target_path: openspec $actual_version != override target $OPENSPEC_OVERRIDE_VERSION (repair would downgrade upstream)"
-        continue
-      fi
       repair_path "$source_path" "$target_path"
       ((repaired+=1))
       continue
@@ -331,14 +348,18 @@ main() {
     echo "✨ No drift detected"
   fi
 
+  if [[ "$unhealthy" -ne 0 ]]; then
+    if [[ "$repair_requested" == "true" ]]; then
+      echo "Forgevia Claude doctor repair incomplete; unresolved managed assets remain" >&2
+    else
+      echo "Forgevia Claude doctor found missing or drifted managed assets" >&2
+    fi
+    exit 1
+  fi
+
   if [[ "$repair_requested" == "true" ]]; then
     echo "Forgevia Claude doctor repair complete"
     exit 0
-  fi
-
-  if [[ "$unhealthy" -ne 0 ]]; then
-    echo "Forgevia Claude doctor found missing or drifted managed assets" >&2
-    exit 1
   fi
 
   echo "Forgevia Claude doctor passed"

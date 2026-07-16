@@ -22,7 +22,7 @@ This path installs Forgevia-managed Claude skills and commands into `~/.claude` 
 - `openspec` must be available on `PATH`
 - the Claude superpowers plugin must already be installed
 
-If `openspec` is missing, either install it yourself with `npm install -g @fission-ai/openspec@latest` or let the installer do it with `--install-openspec`. Without `openspec`, the installer will still apply Claude skills and superpowers overrides, but it will skip the Forgevia-managed OpenSpec overrides.
+If `openspec` is missing, either install it yourself with `npm install -g @fission-ai/openspec@latest` or let the installer do it with `--install-openspec`. Without `openspec`, the installer still applies Claude skills and superpowers overrides, but skips the Forgevia-managed OpenSpec overrides and exits nonzero to report the incomplete managed state.
 
 In Claude Code, register the marketplace first:
 
