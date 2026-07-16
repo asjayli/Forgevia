@@ -386,4 +386,33 @@ if (cd "$symlink_repo" && "$SDD_WORKSPACE") >/dev/null 2>&1; then
   exit 1
 fi
 
+nested_symlink_repo="$tmp_dir/nested-symlink-repo"
+nested_symlink_target="$tmp_dir/nested-symlink-target"
+mkdir -p "$nested_symlink_repo/.superpowers" "$nested_symlink_target"
+git -C "$nested_symlink_repo" init -q
+ln -s "$nested_symlink_target" "$nested_symlink_repo/.superpowers/sdd"
+if (cd "$nested_symlink_repo" && "$SDD_WORKSPACE") >/dev/null 2>&1; then
+  echo "expected sdd-workspace to reject a symlinked .superpowers/sdd directory" >&2
+  exit 1
+fi
+if [[ -e "$nested_symlink_target/.gitignore" ]]; then
+  echo "sdd-workspace must not write through a symlinked workspace directory" >&2
+  exit 1
+fi
+
+linked_ignore_repo="$tmp_dir/linked-ignore-repo"
+linked_ignore_target="$tmp_dir/linked-ignore-target"
+mkdir -p "$linked_ignore_repo/.superpowers/sdd" "$linked_ignore_target"
+git -C "$linked_ignore_repo" init -q
+printf 'preserve me\n' > "$linked_ignore_target/.gitignore"
+ln -s "$linked_ignore_target/.gitignore" "$linked_ignore_repo/.superpowers/sdd/.gitignore"
+if (cd "$linked_ignore_repo" && "$SDD_WORKSPACE") >/dev/null 2>&1; then
+  echo "expected sdd-workspace to reject a symlinked workspace .gitignore" >&2
+  exit 1
+fi
+if [[ "$(cat "$linked_ignore_target/.gitignore")" != "preserve me" ]]; then
+  echo "sdd-workspace must not write through a symlinked .gitignore" >&2
+  exit 1
+fi
+
 echo "sdd workflow scripts test passed"

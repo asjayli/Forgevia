@@ -55,7 +55,8 @@ echo "📋 Active change tasks"
 tmp_list="$(mktemp)"
 trap 'rm -f "$tmp_list"' EXIT
 
-find "$changes_root" -mindepth 1 -maxdepth 1 -type d ! -name archive | while read -r change_dir; do
+for change_dir in "$changes_root"/*; do
+  [[ -d "$change_dir" && "$(basename "$change_dir")" != "archive" ]] || continue
   if [[ ! -f "$change_dir/.openspec.yaml" ]]; then
     continue
   fi

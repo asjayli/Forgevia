@@ -66,7 +66,7 @@ main() {
     exit 1
   fi
 
-  if [[ -d "$project_dir/openspec" ]]; then
+  if [[ -f "$project_dir/openspec/config.yaml" ]]; then
     echo "OpenSpec already initialized in $project_dir"
     exit 0
   fi

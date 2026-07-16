@@ -18,7 +18,7 @@ Forgevia is an opinionated workflow bundle for agent coding.
 
 - Integrates OpenSpec, superpowers, code review, and browser validation into one coherent workflow from requirement to archive.
 - Manages global managed assets via `init` / `doctor` / `repair`: skills, commands, and managed override files layered on upstreams.
-- Provides explicit command orchestration: `draw` / `think` / `propose` / `implement` / `tasks` / `review` / `verify-web` / `archive`.
+- Provides explicit command orchestration: `draw` / `think` / `propose` / `implement` / `tasks` / `review` / `verify-web` / `archive`, plus the standalone `openspec-sync-specs` skill.
 
 ### What Forgevia does not do
 
@@ -54,6 +54,7 @@ Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/For
 - `forgevia-review`: Run a focused review checkpoint for current work.
 - `forgevia-verify-web`: Verify web-facing behavior in a browser.
 - `forgevia-draw`: Generate interaction sequence diagrams for a feature, flow, or interface.
+- `openspec-sync-specs`: Sync one change's delta specs to main specs while keeping the change active and unarchived.
 - `forgevia-archive`: Archive one completed active change.
 - `forgevia-doctor`: Inspect whether the Forgevia environment is healthy.
 - `forgevia-repair`: Repair missing or drifted Forgevia-managed assets.
@@ -86,12 +87,14 @@ After a command starts, Forgevia automatically performs routine steps, independe
    Use this at review checkpoints. It requests a focused review of the current work, preferably against a clear commit range, and reports findings in strict severity order so the highest-risk issues are handled first.
 10. `Forgevia verify-web`
    Use this when the change affects web pages, browser behavior, UI interaction, or visual output. It validates the user-facing result in a real browser before completion.
-11. `Forgevia archive <change>`
+11. `openspec-sync-specs <change>`
+   Use this to merge one change's delta specs into main specs without archiving it. It authorizes spec synchronization only, not archive, commit, push, or release.
+12. `Forgevia archive <change>`
    Use this after implementation, review, and verification are complete. It closes the finished change, syncs its final documentation, and keeps the project history clean.
 
 ### Simple workflow
 
-`draw -> think -> propose -> implement -> review -> verify-web (if needed) -> archive`
+`draw -> think -> propose -> implement -> review -> verify-web (if needed) -> openspec-sync-specs (when early synchronization is needed) -> archive`
 
 Forgevia turns requirement shaping, structured implementation, review, validation, and closure into one consistent delivery workflow.
 

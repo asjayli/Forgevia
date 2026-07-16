@@ -81,7 +81,7 @@ trap 'rm -rf "$tmp_dir"' EXIT
 
 export CLAUDE_HOME="$tmp_dir/.claude"
 bin_dir="$tmp_dir/bin"
-superpowers_root="$tmp_dir/plugin-cache/superpowers/6.1.1"
+superpowers_root="$CLAUDE_HOME/plugins/cache/superpowers/6.1.1"
 export OPENSPEC_ROOT="$tmp_dir/openspec"
 npm_log="$tmp_dir/npm.log"
 export FAKE_NPM_ROOT="$tmp_dir/npm-global"
@@ -272,6 +272,24 @@ post_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR")"
 assert_contains "$post_repair_output" "✨ No drift detected"
 assert_contains "$post_repair_output" "Forgevia Claude doctor passed"
 
+chmod -x "$CLAUDE_HOME/forgevia/bin/forgevia-draw.sh"
+
+set +e
+mode_drift_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" 2>&1)"
+mode_drift_status=$?
+set -e
+
+if [[ "$mode_drift_status" != "1" ]]; then
+  echo "expected executable-bit drift exit code 1 but got $mode_drift_status" >&2
+  exit 1
+fi
+assert_contains "$mode_drift_output" "❌ DRIFT"
+assert_contains "$mode_drift_output" "$CLAUDE_HOME/forgevia/bin/forgevia-draw.sh"
+
+mode_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
+assert_contains "$mode_repair_output" "$CLAUDE_HOME/forgevia/bin/forgevia-draw.sh"
+test_file_executable "$CLAUDE_HOME/forgevia/bin/forgevia-draw.sh"
+
 rm "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
 
 set +e
@@ -391,6 +409,8 @@ trap 'rm -rf "$tmp_dir" "$missing_openspec_dir"' EXIT
 export CLAUDE_HOME="$missing_openspec_dir/.claude"
 unset OPENSPEC_ROOT
 mkdir -p "$CLAUDE_HOME/plugins"
+missing_openspec_superpowers_root="$CLAUDE_HOME/plugins/cache/superpowers/6.1.1"
+mkdir -p "$missing_openspec_superpowers_root/skills"
 cat > "$CLAUDE_HOME/plugins/installed_plugins.json" <<EOF
 {
   "version": 2,
@@ -398,7 +418,7 @@ cat > "$CLAUDE_HOME/plugins/installed_plugins.json" <<EOF
     "superpowers@superpowers-marketplace": [
       {
         "scope": "user",
-        "installPath": "$superpowers_root",
+        "installPath": "$missing_openspec_superpowers_root",
         "version": "6.1.1"
       }
     ]
@@ -440,6 +460,91 @@ assert_contains "$missing_plugin_output" "/plugin install superpowers@superpower
 assert_contains "$missing_plugin_output" "choose:"
 assert_contains "$missing_plugin_output" "user"
 assert_contains "$missing_plugin_output" "CLAUDE_SUPERPOWERS_ROOT"
+
+untrusted_plugin_dir="$tmp_dir/untrusted-plugin"
+untrusted_plugin_home="$tmp_dir/untrusted-plugin-home/.claude"
+mkdir -p "$untrusted_plugin_dir/skills/brainstorming" "$untrusted_plugin_home/plugins"
+printf 'do not replace\n' > "$untrusted_plugin_dir/skills/brainstorming/SKILL.md"
+cat > "$untrusted_plugin_home/plugins/installed_plugins.json" <<EOF
+{
+  "version": 2,
+  "plugins": {
+    "superpowers@superpowers-marketplace": [
+      {
+        "scope": "user",
+        "installPath": "$untrusted_plugin_dir",
+        "version": "6.1.1"
+      }
+    ]
+  }
+}
+EOF
+
+set +e
+untrusted_plugin_output="$(CLAUDE_HOME="$untrusted_plugin_home" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
+untrusted_plugin_status=$?
+set -e
+
+if [[ "$untrusted_plugin_status" != "1" ]]; then
+  echo "expected untrusted plugin path installer exit code 1 but got $untrusted_plugin_status" >&2
+  exit 1
+fi
+assert_contains "$untrusted_plugin_output" "must be inside"
+if [[ "$(cat "$untrusted_plugin_dir/skills/brainstorming/SKILL.md")" != "do not replace" ]]; then
+  echo "installer must not overlay an automatically discovered plugin outside CLAUDE_HOME" >&2
+  exit 1
+fi
+
+linked_skills_home="$tmp_dir/linked-skills-home/.claude"
+linked_skills_root="$linked_skills_home/plugins/cache/superpowers/6.1.1"
+linked_skills_target="$tmp_dir/linked-skills-target"
+mkdir -p "$linked_skills_root" "$linked_skills_target/brainstorming" "$linked_skills_home/plugins"
+printf 'preserve linked skill\n' > "$linked_skills_target/brainstorming/SKILL.md"
+ln -s "$linked_skills_target" "$linked_skills_root/skills"
+cat > "$linked_skills_home/plugins/installed_plugins.json" <<EOF
+{
+  "version": 2,
+  "plugins": {
+    "superpowers@superpowers-marketplace": [
+      {
+        "scope": "user",
+        "installPath": "$linked_skills_root",
+        "version": "6.1.1"
+      }
+    ]
+  }
+}
+EOF
+
+set +e
+linked_skills_output="$(CLAUDE_HOME="$linked_skills_home" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
+linked_skills_status=$?
+set -e
+
+if [[ "$linked_skills_status" != "1" ]]; then
+  echo "expected symlinked plugin skills installer exit code 1 but got $linked_skills_status" >&2
+  exit 1
+fi
+assert_contains "$linked_skills_output" "must not contain symlinks"
+if [[ "$(cat "$linked_skills_target/brainstorming/SKILL.md")" != "preserve linked skill" ]]; then
+  echo "installer must not write through a symlinked plugin skills directory" >&2
+  exit 1
+fi
+
+set +e
+linked_skills_doctor_output="$(CLAUDE_HOME="$linked_skills_home" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$DOCTOR" --repair 2>&1)"
+linked_skills_doctor_status=$?
+set -e
+
+if [[ "$linked_skills_doctor_status" != "1" ]]; then
+  echo "expected symlinked plugin skills doctor exit code 1 but got $linked_skills_doctor_status" >&2
+  exit 1
+fi
+assert_contains "$linked_skills_doctor_output" "must not contain symlinks"
+if [[ "$(cat "$linked_skills_target/brainstorming/SKILL.md")" != "preserve linked skill" ]]; then
+  echo "doctor must not repair through a symlinked plugin skills directory" >&2
+  exit 1
+fi
 
 bad_root_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir" "$missing_openspec_dir" "$missing_plugin_dir" "$bad_root_dir"' EXIT

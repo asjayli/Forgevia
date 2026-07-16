@@ -250,6 +250,21 @@ post_repair_output="$("$DOCTOR")"
 assert_contains "$post_repair_output" "✨ No drift detected"
 assert_contains "$post_repair_output" "Forgevia Codex doctor passed"
 
+chmod -x "$CODEX_HOME/forgevia/bin/forgevia-draw.sh"
+
+set +e
+mode_drift_output="$("$DOCTOR" 2>&1)"
+mode_drift_status=$?
+set -e
+
+assert_exit_code "$mode_drift_status" "1"
+assert_contains "$mode_drift_output" "❌ DRIFT"
+assert_contains "$mode_drift_output" "$CODEX_HOME/forgevia/bin/forgevia-draw.sh"
+
+mode_repair_output="$("$DOCTOR" --repair)"
+assert_contains "$mode_repair_output" "$CODEX_HOME/forgevia/bin/forgevia-draw.sh"
+test_file_executable "$CODEX_HOME/forgevia/bin/forgevia-draw.sh"
+
 rm "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
 
 set +e

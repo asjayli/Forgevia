@@ -70,7 +70,8 @@ resolve_superpowers_root() {
     return
   fi
 
-  node -e '
+  local resolved
+  resolved="$(node -e '
     const fs = require("fs");
     const path = process.argv[1];
     const data = JSON.parse(fs.readFileSync(path, "utf8"));
@@ -81,13 +82,19 @@ resolve_superpowers_root() {
       const selected = userEntry || anyEntry;
       if (selected?.installPath) process.stdout.write(selected.installPath);
     }
-  ' "$installed_plugins_path"
+  ' "$installed_plugins_path")"
+
+  if [[ -n "$resolved" ]]; then
+    validate_discovered_superpowers_root "$resolved" || return 1
+  fi
+  echo "$resolved"
 }
 
 verify_superpowers_present() {
   local superpowers_root="$1"
 
   if [[ -n "$superpowers_root" && -d "$superpowers_root/skills" ]]; then
+    validate_superpowers_skills_root "$superpowers_root" || exit 1
     return
   fi
 
@@ -130,6 +137,50 @@ validate_root() {
   if [[ -n "$expected_suffix" && "$root_path" != *"$expected_suffix" ]]; then
     echo "root path must end with $expected_suffix: $root_path" >&2
     exit 1
+  fi
+}
+
+validate_discovered_superpowers_root() {
+  local root_path="$1"
+  local claude_root_real
+  local plugin_root_real
+
+  validate_root "$root_path" ""
+  if [[ ! -d "$root_path" ]]; then
+    echo "Claude plugin install path does not exist: $root_path" >&2
+    return 1
+  fi
+
+  claude_root_real="$(cd "$CLAUDE_ROOT" && pwd -P)"
+  plugin_root_real="$(cd "$root_path" && pwd -P)"
+  if [[ "$plugin_root_real" != "$claude_root_real/plugins" && "$plugin_root_real" != "$claude_root_real/plugins/"* ]]; then
+    echo "Claude plugin install path must be inside $CLAUDE_ROOT/plugins: $root_path" >&2
+    return 1
+  fi
+
+  validate_superpowers_skills_root "$root_path"
+}
+
+validate_superpowers_skills_root() {
+  local root_path="$1"
+  local skills_path="$root_path/skills"
+  local root_real
+  local skills_real
+
+  if [[ ! -d "$skills_path" ]]; then
+    echo "Claude plugin skills directory is missing: $skills_path" >&2
+    return 1
+  fi
+  if [[ -L "$skills_path" || -n "$(find "$skills_path" -type l -print -quit)" ]]; then
+    echo "Claude plugin skills directory must not contain symlinks: $skills_path" >&2
+    return 1
+  fi
+
+  root_real="$(cd "$root_path" && pwd -P)"
+  skills_real="$(cd "$skills_path" && pwd -P)"
+  if [[ "$skills_real" != "$root_real/skills" && "$skills_real" != "$root_real/skills/"* ]]; then
+    echo "Claude plugin skills directory escapes plugin root: $skills_path" >&2
+    return 1
   fi
 }
 
@@ -216,7 +267,12 @@ sync_path() {
 }
 
 managed_skill_paths() {
-  find "$ASSETS_DIR/skills" -mindepth 1 -maxdepth 1 -type d | sort
+  local source_path
+
+  for source_path in "$ASSETS_DIR/skills"/*; do
+    [[ -d "$source_path" ]] || continue
+    echo "$source_path"
+  done | sort
 }
 
 managed_command_paths() {
@@ -224,7 +280,12 @@ managed_command_paths() {
     return
   fi
 
-  find "$ASSETS_DIR/commands" -mindepth 1 -maxdepth 1 -type d | sort
+  local source_path
+
+  for source_path in "$ASSETS_DIR/commands"/*; do
+    [[ -d "$source_path" ]] || continue
+    echo "$source_path"
+  done | sort
 }
 
 overlay_assets() {
@@ -336,7 +397,6 @@ main() {
     validate_root "$CLAUDE_SUPERPOWERS_ROOT" ""
   fi
   require_command cp
-  require_command find
   require_command rm
   require_command mkdir
   require_command node
