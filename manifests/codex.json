@@ -260,7 +260,7 @@
     },
     {
       "id": "forgevia-home-mirror",
-      "source": "repo root (.claude, assets, scripts, manifests)",
+      "source": "repo root (assets, scripts, manifests)",
       "target": "~/.codex/forgevia",
       "owner": "forgevia",
       "kind": "source-mirror",

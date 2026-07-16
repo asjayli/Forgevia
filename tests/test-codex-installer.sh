@@ -73,6 +73,7 @@ fi
 
 assert_contains "$(<"$MANIFEST")" '"version": "1.6.0"'
 assert_contains "$(<"$MANIFEST")" '"overrideTargetVersion": "1.6.0"'
+assert_contains "$(<"$MANIFEST")" '"source": "repo root (assets, scripts, manifests)"'
 assert_contains "$(<"$INSTALLER")" 'npm install -g @fission-ai/openspec@1.6.0'
 
 installer_help="$("$INSTALLER" --help)"
