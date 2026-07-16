@@ -103,10 +103,10 @@ Forgevia 把需求梳理、结构化开发、代码评审、效果验证和最�
 Forgevia 通过 `forgevia validate` 提供中文 OpenSpec 严格校验，用于在不修改源规格的前提下支持需求正文中的“必须、不得、禁止、应当”。它先校验中文强制词，再在临时副本中注入 `MUST` 并运行原生严格校验：
 
 ```bash
-"${CODEX_HOME:-$HOME/.codex}/forgevia/bin/forgevia" validate --root <项目根目录>
+forgevia validate --root <项目根目录>
 ```
 
-Claude 安装使用 `${CLAUDE_HOME:-$HOME/.claude}/forgevia/bin/forgevia`。将对应 `forgevia/bin` 加入 PATH 后，可直接运行 `forgevia validate --root <项目根目录>`。当前命令分发器还支持 `init`、`tasks`、`draw`、`doctor` 和 `repair`。适配器同时校验主规格和活跃变更，且只支持 `spec-driven` schema；不支持中文章节或标题，必须继续使用 `## Requirements`、`### Requirement:` 和 `#### Scenario:` 等 OpenSpec 结构关键字。
+安装器会将平台无关的命令安装到 `~/.local/bin/forgevia`；确保该目录在 PATH 中后，可直接运行 `forgevia validate --root <项目根目录>`。当前命令分发器还支持 `init`、`tasks`、`draw`、`doctor` 和 `repair`。当 Codex 与 Claude 都已安装时，`doctor` 与 `repair` 会检查两个运行时；其他命令优先使用 Codex 运行时。适配器同时校验主规格和活跃变更，且只支持 `spec-driven` schema；不支持中文章节或标题，必须继续使用 `## Requirements`、`### Requirement:` 和 `#### Scenario:` 等 OpenSpec 结构关键字。
 
 ## 第三方资产与许可
 

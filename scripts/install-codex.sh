@@ -7,6 +7,8 @@ MANIFEST_PATH="$ROOT_DIR/manifests/codex.json"
 ASSETS_DIR="$ROOT_DIR/assets/codex"
 OPENSPEC_ASSETS_DIR="$ROOT_DIR/assets/openspec"
 CODEX_ROOT="${CODEX_HOME:-$HOME/.codex}"
+FORGEVIA_BIN_DIR="${FORGEVIA_BIN_DIR:-$HOME/.local/bin}"
+GLOBAL_COMMAND_STATE_PATH="$FORGEVIA_BIN_DIR/.forgevia-global-command.sha256"
 SUPERPOWERS_INSTALL_URL="https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.codex/INSTALL.md"
 OPENSPEC_ROOT="${OPENSPEC_ROOT:-}"
 # Forgevia's openspec override files are snapshots taken against this upstream
@@ -30,6 +32,7 @@ Behavior:
   - overlays Forgevia-managed openspec customization
   - requires upstream superpowers to already exist
   - directly overlays Forgevia-managed assets into ~/.codex
+  - exposes the forgevia command at ~/.local/bin/forgevia
 EOF
 }
 
@@ -212,6 +215,41 @@ EOF
   exit 1
 }
 
+validate_global_command_target() {
+  local command_path="$FORGEVIA_BIN_DIR/forgevia"
+
+  validate_root "$FORGEVIA_BIN_DIR" ""
+  if [[ ( -e "$command_path" || -L "$command_path" ) ]] && ! is_managed_global_command "$command_path" && ! is_legacy_runtime_link "$command_path"; then
+    echo "refusing to replace existing command: $command_path" >&2
+    exit 1
+  fi
+}
+
+is_managed_global_command() {
+  local command_path="$1"
+
+  [[ -f "$command_path" && ! -L "$command_path" ]] || return 1
+  cmp -s "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path" && return 0
+  [[ -f "$GLOBAL_COMMAND_STATE_PATH" ]] && [[ "$(<"$GLOBAL_COMMAND_STATE_PATH")" == "$(command_checksum "$command_path")" ]]
+}
+
+command_checksum() {
+  sha256sum "$1" | awk '{print $1}'
+}
+
+write_global_command_state() {
+  command_checksum "$FORGEVIA_BIN_DIR/forgevia" > "$GLOBAL_COMMAND_STATE_PATH"
+}
+
+is_legacy_runtime_link() {
+  local command_path="$1"
+  local target_path
+
+  [[ -L "$command_path" ]] || return 1
+  target_path="$(readlink "$command_path")"
+  [[ "$target_path" == "$CODEX_ROOT/forgevia/bin/forgevia" || "$target_path" == "${CLAUDE_HOME:-$HOME/.claude}/forgevia/bin/forgevia" ]]
+}
+
 overlay_assets() {
   log_step "Overlaying Forgevia-managed assets into $CODEX_ROOT"
 
@@ -254,6 +292,19 @@ overlay_runtime_scripts() {
   sync_path "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$runtime_dir/validate-openspec-cn.mjs"
   sync_path "$ROOT_DIR/scripts/forgevia.sh" "$runtime_dir/forgevia"
   log_success "Installed Forgevia runtime scripts (forgevia/bootstrap/list-change-tasks/draw/doctor/validate-openspec-cn)"
+}
+
+install_global_command() {
+  local command_path="$FORGEVIA_BIN_DIR/forgevia"
+
+  log_step "Installing Forgevia command at $command_path"
+  mkdir -p "$FORGEVIA_BIN_DIR"
+  if [[ -e "$command_path" || -L "$command_path" ]]; then
+    rm -f "$command_path"
+  fi
+  cp "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path"
+  write_global_command_state
+  log_success "Installed Forgevia command: $command_path"
 }
 
 overlay_forgevia_home() {
@@ -312,10 +363,12 @@ main() {
 
   log_step "Forgevia Codex installer"
   validate_root "$CODEX_ROOT" ".codex"
+  validate_global_command_target
   require_command cp
   require_command rm
   require_command mkdir
   require_command node
+  require_command sha256sum
 
   require_command npm
   install_openspec
@@ -330,6 +383,7 @@ main() {
   overlay_assets
   overlay_forgevia_home
   overlay_runtime_scripts
+  install_global_command
 
   if [[ "$install_incomplete" == "true" ]]; then
     echo "Forgevia Codex install incomplete: OpenSpec overrides were not applied" >&2

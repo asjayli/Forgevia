@@ -40,6 +40,26 @@ test_path_not_exists() {
   fi
 }
 
+test_symbolic_link() {
+  local path="$1"
+  if [[ ! -L "$path" ]]; then
+    echo "expected symbolic link to exist: $path" >&2
+    exit 1
+  fi
+}
+
+assert_link_target() {
+  local path="$1"
+  local expected="$2"
+  local actual
+
+  actual="$(readlink "$path")"
+  if [[ "$actual" != "$expected" ]]; then
+    echo "expected symbolic link target $expected but got $actual" >&2
+    exit 1
+  fi
+}
+
 assert_paths_equal() {
   local expected="$1"
   local actual="$2"
@@ -90,6 +110,7 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
 export CODEX_HOME="$tmp_dir/.codex"
+export FORGEVIA_BIN_DIR="$tmp_dir/.local/bin"
 export OPENSPEC_ROOT="$tmp_dir/openspec"
 bin_dir="$tmp_dir/bin"
 npm_log="$tmp_dir/npm.log"
@@ -134,6 +155,18 @@ printf 'user local brainstorming\n' > "$CODEX_HOME/superpowers/skills/brainstorm
 printf 'user local tdd\n' > "$CODEX_HOME/superpowers/skills/test-driven-development/SKILL.md"
 printf 'export function serializeConfig() { return \"wrong\"; }\n' > "$OPENSPEC_ROOT/dist/core/config-prompts.js"
 printf 'export const propose = \"wrong\";\n' > "$OPENSPEC_ROOT/dist/core/templates/workflows/propose.js"
+
+mkdir -p "$FORGEVIA_BIN_DIR"
+printf '#!/usr/bin/env bash\n# Forgevia global command shim\necho user-command\n' > "$FORGEVIA_BIN_DIR/forgevia"
+chmod +x "$FORGEVIA_BIN_DIR/forgevia"
+
+set +e
+command_collision_output="$("$INSTALLER" 2>&1)"
+command_collision_status=$?
+set -e
+assert_exit_code "$command_collision_status" "1"
+assert_contains "$command_collision_output" "refusing to replace existing command: $FORGEVIA_BIN_DIR/forgevia"
+rm "$FORGEVIA_BIN_DIR/forgevia"
 
 installer_output="$("$INSTALLER")"
 assert_contains "$installer_output" "🧱 Forgevia Codex installer"
@@ -203,6 +236,10 @@ test_file_executable "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
 cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
 test_file_executable "$CODEX_HOME/forgevia/bin/forgevia"
 cmp "$ROOT_DIR/scripts/forgevia.sh" "$CODEX_HOME/forgevia/bin/forgevia"
+test_file_executable "$FORGEVIA_BIN_DIR/forgevia"
+cmp "$ROOT_DIR/scripts/forgevia-global.sh" "$FORGEVIA_BIN_DIR/forgevia"
+global_command_output="$(CLAUDE_HOME="$tmp_dir/.claude" "$FORGEVIA_BIN_DIR/forgevia" doctor)"
+assert_contains "$global_command_output" "Forgevia Codex doctor passed"
 
 doctor_output="$("$DOCTOR")"
 assert_contains "$doctor_output" "🔎 Forgevia Codex doctor"
@@ -214,6 +251,30 @@ assert_contains "$doctor_output" "$OPENSPEC_ROOT/dist/core/templates/workflows/p
 assert_contains "$doctor_output" "$CODEX_HOME/skills/openspec-propose"
 assert_contains "$doctor_output" "$CODEX_HOME/skills/openspec-apply-change"
 assert_contains "$doctor_output" "$CODEX_HOME/skills/openspec-sync-specs"
+
+rm "$FORGEVIA_BIN_DIR/forgevia"
+
+set +e
+global_command_drift_output="$("$DOCTOR" 2>&1)"
+global_command_drift_status=$?
+set -e
+assert_exit_code "$global_command_drift_status" "1"
+assert_contains "$global_command_drift_output" "$FORGEVIA_BIN_DIR/forgevia"
+
+global_command_repair_output="$("$DOCTOR" --repair)"
+assert_contains "$global_command_repair_output" "$FORGEVIA_BIN_DIR/forgevia"
+test_file_executable "$FORGEVIA_BIN_DIR/forgevia"
+cmp "$ROOT_DIR/scripts/forgevia-global.sh" "$FORGEVIA_BIN_DIR/forgevia"
+
+rm "$FORGEVIA_BIN_DIR/forgevia"
+rm "$FORGEVIA_BIN_DIR/.forgevia-global-command.sha256"
+ln -s "$CODEX_HOME/forgevia/bin/forgevia" "$FORGEVIA_BIN_DIR/forgevia"
+
+legacy_command_repair_output="$("$DOCTOR" --repair)"
+assert_contains "$legacy_command_repair_output" "$FORGEVIA_BIN_DIR/forgevia"
+test_file_executable "$FORGEVIA_BIN_DIR/forgevia"
+test_path_not_exists "$FORGEVIA_BIN_DIR/forgevia.forgevia.bak"
+cmp "$ROOT_DIR/scripts/forgevia-global.sh" "$FORGEVIA_BIN_DIR/forgevia"
 
 expected_openspec_config="$(cat "$ROOT_DIR/assets/openspec/dist/core/config-prompts.js")"
 actual_openspec_config="$(cat "$OPENSPEC_ROOT/dist/core/config-prompts.js")"
@@ -381,7 +442,7 @@ trap 'rm -rf "$tmp_dir" "$bad_root_dir" "$missing_openspec_dir"' EXIT
 mkdir -p "$missing_openspec_dir/.codex/superpowers"
 
 set +e
-missing_openspec_install_output="$(env -u OPENSPEC_ROOT CODEX_HOME="$missing_openspec_dir/.codex" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
+missing_openspec_install_output="$(env -u OPENSPEC_ROOT CODEX_HOME="$missing_openspec_dir/.codex" FORGEVIA_BIN_DIR="$missing_openspec_dir/.local/bin" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
 missing_openspec_install_status=$?
 set -e
 

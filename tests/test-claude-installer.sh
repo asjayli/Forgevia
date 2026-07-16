@@ -40,6 +40,26 @@ test_path_not_exists() {
   fi
 }
 
+test_symbolic_link() {
+  local path="$1"
+  if [[ ! -L "$path" ]]; then
+    echo "expected symbolic link to exist: $path" >&2
+    exit 1
+  fi
+}
+
+assert_link_target() {
+  local path="$1"
+  local expected="$2"
+  local actual
+
+  actual="$(readlink "$path")"
+  if [[ "$actual" != "$expected" ]]; then
+    echo "expected symbolic link target $expected but got $actual" >&2
+    exit 1
+  fi
+}
+
 assert_paths_equal() {
   local expected="$1"
   local actual="$2"
@@ -80,6 +100,7 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
 export CLAUDE_HOME="$tmp_dir/.claude"
+export FORGEVIA_BIN_DIR="$tmp_dir/.local/bin"
 bin_dir="$tmp_dir/bin"
 superpowers_root="$CLAUDE_HOME/plugins/cache/superpowers/6.1.1"
 export OPENSPEC_ROOT="$tmp_dir/openspec"
@@ -149,6 +170,21 @@ cat > "$CLAUDE_HOME/plugins/installed_plugins.json" <<EOF
 }
 EOF
 
+mkdir -p "$FORGEVIA_BIN_DIR"
+printf '#!/usr/bin/env bash\n# Forgevia global command shim\necho user-command\n' > "$FORGEVIA_BIN_DIR/forgevia"
+chmod +x "$FORGEVIA_BIN_DIR/forgevia"
+
+set +e
+command_collision_output="$(PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
+command_collision_status=$?
+set -e
+if [[ "$command_collision_status" != "1" ]]; then
+  echo "expected command collision exit code 1 but got $command_collision_status" >&2
+  exit 1
+fi
+assert_contains "$command_collision_output" "refusing to replace existing command: $FORGEVIA_BIN_DIR/forgevia"
+rm "$FORGEVIA_BIN_DIR/forgevia"
+
 installer_output="$(PATH="$bin_dir:$PATH" "$INSTALLER")"
 assert_contains "$installer_output" "🧱 Forgevia Claude installer"
 assert_contains "$installer_output" "✅ Applied openspec override"
@@ -203,6 +239,10 @@ test_file_executable "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
 cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
 test_file_executable "$CLAUDE_HOME/forgevia/bin/forgevia"
 cmp "$ROOT_DIR/scripts/forgevia.sh" "$CLAUDE_HOME/forgevia/bin/forgevia"
+test_file_executable "$FORGEVIA_BIN_DIR/forgevia"
+cmp "$ROOT_DIR/scripts/forgevia-global.sh" "$FORGEVIA_BIN_DIR/forgevia"
+global_command_output="$(CODEX_HOME="$tmp_dir/.codex" PATH="$bin_dir:$PATH" "$FORGEVIA_BIN_DIR/forgevia" doctor)"
+assert_contains "$global_command_output" "Forgevia Claude doctor passed"
 
 expected_skill="$(cat "$ROOT_DIR/assets/claude/skills/forgevia-think/SKILL.md")"
 actual_skill="$(cat "$CLAUDE_HOME/skills/forgevia-think/SKILL.md")"
@@ -247,6 +287,33 @@ assert_contains "$doctor_output" "$CLAUDE_HOME/skills/forgevia-think"
 assert_contains "$doctor_output" "$CLAUDE_HOME/skills/forgevia"
 assert_contains "$doctor_output" "$CLAUDE_HOME/commands/opsx"
 assert_contains "$doctor_output" "$superpowers_root/skills/requesting-code-review"
+
+rm "$FORGEVIA_BIN_DIR/forgevia"
+
+set +e
+global_command_drift_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" 2>&1)"
+global_command_drift_status=$?
+set -e
+if [[ "$global_command_drift_status" != "1" ]]; then
+  echo "expected global command drift exit code 1 but got $global_command_drift_status" >&2
+  exit 1
+fi
+assert_contains "$global_command_drift_output" "$FORGEVIA_BIN_DIR/forgevia"
+
+global_command_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
+assert_contains "$global_command_repair_output" "$FORGEVIA_BIN_DIR/forgevia"
+test_file_executable "$FORGEVIA_BIN_DIR/forgevia"
+cmp "$ROOT_DIR/scripts/forgevia-global.sh" "$FORGEVIA_BIN_DIR/forgevia"
+
+rm "$FORGEVIA_BIN_DIR/forgevia"
+rm "$FORGEVIA_BIN_DIR/.forgevia-global-command.sha256"
+ln -s "$CLAUDE_HOME/forgevia/bin/forgevia" "$FORGEVIA_BIN_DIR/forgevia"
+
+legacy_command_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
+assert_contains "$legacy_command_repair_output" "$FORGEVIA_BIN_DIR/forgevia"
+test_file_executable "$FORGEVIA_BIN_DIR/forgevia"
+test_path_not_exists "$FORGEVIA_BIN_DIR/forgevia.forgevia.bak"
+cmp "$ROOT_DIR/scripts/forgevia-global.sh" "$FORGEVIA_BIN_DIR/forgevia"
 
 echo "drift" >> "$superpowers_root/skills/brainstorming/SKILL.md"
 
@@ -407,6 +474,7 @@ test_file_exists "$CLAUDE_HOME/skills/forgevia/SKILL.md"
 missing_openspec_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir" "$missing_openspec_dir"' EXIT
 export CLAUDE_HOME="$missing_openspec_dir/.claude"
+export FORGEVIA_BIN_DIR="$missing_openspec_dir/.local/bin"
 unset OPENSPEC_ROOT
 mkdir -p "$CLAUDE_HOME/plugins"
 missing_openspec_superpowers_root="$CLAUDE_HOME/plugins/cache/superpowers/6.1.1"
@@ -443,6 +511,7 @@ assert_contains "$missing_openspec_output" "Forgevia Claude install incomplete"
 missing_plugin_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir" "$missing_openspec_dir" "$missing_plugin_dir"' EXIT
 export CLAUDE_HOME="$missing_plugin_dir/.claude"
+export FORGEVIA_BIN_DIR="$missing_plugin_dir/.local/bin"
 export OPENSPEC_ROOT="$tmp_dir/openspec"
 mkdir -p "$CLAUDE_HOME/plugins"
 
@@ -481,7 +550,7 @@ cat > "$untrusted_plugin_home/plugins/installed_plugins.json" <<EOF
 EOF
 
 set +e
-untrusted_plugin_output="$(CLAUDE_HOME="$untrusted_plugin_home" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
+untrusted_plugin_output="$(CLAUDE_HOME="$untrusted_plugin_home" FORGEVIA_BIN_DIR="$untrusted_plugin_home/.local/bin" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
 untrusted_plugin_status=$?
 set -e
 
@@ -517,7 +586,7 @@ cat > "$linked_skills_home/plugins/installed_plugins.json" <<EOF
 EOF
 
 set +e
-linked_skills_output="$(CLAUDE_HOME="$linked_skills_home" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
+linked_skills_output="$(CLAUDE_HOME="$linked_skills_home" FORGEVIA_BIN_DIR="$linked_skills_home/.local/bin" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
 linked_skills_status=$?
 set -e
 
@@ -532,7 +601,7 @@ if [[ "$(cat "$linked_skills_target/brainstorming/SKILL.md")" != "preserve linke
 fi
 
 set +e
-linked_skills_doctor_output="$(CLAUDE_HOME="$linked_skills_home" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$DOCTOR" --repair 2>&1)"
+linked_skills_doctor_output="$(CLAUDE_HOME="$linked_skills_home" FORGEVIA_BIN_DIR="$linked_skills_home/.local/bin" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$DOCTOR" --repair 2>&1)"
 linked_skills_doctor_status=$?
 set -e
 

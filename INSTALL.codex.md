@@ -25,6 +25,7 @@ The Codex installer manages:
   - `requesting-code-review`
   - `executing-plans`
 - Forgevia-managed overrides for the upstream OpenSpec npm package internals (`config-prompts.js`, `propose.js`)
+- the platform-neutral `forgevia` command is installed at `~/.local/bin/forgevia`
 
 `playwright-interactive` is vendored into this repository (Apache-2.0, © Microsoft Corporation; see its `LICENSE.txt` / `NOTICE.txt`). `mermaid-diagram-specialist` is a Forgevia-original skill.
 
@@ -52,6 +53,7 @@ bash scripts/install-codex.sh
 After installation:
 
 - `openspec` is available on `PATH`
+- `forgevia` is available on `PATH` through `~/.local/bin/forgevia`
 - Forgevia-managed Codex skill files are installed under `~/.codex/skills`
 - selected superpowers skill files are replaced with Forgevia-managed copies under `~/.codex/superpowers`
 - Forgevia-managed OpenSpec overrides are applied to the installed OpenSpec package
@@ -59,6 +61,9 @@ After installation:
 ### Symbolic Links
 
 You may use symbolic links to place `~/.codex` or any managed subdirectory on another volume. Forgevia follows those links and synchronizes the resolved target without replacing the user-defined link; `doctor --repair` follows the same behavior.
+
+The installer replaces only its marked Forgevia global command. It refuses to
+replace another command or a link owned by the user or another installation.
 
 ### OpenSpec Override Version Note
 
