@@ -231,6 +231,31 @@ copy_path() {
   cp -R "$source_path" "$target_path"
 }
 
+resolve_managed_target() {
+  local target_path="$1"
+  local resolved_path="$target_path"
+  local link_target
+  local depth=0
+
+  # Preserve a user-managed final symlink while replacing its resolved target.
+  while [[ -L "$resolved_path" ]]; do
+    ((depth += 1))
+    if [[ "$depth" -gt 40 ]]; then
+      echo "too many symbolic links while resolving managed target: $target_path" >&2
+      exit 1
+    fi
+
+    link_target="$(readlink "$resolved_path")"
+    if [[ "$link_target" == /* ]]; then
+      resolved_path="$link_target"
+    else
+      resolved_path="$(dirname "$resolved_path")/$link_target"
+    fi
+  done
+
+  printf '%s\n' "$resolved_path"
+}
+
 backup_target_if_present() {
   local target_path="$1"
   local backup_path="${target_path}.forgevia.bak"
@@ -260,10 +285,12 @@ install_openspec() {
 sync_path() {
   local source_path="$1"
   local target_path="$2"
+  local resolved_target
 
-  backup_target_if_present "$target_path"
-  copy_path "$source_path" "$target_path"
-  remove_stale_backup "$target_path"
+  resolved_target="$(resolve_managed_target "$target_path")"
+  backup_target_if_present "$resolved_target"
+  copy_path "$source_path" "$resolved_target"
+  remove_stale_backup "$resolved_target"
 }
 
 managed_skill_paths() {
