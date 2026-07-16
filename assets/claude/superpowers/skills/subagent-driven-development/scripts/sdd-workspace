@@ -24,7 +24,22 @@ if [ -L "$powers_dir" ]; then
   exit 2
 fi
 
+if [ -L "$dir" ]; then
+  echo ".superpowers/sdd must not be a symlink: $dir" >&2
+  exit 2
+fi
+
 mkdir -p "$dir"
 chmod 0700 "$dir"
-printf '*\n' > "$dir/.gitignore"
+ignore_path="$dir/.gitignore"
+if [ -L "$ignore_path" ]; then
+  echo ".superpowers/sdd/.gitignore must not be a symlink: $ignore_path" >&2
+  exit 2
+fi
+
+tmp_ignore=$(mktemp "$dir/.gitignore.XXXXXX")
+trap 'rm -f "$tmp_ignore"' EXIT
+printf '*\n' > "$tmp_ignore"
+mv -f "$tmp_ignore" "$ignore_path"
+trap - EXIT
 cd "$dir" && pwd

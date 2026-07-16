@@ -122,12 +122,35 @@ openspec_version_matches() {
   [[ "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
 }
 
+executable_permissions_match() {
+  local source_path="$1"
+  local target_path="$2"
+  local source_file
+  local target_file
+
+  if [[ -f "$source_path" ]]; then
+    [[ ! -x "$source_path" || -x "$target_path" ]]
+    return
+  fi
+
+  while IFS= read -r source_file; do
+    [[ -x "$source_file" ]] || continue
+    target_file="$target_path/${source_file#"$source_path"/}"
+    [[ -x "$target_file" ]] || return 1
+  done < <(find "$source_path" -type f)
+}
+
 compare_path() {
   local source_path="$1"
   local target_path="$2"
 
   if [[ ! -e "$target_path" ]]; then
     print_status "MISS" "$target_path"
+    return 1
+  fi
+
+  if ! executable_permissions_match "$source_path" "$target_path"; then
+    print_status "DRIFT" "$target_path"
     return 1
   fi
 

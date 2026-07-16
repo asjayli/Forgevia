@@ -123,6 +123,50 @@ validate_root() {
   fi
 }
 
+validate_discovered_superpowers_root() {
+  local root_path="$1"
+  local claude_root_real
+  local plugin_root_real
+
+  validate_root "$root_path" ""
+  if [[ ! -d "$root_path" ]]; then
+    echo "Claude plugin install path does not exist: $root_path" >&2
+    return 1
+  fi
+
+  claude_root_real="$(cd "$CLAUDE_ROOT" && pwd -P)"
+  plugin_root_real="$(cd "$root_path" && pwd -P)"
+  if [[ "$plugin_root_real" != "$claude_root_real/plugins" && "$plugin_root_real" != "$claude_root_real/plugins/"* ]]; then
+    echo "Claude plugin install path must be inside $CLAUDE_ROOT/plugins: $root_path" >&2
+    return 1
+  fi
+
+  validate_superpowers_skills_root "$root_path"
+}
+
+validate_superpowers_skills_root() {
+  local root_path="$1"
+  local skills_path="$root_path/skills"
+  local root_real
+  local skills_real
+
+  if [[ ! -d "$skills_path" ]]; then
+    echo "Claude plugin skills directory is missing: $skills_path" >&2
+    return 1
+  fi
+  if [[ -L "$skills_path" || -n "$(find "$skills_path" -type l -print -quit)" ]]; then
+    echo "Claude plugin skills directory must not contain symlinks: $skills_path" >&2
+    return 1
+  fi
+
+  root_real="$(cd "$root_path" && pwd -P)"
+  skills_real="$(cd "$skills_path" && pwd -P)"
+  if [[ "$skills_real" != "$root_real/skills" && "$skills_real" != "$root_real/skills/"* ]]; then
+    echo "Claude plugin skills directory escapes plugin root: $skills_path" >&2
+    return 1
+  fi
+}
+
 resolve_superpowers_root() {
   if [[ -n "$CLAUDE_SUPERPOWERS_ROOT" ]]; then
     validate_root "$CLAUDE_SUPERPOWERS_ROOT" ""
@@ -136,7 +180,8 @@ resolve_superpowers_root() {
     return
   fi
 
-  node -e '
+  local resolved
+  resolved="$(node -e '
     const fs = require("fs");
     const path = process.argv[1];
     const data = JSON.parse(fs.readFileSync(path, "utf8"));
@@ -147,7 +192,30 @@ resolve_superpowers_root() {
       const selected = userEntry || anyEntry;
       if (selected?.installPath) process.stdout.write(selected.installPath);
     }
-  ' "$installed_plugins_path"
+  ' "$installed_plugins_path")"
+
+  if [[ -n "$resolved" ]]; then
+    validate_discovered_superpowers_root "$resolved" || return 1
+  fi
+  echo "$resolved"
+}
+
+executable_permissions_match() {
+  local source_path="$1"
+  local target_path="$2"
+  local source_file
+  local target_file
+
+  if [[ -f "$source_path" ]]; then
+    [[ ! -x "$source_path" || -x "$target_path" ]]
+    return
+  fi
+
+  while IFS= read -r source_file; do
+    [[ -x "$source_file" ]] || continue
+    target_file="$target_path/${source_file#"$source_path"/}"
+    [[ -x "$target_file" ]] || return 1
+  done < <(find "$source_path" -type f)
 }
 
 compare_path() {
@@ -156,6 +224,11 @@ compare_path() {
 
   if [[ ! -e "$target_path" ]]; then
     print_status "MISS" "$target_path"
+    return 1
+  fi
+
+  if ! executable_permissions_match "$source_path" "$target_path"; then
+    print_status "DRIFT" "$target_path"
     return 1
   fi
 
@@ -214,11 +287,11 @@ managed_skill_pairs() {
   local source_path
   local target_name
 
-  find "$ASSETS_DIR/skills" -mindepth 1 -maxdepth 1 -type d | sort |
-    while IFS= read -r source_path; do
-      target_name="$(basename "$source_path")"
-      echo "$source_path::$CLAUDE_ROOT/skills/$target_name"
-    done
+  for source_path in "$ASSETS_DIR/skills"/*; do
+    [[ -d "$source_path" ]] || continue
+    target_name="$(basename "$source_path")"
+    echo "$source_path::$CLAUDE_ROOT/skills/$target_name"
+  done | sort
 }
 
 managed_command_pairs() {
@@ -229,11 +302,11 @@ managed_command_pairs() {
   local source_path
   local target_name
 
-  find "$ASSETS_DIR/commands" -mindepth 1 -maxdepth 1 -type d | sort |
-    while IFS= read -r source_path; do
-      target_name="$(basename "$source_path")"
-      echo "$source_path::$CLAUDE_ROOT/commands/$target_name"
-    done
+  for source_path in "$ASSETS_DIR/commands"/*; do
+    [[ -d "$source_path" ]] || continue
+    target_name="$(basename "$source_path")"
+    echo "$source_path::$CLAUDE_ROOT/commands/$target_name"
+  done | sort
 }
 
 main() {
@@ -291,6 +364,10 @@ main() {
   if [[ -z "$superpowers_root" ]]; then
     print_status "MISS" "$CLAUDE_ROOT/plugins/installed_plugins.json"
     log_info "Claude superpowers plugin could not be resolved. Install the plugin first or set CLAUDE_SUPERPOWERS_ROOT."
+    unhealthy=1
+  elif ! validate_superpowers_skills_root "$superpowers_root"; then
+    print_status "DRIFT" "$superpowers_root/skills"
+    log_info "Claude superpowers plugin has an unsafe or missing skills directory; skipping its override checks and repairs."
     unhealthy=1
   else
     managed_pairs+=(

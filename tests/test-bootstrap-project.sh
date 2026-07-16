@@ -36,6 +36,7 @@ set -euo pipefail
 echo "\$*" >> "$fake_log"
 target_dir="\${@: -1}"
 mkdir -p "\$target_dir/openspec" "\$target_dir/.codex"
+printf 'schema: spec-driven\n' > "\$target_dir/openspec/config.yaml"
 EOF
 chmod +x "$bin_dir/openspec"
 
@@ -56,6 +57,13 @@ fi
 
 second_output="$(PATH="$bin_dir:$PATH" "$BOOTSTRAP" --tools codex,claude "$project_dir")"
 assert_contains "$second_output" "OpenSpec already initialized"
+
+incomplete_project_dir="$tmp_dir/project-incomplete"
+mkdir -p "$incomplete_project_dir/openspec"
+
+incomplete_output="$(PATH="$bin_dir:$PATH" "$BOOTSTRAP" "$incomplete_project_dir")"
+assert_contains "$incomplete_output" "Running openspec init --tools codex,claude"
+assert_contains "$(cat "$fake_log")" "init --tools codex,claude $incomplete_project_dir"
 
 second_project="$tmp_dir/project-explicit"
 mkdir -p "$second_project"

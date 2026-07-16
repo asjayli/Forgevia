@@ -18,7 +18,7 @@ Forgevia 是一套面向 agent coding 的工作流整合方案。
 
 - 把 OpenSpec、superpowers、代码评审与浏览器验证整合为一条从需求到归档的连贯工作流。
 - 通过 `init` / `doctor` / `repair` 管理全局受管资源：技能、命令，以及对上游的受管覆盖文件。
-- 提供显式命令编排：`draw` / `think` / `propose` / `implement` / `tasks` / `review` / `verify-web` / `archive`。
+- 提供显式命令编排：`draw` / `think` / `propose` / `implement` / `tasks` / `review` / `verify-web` / `archive`，并提供独立的 `openspec-sync-specs` 规格同步技能。
 
 ### Forgevia 不做什么
 
@@ -54,6 +54,7 @@ Forgevia 是一套面向 agent coding 的工作流整合方案。
 - `forgevia-review`：对当前工作发起一次聚焦评审。
 - `forgevia-verify-web`：在浏览器中验证 Web 侧行为。
 - `forgevia-draw`：为功能、链路或接口生成交互时序图。
+- `openspec-sync-specs`：将指定 change 的 delta specs 同步至主规格，保持 change 活跃且不归档。
 - `forgevia-archive`：归档一个已完成的活跃变更。
 - `forgevia-doctor`：检查 Forgevia 环境是否健康。
 - `forgevia-repair`：修复缺失或漂移的 Forgevia 受管资源。
@@ -86,12 +87,14 @@ Forgevia 是一套面向 agent coding 的工作流整合方案。
    用于关键检查点发起评审。它会针对当前工作做聚焦审查，优先基于明确的提交范围，并按严重级别严格排序问题，让最高风险项先被处理。
 10. `Forgevia verify-web`
    当改动涉及页面、浏览器行为、交互流程或视觉效果时使用。它会在真实浏览器里验证用户最终会看到的结果。
-11. `Forgevia archive <change>`
+11. `openspec-sync-specs <change>`
+   当需要在不归档的前提下把指定 change 的 delta specs 合并到主规格时使用。它只授权主规格同步，不授权归档、提交、推送或发布。
+12. `Forgevia archive <change>`
    当实现、评审和验证都完成后使用。它会关闭该变更、同步最终文档状态，并让项目历史保持整洁。
 
 ### 简版链路
 
-`draw -> think -> propose -> implement -> review -> verify-web（如需要）-> archive`
+`draw -> think -> propose -> implement -> review -> verify-web（如需要）-> openspec-sync-specs（如需提前同步）-> archive`
 
 Forgevia 把需求梳理、结构化开发、代码评审、效果验证和最终归档串成一条一致的交付流程。
 
