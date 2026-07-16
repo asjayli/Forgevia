@@ -95,4 +95,21 @@ assert_file_contains "$svg_path" "data-source=\"$mmd_path\""
 assert_file_contains "$args_log" "-p"
 assert_file_contains "$config_log" "\"executablePath\": \"$fake_chrome\""
 
+# A timestamp is part of the generated filename, so an environment override
+# must not be able to escape the caller-selected output directory.
+set +e
+invalid_timestamp_output="$(printf 'sequenceDiagram\nA->>B: Login\n' | PATH="$bin_dir:$PATH" ARGS_LOG="$args_log" CONFIG_LOG="$config_log" MMDC_BIN="$bin_dir/mmdc" FORGEVIA_DRAW_TIMESTAMP="../outside" "$SCRIPT" "login-flow" "$tmp_dir/out" 2>&1)"
+invalid_timestamp_status=$?
+set -e
+
+if [[ "$invalid_timestamp_status" != "1" ]]; then
+  echo "expected invalid timestamp exit code 1 but got $invalid_timestamp_status" >&2
+  exit 1
+fi
+assert_contains "$invalid_timestamp_output" "invalid Forgevia draw timestamp"
+if [[ -e "$tmp_dir/outside-login-flow.mmd" ]]; then
+  echo "timestamp override escaped the output directory" >&2
+  exit 1
+fi
+
 echo "draw helper test passed"

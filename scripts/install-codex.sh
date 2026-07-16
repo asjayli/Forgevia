@@ -159,11 +159,21 @@ read_openspec_version() {
   node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(p.version||"")' "$pkg" 2>/dev/null
 }
 
+is_valid_openspec_package() {
+  local openspec_root="$1"
+  local pkg="$openspec_root/package.json"
+
+  [[ -f "$pkg" ]] || return 1
+  node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.exit(p.name === "@fission-ai/openspec" ? 0 : 1)' "$pkg" 2>/dev/null
+}
+
 openspec_version_matches() {
   local openspec_root="$1"
   local ver
+
+  is_valid_openspec_package "$openspec_root" || return 1
   ver="$(read_openspec_version "$openspec_root")"
-  [[ -z "$ver" || "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
+  [[ "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
 }
 
 verify_superpowers_present() {
@@ -240,7 +250,12 @@ overlay_openspec_assets() {
 
   if [[ ! -d "$openspec_root" ]]; then
     echo "openspec install root not found: $openspec_root" >&2
-    exit 1
+    return 1
+  fi
+
+  if ! is_valid_openspec_package "$openspec_root"; then
+    echo "OpenSpec package metadata is missing or invalid: $openspec_root/package.json" >&2
+    return 1
   fi
 
   if ! openspec_version_matches "$openspec_root"; then
@@ -248,7 +263,7 @@ overlay_openspec_assets() {
     actual_version="$(read_openspec_version "$openspec_root")"
     log_info "openspec $actual_version detected; Forgevia openspec override targets $OPENSPEC_OVERRIDE_VERSION."
     log_info "Skipping openspec override to avoid downgrading upstream. Pin openspec to $OPENSPEC_OVERRIDE_VERSION or update Forgevia's override."
-    return
+    return 1
   fi
 
   sync_path "$OPENSPEC_ASSETS_DIR/dist/core/config-prompts.js" "$openspec_root/dist/core/config-prompts.js"
@@ -259,6 +274,7 @@ overlay_openspec_assets() {
 
 main() {
   local should_install_openspec="false"
+  local install_incomplete="false"
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -283,6 +299,7 @@ main() {
   require_command cp
   require_command rm
   require_command mkdir
+  require_command node
 
   if [[ "$should_install_openspec" == "true" ]]; then
     require_command npm
@@ -290,7 +307,12 @@ main() {
   fi
 
   if command -v openspec >/dev/null 2>&1 || [[ -n "$OPENSPEC_ROOT" ]]; then
-    overlay_openspec_assets
+    if ! overlay_openspec_assets; then
+      install_incomplete="true"
+    fi
+  else
+    log_info "openspec not found; skipping Forgevia-managed openspec overrides"
+    install_incomplete="true"
   fi
 
   mkdir -p "$CODEX_ROOT/skills"
@@ -299,6 +321,11 @@ main() {
   overlay_assets
   overlay_forgevia_home
   overlay_runtime_scripts
+
+  if [[ "$install_incomplete" == "true" ]]; then
+    echo "Forgevia Codex install incomplete: OpenSpec overrides were not applied" >&2
+    exit 1
+  fi
 
   echo "🎉 Forgevia Codex install complete"
 }

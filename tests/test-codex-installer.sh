@@ -94,6 +94,7 @@ mkdir -p "$CODEX_HOME/superpowers/skills/requesting-code-review"
 mkdir -p "$CODEX_HOME/superpowers/skills/test-driven-development"
 mkdir -p "$OPENSPEC_ROOT/dist/core"
 mkdir -p "$OPENSPEC_ROOT/dist/core/templates/workflows"
+printf '{"name":"@fission-ai/openspec","version":"1.5.0"}\n' > "$OPENSPEC_ROOT/package.json"
 printf 'user local brainstorming\n' > "$CODEX_HOME/superpowers/skills/brainstorming/SKILL.md"
 printf 'user local tdd\n' > "$CODEX_HOME/superpowers/skills/test-driven-development/SKILL.md"
 printf 'export function serializeConfig() { return \"wrong\"; }\n' > "$OPENSPEC_ROOT/dist/core/config-prompts.js"
@@ -241,6 +242,69 @@ assert_contains "$command_repair_output" "$CODEX_HOME/forgevia/bin/forgevia"
 test_file_executable "$CODEX_HOME/forgevia/bin/forgevia"
 cmp "$ROOT_DIR/scripts/forgevia.sh" "$CODEX_HOME/forgevia/bin/forgevia"
 
+rm "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
+
+set +e
+doctor_script_drift_output="$($DOCTOR 2>&1)"
+doctor_script_drift_status=$?
+set -e
+
+assert_exit_code "$doctor_script_drift_status" "1"
+assert_contains "$doctor_script_drift_output" "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
+
+doctor_script_repair_output="$($DOCTOR --repair)"
+assert_contains "$doctor_script_repair_output" "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
+test_file_executable "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
+cmp "$ROOT_DIR/scripts/doctor-codex.sh" "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
+
+missing_openspec_root="$tmp_dir/missing-openspec"
+rm -rf "$missing_openspec_root"
+
+set +e
+missing_openspec_repair_output="$(OPENSPEC_ROOT="$missing_openspec_root" "$DOCTOR" --repair 2>&1)"
+missing_openspec_repair_status=$?
+set -e
+
+assert_exit_code "$missing_openspec_repair_status" "1"
+assert_contains "$missing_openspec_repair_output" "OpenSpec package is missing or invalid"
+test_path_not_exists "$missing_openspec_root/dist/core/config-prompts.js"
+
+mismatched_openspec_root="$tmp_dir/mismatched-openspec"
+mkdir -p "$mismatched_openspec_root"
+printf '{"name":"@fission-ai/openspec","version":"9.9.9"}\n' > "$mismatched_openspec_root/package.json"
+
+set +e
+mismatched_openspec_repair_output="$(OPENSPEC_ROOT="$mismatched_openspec_root" "$DOCTOR" --repair 2>&1)"
+mismatched_openspec_repair_status=$?
+set -e
+
+assert_exit_code "$mismatched_openspec_repair_status" "1"
+assert_contains "$mismatched_openspec_repair_output" "override target 1.5.0"
+test_path_not_exists "$mismatched_openspec_root/dist/core/config-prompts.js"
+
+set +e
+mismatched_openspec_install_output="$(OPENSPEC_ROOT="$mismatched_openspec_root" "$INSTALLER" 2>&1)"
+mismatched_openspec_install_status=$?
+set -e
+
+assert_exit_code "$mismatched_openspec_install_status" "1"
+assert_contains "$mismatched_openspec_install_output" "Forgevia Codex install incomplete"
+test_path_not_exists "$mismatched_openspec_root/dist/core/config-prompts.js"
+
+invalid_openspec_root="$tmp_dir/invalid-openspec"
+mkdir -p "$invalid_openspec_root"
+rm -rf "$CODEX_HOME/skills/forgevia"
+
+set +e
+invalid_openspec_install_output="$(OPENSPEC_ROOT="$invalid_openspec_root" "$INSTALLER" 2>&1)"
+invalid_openspec_install_status=$?
+set -e
+
+assert_exit_code "$invalid_openspec_install_status" "1"
+assert_contains "$invalid_openspec_install_output" "OpenSpec package metadata is missing or invalid"
+test_path_not_exists "$invalid_openspec_root/dist/core/config-prompts.js"
+test_file_exists "$CODEX_HOME/skills/forgevia/SKILL.md"
+
 bad_root_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir" "$bad_root_dir"' EXIT
 
@@ -257,5 +321,19 @@ bad_openspec_status=$?
 set -e
 assert_exit_code "$bad_openspec_status" "1"
 assert_contains "$bad_openspec_output" "root path must not be /"
+
+missing_openspec_dir="$(mktemp -d)"
+trap 'rm -rf "$tmp_dir" "$bad_root_dir" "$missing_openspec_dir"' EXIT
+missing_node_dir="$(dirname "$(command -v node)")"
+mkdir -p "$missing_openspec_dir/.codex/superpowers"
+
+set +e
+missing_openspec_install_output="$(env -u OPENSPEC_ROOT CODEX_HOME="$missing_openspec_dir/.codex" PATH="$missing_node_dir:/usr/bin:/bin" "$INSTALLER" 2>&1)"
+missing_openspec_install_status=$?
+set -e
+
+assert_exit_code "$missing_openspec_install_status" "1"
+assert_contains "$missing_openspec_install_output" "openspec not found; skipping Forgevia-managed openspec overrides"
+assert_contains "$missing_openspec_install_output" "Forgevia Codex install incomplete"
 
 echo "codex installer smoke test passed"

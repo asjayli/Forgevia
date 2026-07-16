@@ -88,6 +88,7 @@ mkdir -p "$superpowers_root/skills/subagent-driven-development"
 mkdir -p "$superpowers_root/skills/requesting-code-review"
 mkdir -p "$superpowers_root/skills/executing-plans"
 mkdir -p "$OPENSPEC_ROOT/dist/core/templates/workflows"
+printf '{"name":"@fission-ai/openspec","version":"1.5.0"}\n' > "$OPENSPEC_ROOT/package.json"
 printf 'user local claude think\n' > "$CLAUDE_HOME/skills/forgevia-think/SKILL.md"
 printf 'user local claude brainstorming\n' > "$superpowers_root/skills/brainstorming/SKILL.md"
 printf 'user local claude tdd\n' > "$superpowers_root/skills/test-driven-development/SKILL.md"
@@ -269,6 +270,84 @@ assert_contains "$command_repair_output" "$CLAUDE_HOME/forgevia/bin/forgevia"
 test_file_executable "$CLAUDE_HOME/forgevia/bin/forgevia"
 cmp "$ROOT_DIR/scripts/forgevia.sh" "$CLAUDE_HOME/forgevia/bin/forgevia"
 
+rm "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
+
+set +e
+doctor_script_drift_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" 2>&1)"
+doctor_script_drift_status=$?
+set -e
+
+if [[ "$doctor_script_drift_status" != "1" ]]; then
+  echo "expected doctor runtime script drift exit code 1 but got $doctor_script_drift_status" >&2
+  exit 1
+fi
+assert_contains "$doctor_script_drift_output" "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
+
+doctor_script_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
+assert_contains "$doctor_script_repair_output" "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
+test_file_executable "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
+cmp "$ROOT_DIR/scripts/doctor-claude.sh" "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
+
+missing_openspec_root="$tmp_dir/missing-openspec"
+rm -rf "$missing_openspec_root"
+
+set +e
+missing_openspec_repair_output="$(OPENSPEC_ROOT="$missing_openspec_root" PATH="$bin_dir:$PATH" "$DOCTOR" --repair 2>&1)"
+missing_openspec_repair_status=$?
+set -e
+
+if [[ "$missing_openspec_repair_status" != "1" ]]; then
+  echo "expected missing openspec repair exit code 1 but got $missing_openspec_repair_status" >&2
+  exit 1
+fi
+assert_contains "$missing_openspec_repair_output" "OpenSpec package is missing or invalid"
+test_path_not_exists "$missing_openspec_root/dist/core/config-prompts.js"
+
+mismatched_openspec_root="$tmp_dir/mismatched-openspec"
+mkdir -p "$mismatched_openspec_root"
+printf '{"name":"@fission-ai/openspec","version":"9.9.9"}\n' > "$mismatched_openspec_root/package.json"
+
+set +e
+mismatched_openspec_repair_output="$(OPENSPEC_ROOT="$mismatched_openspec_root" PATH="$bin_dir:$PATH" "$DOCTOR" --repair 2>&1)"
+mismatched_openspec_repair_status=$?
+set -e
+
+if [[ "$mismatched_openspec_repair_status" != "1" ]]; then
+  echo "expected mismatched openspec repair exit code 1 but got $mismatched_openspec_repair_status" >&2
+  exit 1
+fi
+assert_contains "$mismatched_openspec_repair_output" "override target 1.5.0"
+test_path_not_exists "$mismatched_openspec_root/dist/core/config-prompts.js"
+
+set +e
+mismatched_openspec_install_output="$(OPENSPEC_ROOT="$mismatched_openspec_root" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
+mismatched_openspec_install_status=$?
+set -e
+
+if [[ "$mismatched_openspec_install_status" != "1" ]]; then
+  echo "expected mismatched openspec installer exit code 1 but got $mismatched_openspec_install_status" >&2
+  exit 1
+fi
+assert_contains "$mismatched_openspec_install_output" "Forgevia Claude install incomplete"
+test_path_not_exists "$mismatched_openspec_root/dist/core/config-prompts.js"
+
+invalid_openspec_root="$tmp_dir/invalid-openspec"
+mkdir -p "$invalid_openspec_root"
+rm -rf "$CLAUDE_HOME/skills/forgevia"
+
+set +e
+invalid_openspec_install_output="$(OPENSPEC_ROOT="$invalid_openspec_root" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
+invalid_openspec_install_status=$?
+set -e
+
+if [[ "$invalid_openspec_install_status" != "1" ]]; then
+  echo "expected invalid openspec installer exit code 1 but got $invalid_openspec_install_status" >&2
+  exit 1
+fi
+assert_contains "$invalid_openspec_install_output" "OpenSpec package metadata is missing or invalid"
+test_path_not_exists "$invalid_openspec_root/dist/core/config-prompts.js"
+test_file_exists "$CLAUDE_HOME/skills/forgevia/SKILL.md"
+
 missing_openspec_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir" "$missing_openspec_dir"' EXIT
 export CLAUDE_HOME="$missing_openspec_dir/.claude"
@@ -296,13 +375,14 @@ missing_openspec_output="$(PATH="$node_dir:$npm_dir:/usr/bin:/bin" "$INSTALLER" 
 missing_openspec_status=$?
 set -e
 
-if [[ "$missing_openspec_status" != "0" ]]; then
-  echo "expected missing openspec exit code 0 but got $missing_openspec_status" >&2
+if [[ "$missing_openspec_status" != "1" ]]; then
+  echo "expected missing openspec exit code 1 but got $missing_openspec_status" >&2
   exit 1
 fi
 assert_contains "$missing_openspec_output" "openspec not found; skipping Forgevia-managed openspec overrides"
 assert_contains "$missing_openspec_output" "Applied Forgevia-managed Claude assets"
 assert_contains "$missing_openspec_output" "Applied Forgevia-managed Claude superpowers overrides"
+assert_contains "$missing_openspec_output" "Forgevia Claude install incomplete"
 
 missing_plugin_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir" "$missing_openspec_dir" "$missing_plugin_dir"' EXIT

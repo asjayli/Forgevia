@@ -30,6 +30,15 @@ timestamp() {
   date '+%Y%m%d-%H%M%S'
 }
 
+validate_timestamp() {
+  local value="$1"
+
+  if [[ ! "$value" =~ ^[0-9]{8}-[0-9]{6}$ ]]; then
+    echo "invalid Forgevia draw timestamp: $value (expected YYYYMMDD-HHMMSS)" >&2
+    exit 1
+  fi
+}
+
 sanitize_feature_name() {
   printf '%s' "$1" | tr '/[:space:]' '--' | tr -s '-'
 }
@@ -98,6 +107,7 @@ main() {
   local -a mmdc_cmd
 
   ts="$(timestamp)"
+  validate_timestamp "$ts"
   safe_feature="$(sanitize_feature_name "$feature_name")"
   base_name="${ts}-${safe_feature}"
 

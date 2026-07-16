@@ -36,6 +36,11 @@ The Codex installer manages:
 
 > Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.codex/INSTALL.md
 
+If OpenSpec is absent or its installed version differs from Forgevia's override
+snapshot, the installer still deploys the independent Forgevia assets but exits
+nonzero and reports an incomplete installation. Install or align OpenSpec, then
+run the installer again to obtain a healthy managed state.
+
 ## Install
 
 ```bash

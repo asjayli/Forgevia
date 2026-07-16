@@ -105,11 +105,21 @@ read_openspec_version() {
   node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(p.version||"")' "$pkg" 2>/dev/null
 }
 
+is_valid_openspec_package() {
+  local openspec_root="$1"
+  local pkg="$openspec_root/package.json"
+
+  [[ -f "$pkg" ]] || return 1
+  node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.exit(p.name === "@fission-ai/openspec" ? 0 : 1)' "$pkg" 2>/dev/null
+}
+
 openspec_version_matches() {
   local openspec_root="$1"
   local ver
+
+  is_valid_openspec_package "$openspec_root" || return 1
   ver="$(read_openspec_version "$openspec_root")"
-  [[ -z "$ver" || "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
+  [[ "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
 }
 
 compare_path() {
@@ -197,6 +207,7 @@ main() {
   local healthy=0
   local repaired=0
   local openspec_root
+  local openspec_compatible="false"
 
   echo "🔎 Forgevia Codex doctor"
   validate_root "$CODEX_ROOT" ".codex"
@@ -204,6 +215,19 @@ main() {
     echo "🛠️ Repairing drifted or missing assets"
   fi
   openspec_root="$(resolve_openspec_root)"
+
+  if ! is_valid_openspec_package "$openspec_root"; then
+    print_status "MISS" "$openspec_root/package.json"
+    log_info "OpenSpec package is missing or invalid at $openspec_root; install @fission-ai/openspec before repairing its overrides."
+    unhealthy=1
+  elif ! openspec_version_matches "$openspec_root"; then
+    actual_version="$(read_openspec_version "$openspec_root")"
+    print_status "DRIFT" "$openspec_root/package.json"
+    log_info "OpenSpec $actual_version does not match override target $OPENSPEC_OVERRIDE_VERSION; its overrides remain unrepaired to avoid downgrading upstream."
+    unhealthy=1
+  else
+    openspec_compatible="true"
+  fi
 
   for pair in \
     "$OPENSPEC_ASSETS_DIR/dist/core/config-prompts.js::$openspec_root/dist/core/config-prompts.js" \
@@ -236,11 +260,16 @@ main() {
     "$ROOT_DIR/scripts/bootstrap-project.sh::$CODEX_ROOT/forgevia/bin/bootstrap-project.sh" \
     "$ROOT_DIR/scripts/list-change-tasks.sh::$CODEX_ROOT/forgevia/bin/list-change-tasks.sh" \
     "$ROOT_DIR/scripts/forgevia-draw.sh::$CODEX_ROOT/forgevia/bin/forgevia-draw.sh" \
+    "$ROOT_DIR/scripts/doctor-codex.sh::$CODEX_ROOT/forgevia/bin/doctor-codex.sh" \
     "$ROOT_DIR/scripts/validate-openspec-cn.mjs::$CODEX_ROOT/forgevia/bin/validate-openspec-cn.mjs" \
     "$ROOT_DIR/scripts/forgevia.sh::$CODEX_ROOT/forgevia/bin/forgevia"
   do
     local source_path="${pair%%::*}"
     local target_path="${pair#*::}"
+
+    if [[ "$target_path" == "$openspec_root"/* && "$openspec_compatible" != "true" ]]; then
+      continue
+    fi
 
     # If upstream superpowers is not installed, its override targets cannot
     # exist. Warn once and skip them instead of flooding MISS rows, mirroring
@@ -261,11 +290,6 @@ main() {
     fi
 
     if [[ "$repair_requested" == "true" ]]; then
-      if [[ "$target_path" == "$openspec_root"* ]] && ! openspec_version_matches "$openspec_root"; then
-        actual_version="$(read_openspec_version "$openspec_root")"
-        log_info "Skipping repair of $target_path: openspec $actual_version != override target $OPENSPEC_OVERRIDE_VERSION (repair would downgrade upstream)"
-        continue
-      fi
       repair_path "$source_path" "$target_path"
       ((repaired+=1))
       continue
@@ -283,14 +307,18 @@ main() {
     echo "✨ No drift detected"
   fi
 
+  if [[ "$unhealthy" -ne 0 ]]; then
+    if [[ "$repair_requested" == "true" ]]; then
+      echo "Forgevia Codex doctor repair incomplete; unresolved managed assets remain" >&2
+    else
+      echo "Forgevia Codex doctor found missing or drifted managed assets" >&2
+    fi
+    exit 1
+  fi
+
   if [[ "$repair_requested" == "true" ]]; then
     echo "Forgevia Codex doctor repair complete"
     exit 0
-  fi
-
-  if [[ "$unhealthy" -ne 0 ]]; then
-    echo "Forgevia Codex doctor found missing or drifted managed assets" >&2
-    exit 1
   fi
 
   echo "Forgevia Codex doctor passed"
