@@ -71,6 +71,10 @@ if [[ "$manifest_skill_sources" != "$scanned_skill_sources" ]]; then
   exit 1
 fi
 
+assert_contains "$(<"$MANIFEST")" '"version": "1.6.0"'
+assert_contains "$(<"$MANIFEST")" '"overrideTargetVersion": "1.6.0"'
+assert_contains "$(<"$INSTALLER")" 'npm install -g @fission-ai/openspec@1.6.0'
+
 installer_help="$("$INSTALLER" --help)"
 doctor_help="$("$DOCTOR" --help)"
 
@@ -86,6 +90,36 @@ trap 'rm -rf "$tmp_dir"' EXIT
 
 export CODEX_HOME="$tmp_dir/.codex"
 export OPENSPEC_ROOT="$tmp_dir/openspec"
+bin_dir="$tmp_dir/bin"
+npm_log="$tmp_dir/npm.log"
+export FAKE_NPM_ROOT="$tmp_dir/npm-global"
+export FAKE_NPM_LOG="$npm_log"
+mkdir -p "$bin_dir"
+cat > "$bin_dir/npm" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+case "${1:-}" in
+  install)
+    printf '%s\n' "$*" >> "$FAKE_NPM_LOG"
+    ;;
+  root)
+    printf '%s\n' "$FAKE_NPM_ROOT"
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+EOF
+chmod +x "$bin_dir/npm"
+export PATH="$bin_dir:$PATH"
+
+set +e
+deprecated_flag_output="$("$INSTALLER" --install-openspec 2>&1)"
+deprecated_flag_status=$?
+set -e
+assert_exit_code "$deprecated_flag_status" "1"
+assert_contains "$deprecated_flag_output" "unknown argument: --install-openspec"
+
 mkdir -p "$CODEX_HOME/superpowers/skills/brainstorming"
 mkdir -p "$CODEX_HOME/superpowers/skills/writing-plans"
 mkdir -p "$CODEX_HOME/superpowers/skills/executing-plans"
@@ -94,7 +128,7 @@ mkdir -p "$CODEX_HOME/superpowers/skills/requesting-code-review"
 mkdir -p "$CODEX_HOME/superpowers/skills/test-driven-development"
 mkdir -p "$OPENSPEC_ROOT/dist/core"
 mkdir -p "$OPENSPEC_ROOT/dist/core/templates/workflows"
-printf '{"name":"@fission-ai/openspec","version":"1.5.0"}\n' > "$OPENSPEC_ROOT/package.json"
+printf '{"name":"@fission-ai/openspec","version":"1.6.0"}\n' > "$OPENSPEC_ROOT/package.json"
 printf 'user local brainstorming\n' > "$CODEX_HOME/superpowers/skills/brainstorming/SKILL.md"
 printf 'user local tdd\n' > "$CODEX_HOME/superpowers/skills/test-driven-development/SKILL.md"
 printf 'export function serializeConfig() { return \"wrong\"; }\n' > "$OPENSPEC_ROOT/dist/core/config-prompts.js"
@@ -106,6 +140,7 @@ assert_contains "$installer_output" "✅ Applied openspec override"
 assert_contains "$installer_output" "✅ Applied Forgevia-managed Codex assets"
 assert_contains "$installer_output" "💾 Backed up"
 assert_contains "$installer_output" "🎉 Forgevia Codex install complete"
+assert_contains "$(cat "$npm_log")" "install -g @fission-ai/openspec@1.6.0"
 
 for mirror_path in .claude assets scripts manifests; do
   assert_paths_equal "$ROOT_DIR/$mirror_path" "$CODEX_HOME/forgevia/$mirror_path"
@@ -136,7 +171,7 @@ test_file_exists "$CODEX_HOME/skills/openspec-sync-specs/SKILL.md"
 
 for skill_name in openspec-propose openspec-apply-change openspec-archive-change openspec-explore openspec-sync-specs; do
   cmp "$ROOT_DIR/assets/codex/skills/$skill_name/SKILL.md" "$CODEX_HOME/skills/$skill_name/SKILL.md"
-  assert_contains "$(<"$CODEX_HOME/skills/$skill_name/SKILL.md")" 'generatedBy: "1.5.0"'
+  assert_contains "$(<"$CODEX_HOME/skills/$skill_name/SKILL.md")" 'generatedBy: "1.6.0"'
 done
 
 assert_contains "$(<"$MANIFEST")" '"id": "openspec-sync-specs-skill"'
@@ -182,6 +217,9 @@ assert_contains "$doctor_output" "$CODEX_HOME/skills/openspec-sync-specs"
 expected_openspec_config="$(cat "$ROOT_DIR/assets/openspec/dist/core/config-prompts.js")"
 actual_openspec_config="$(cat "$OPENSPEC_ROOT/dist/core/config-prompts.js")"
 assert_contains "$actual_openspec_config" "$expected_openspec_config"
+assert_contains "$expected_openspec_config" "# Project context (optional)"
+assert_contains "$expected_openspec_config" "# Per-artifact rules (optional)"
+assert_contains "$expected_openspec_config" "所有产出物必须用简体中文撰写。"
 expected_openspec_propose="$(cat "$ROOT_DIR/assets/openspec/dist/core/templates/workflows/propose.js")"
 actual_openspec_propose="$(cat "$OPENSPEC_ROOT/dist/core/templates/workflows/propose.js")"
 assert_contains "$actual_openspec_propose" "$expected_openspec_propose"
@@ -279,7 +317,7 @@ mismatched_openspec_repair_status=$?
 set -e
 
 assert_exit_code "$mismatched_openspec_repair_status" "1"
-assert_contains "$mismatched_openspec_repair_output" "override target 1.5.0"
+assert_contains "$mismatched_openspec_repair_output" "override target 1.6.0"
 test_path_not_exists "$mismatched_openspec_root/dist/core/config-prompts.js"
 
 set +e
@@ -324,16 +362,15 @@ assert_contains "$bad_openspec_output" "root path must not be /"
 
 missing_openspec_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir" "$bad_root_dir" "$missing_openspec_dir"' EXIT
-missing_node_dir="$(dirname "$(command -v node)")"
 mkdir -p "$missing_openspec_dir/.codex/superpowers"
 
 set +e
-missing_openspec_install_output="$(env -u OPENSPEC_ROOT CODEX_HOME="$missing_openspec_dir/.codex" PATH="$missing_node_dir:/usr/bin:/bin" "$INSTALLER" 2>&1)"
+missing_openspec_install_output="$(env -u OPENSPEC_ROOT CODEX_HOME="$missing_openspec_dir/.codex" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
 missing_openspec_install_status=$?
 set -e
 
 assert_exit_code "$missing_openspec_install_status" "1"
-assert_contains "$missing_openspec_install_output" "openspec not found; skipping Forgevia-managed openspec overrides"
+assert_contains "$missing_openspec_install_output" "openspec install root not found"
 assert_contains "$missing_openspec_install_output" "Forgevia Codex install incomplete"
 
 echo "codex installer smoke test passed"

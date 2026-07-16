@@ -25,7 +25,7 @@ Forgevia 是一套面向 agent coding 的工作流整合方案。
 - 不替代 OpenSpec、superpowers 或 playwright-interactive，只负责编排，底层能力仍由它们提供。
 - 不接管你的项目源码：仅在缺失时调用 `openspec init`，不修改业务代码。
 - 不自动触发：仅在用户显式要求时工作，不会因为存在编码请求就自动介入。
-- 不强行锁定上游版本：上游以 `latest` 安装；Forgevia 的覆盖快照针对特定版本（见文末「上游依赖」），版本不匹配时安装器会保护性跳过覆盖，而不是降级上游。
+- OpenSpec 固定安装经验证的 `1.6.0`；其他上游依赖按各自安装方式管理。版本不匹配时安装器会保护性跳过覆盖，而不是降级上游。
 
 ## Codex 安装方式
 
@@ -117,10 +117,10 @@ Forgevia 在下列上游之上叠加受管定制。覆盖快照针对的版本�
 
 | 上游 | 用途 | Forgevia 基准 | 上游最新 | 地址 |
 |------|------|---------------|----------|------|
-| OpenSpec (`@fission-ai/openspec`) | spec-driven 变更工作流 CLI | override 针对 `1.5.0` | `1.5.0`（含 `1.6.0-beta.1`） | https://www.npmjs.com/package/@fission-ai/openspec |
+| OpenSpec (`@fission-ai/openspec`) | spec-driven 变更工作流 CLI | override 针对并固定为 `1.6.0` | `1.6.0` | https://www.npmjs.com/package/@fission-ai/openspec |
 | superpowers (`obra/superpowers`) | brainstorming / TDD / 计划 / 评审等技能框架 | 测试基准 `6.1.1` | `6.1.1` | https://github.com/obra/superpowers |
 | playwright-interactive | 浏览器交互验证技能 | vendored（未追踪版本） | — | 见技能内 `LICENSE.txt` / `NOTICE.txt`（Apache-2.0，© Microsoft Corporation） |
 | mermaid-cli (`mmdc`) | `forgevia-draw` 渲染 SVG 的运行时依赖 | 运行时工具 | — | https://github.com/mermaid-js/mermaid-cli |
 | ripgrep (`rg`) | `forgevia-tasks` 扫描任务（可选，缺失回退 grep） | 运行时工具 | — | https://github.com/BurntSushi/ripgrep |
 
-> 说明：Forgevia 对 OpenSpec 的覆盖是针对 `1.5.0` 的内容快照。当上游 OpenSpec 版本与快照不一致时，安装器与 doctor 会保护性跳过覆盖，避免降级上游；若要在新版上游上恢复 Forgevia 定制，需同步更新覆盖快照与 `manifests/*.json` 中的 `overrideTargetVersion`。
+> 说明：Forgevia 对 OpenSpec 的覆盖是针对 `1.6.0` 的内容快照，安装器固定安装此版本。当本地 OpenSpec 版本与快照不一致时，安装器与 doctor 会保护性跳过覆盖，避免降级上游；升级时必须同步更新覆盖快照、安装版本和 `manifests/*.json` 中的 `overrideTargetVersion`。

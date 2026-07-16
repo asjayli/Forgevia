@@ -12,21 +12,21 @@ OPENSPEC_ROOT="${OPENSPEC_ROOT:-}"
 # Forgevia's openspec override files are snapshots taken against this upstream
 # openspec version. Never overlay them onto a different upstream version —
 # that would silently downgrade upstream behavior.
-OPENSPEC_OVERRIDE_VERSION="1.5.0"
+OPENSPEC_OVERRIDE_VERSION="1.6.0"
 
 usage() {
   cat <<EOF
 Install Forgevia Codex assets.
 
 Usage:
-  $(basename "$0") [--help] [--install-openspec]
+  $(basename "$0") [--help]
 
 Manifest:
   $MANIFEST_PATH
 
 Behavior:
   - verifies the Codex root at $CODEX_ROOT
-  - optionally installs openspec if missing
+  - installs OpenSpec $OPENSPEC_OVERRIDE_VERSION on every run
   - overlays Forgevia-managed openspec customization
   - requires upstream superpowers to already exist
   - directly overlays Forgevia-managed assets into ~/.codex
@@ -127,15 +127,10 @@ sync_path() {
   remove_stale_backup "$target_path"
 }
 
-install_openspec_if_missing() {
-  if command -v openspec >/dev/null 2>&1; then
-    log_info "openspec already installed: $(command -v openspec)"
-    return
-  fi
-
-  log_step "openspec not found; installing with npm"
-  npm install -g @fission-ai/openspec@latest
-  log_success "Installed openspec from npm"
+install_openspec() {
+  log_step "Installing OpenSpec $OPENSPEC_OVERRIDE_VERSION with npm"
+  npm install -g @fission-ai/openspec@1.6.0
+  log_success "Installed OpenSpec $OPENSPEC_OVERRIDE_VERSION from npm"
 }
 
 resolve_openspec_root() {
@@ -273,7 +268,6 @@ overlay_openspec_assets() {
 }
 
 main() {
-  local should_install_openspec="false"
   local install_incomplete="false"
 
   while [[ $# -gt 0 ]]; do
@@ -281,10 +275,6 @@ main() {
       --help|-h)
         usage
         exit 0
-        ;;
-      --install-openspec)
-        should_install_openspec="true"
-        shift
         ;;
       *)
         echo "unknown argument: $1" >&2
@@ -301,17 +291,10 @@ main() {
   require_command mkdir
   require_command node
 
-  if [[ "$should_install_openspec" == "true" ]]; then
-    require_command npm
-    install_openspec_if_missing
-  fi
+  require_command npm
+  install_openspec
 
-  if command -v openspec >/dev/null 2>&1 || [[ -n "$OPENSPEC_ROOT" ]]; then
-    if ! overlay_openspec_assets; then
-      install_incomplete="true"
-    fi
-  else
-    log_info "openspec not found; skipping Forgevia-managed openspec overrides"
+  if ! overlay_openspec_assets; then
     install_incomplete="true"
   fi
 

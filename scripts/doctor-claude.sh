@@ -13,7 +13,7 @@ OPENSPEC_ROOT="${OPENSPEC_ROOT:-}"
 # Forgevia's openspec override files are snapshots taken against this upstream
 # openspec version. Repair must not overlay them onto a different upstream
 # version — that would silently downgrade upstream behavior.
-OPENSPEC_OVERRIDE_VERSION="1.5.0"
+OPENSPEC_OVERRIDE_VERSION="1.6.0"
 
 usage() {
   cat <<EOF

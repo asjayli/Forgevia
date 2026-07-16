@@ -6,9 +6,9 @@
     "openspec": {
       "type": "npm",
       "package": "@fission-ai/openspec",
-      "version": "latest",
-      "install": "npm install -g @fission-ai/openspec@latest",
-      "overrideTargetVersion": "1.5.0"
+      "version": "1.6.0",
+      "install": "npm install -g @fission-ai/openspec@1.6.0",
+      "overrideTargetVersion": "1.6.0"
     },
     "superpowers": {
       "type": "claude-plugin-marketplace",

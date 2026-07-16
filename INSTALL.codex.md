@@ -31,15 +31,13 @@ The Codex installer manages:
 ## Prerequisites
 
 - `node` and `npm` are available
-- `openspec` is installed, or installable with `npm install -g @fission-ai/openspec@latest` (or pass `--install-openspec`)
+- `node` and `npm` are available; the installer always installs OpenSpec `1.6.0`, replacing any local version
 - `superpowers` is installed under `~/.codex/superpowers` from the upstream guide:
 
 > Fetch and follow instructions from https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.codex/INSTALL.md
 
-If OpenSpec is absent or its installed version differs from Forgevia's override
-snapshot, the installer still deploys the independent Forgevia assets but exits
-nonzero and reports an incomplete installation. Install or align OpenSpec, then
-run the installer again to obtain a healthy managed state.
+Every installation runs `npm install -g @fission-ai/openspec@1.6.0` before
+applying Forgevia assets, replacing any locally installed OpenSpec version.
 
 ## Install
 
@@ -47,12 +45,6 @@ run the installer again to obtain a healthy managed state.
 git clone https://github.com/asjayli/Forgevia.git
 cd Forgevia
 bash scripts/install-codex.sh
-```
-
-If you also want the installer to bootstrap `openspec` when missing:
-
-```bash
-bash scripts/install-codex.sh --install-openspec
 ```
 
 ## Managed State
@@ -66,7 +58,7 @@ After installation:
 
 ### OpenSpec Override Version Note
 
-Forgevia's OpenSpec override files are snapshots taken against a specific upstream OpenSpec version (currently `1.5.0`, recorded in `manifests/codex.json` as `overrideTargetVersion`). The installer and doctor refuse to overlay them onto a different upstream version, to avoid silently downgrading upstream behavior. When OpenSpec advances past this version, update Forgevia's override snapshot together with the target version.
+Forgevia's OpenSpec override files are snapshots taken against OpenSpec `1.6.0` (recorded in `manifests/codex.json` as `overrideTargetVersion`). The installer and doctor refuse to overlay them onto a different upstream version, to avoid silently downgrading upstream behavior. When OpenSpec advances, update the override snapshot and the fixed version together.
 
 ## Verify Managed State
 
