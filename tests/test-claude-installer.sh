@@ -62,11 +62,15 @@ if [[ "$manifest_skill_sources" != "$scanned_skill_sources" ]]; then
   exit 1
 fi
 
+assert_contains "$(<"$MANIFEST")" '"version": "1.6.0"'
+assert_contains "$(<"$MANIFEST")" '"overrideTargetVersion": "1.6.0"'
+assert_contains "$(<"$INSTALLER")" 'npm install -g @fission-ai/openspec@1.6.0'
+
 installer_help="$("$INSTALLER" --help)"
 doctor_help="$("$DOCTOR" --help)"
 assert_contains "$installer_help" "Install Forgevia Claude assets"
 assert_contains "$installer_help" "$MANIFEST"
-assert_contains "$installer_help" "--install-openspec"
+assert_contains "$installer_help" "installs OpenSpec 1.6.0 on every run"
 assert_contains "$doctor_help" "Check Forgevia Claude managed assets"
 assert_contains "$doctor_help" "$MANIFEST"
 assert_contains "$doctor_help" "--repair"
@@ -79,7 +83,37 @@ export CLAUDE_HOME="$tmp_dir/.claude"
 bin_dir="$tmp_dir/bin"
 superpowers_root="$tmp_dir/plugin-cache/superpowers/6.1.1"
 export OPENSPEC_ROOT="$tmp_dir/openspec"
+npm_log="$tmp_dir/npm.log"
+export FAKE_NPM_ROOT="$tmp_dir/npm-global"
+export FAKE_NPM_LOG="$npm_log"
 mkdir -p "$CLAUDE_HOME/skills/forgevia-think" "$bin_dir"
+cat > "$bin_dir/npm" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+case "${1:-}" in
+  install)
+    printf '%s\n' "$*" >> "$FAKE_NPM_LOG"
+    ;;
+  root)
+    printf '%s\n' "$FAKE_NPM_ROOT"
+    ;;
+  *)
+    exit 1
+    ;;
+esac
+EOF
+chmod +x "$bin_dir/npm"
+
+set +e
+deprecated_flag_output="$(PATH="$bin_dir:$PATH" "$INSTALLER" --install-openspec 2>&1)"
+deprecated_flag_status=$?
+set -e
+if [[ "$deprecated_flag_status" != "1" ]]; then
+  echo "expected deprecated --install-openspec exit code 1 but got $deprecated_flag_status" >&2
+  exit 1
+fi
+assert_contains "$deprecated_flag_output" "unknown argument: --install-openspec"
+
 mkdir -p "$CLAUDE_HOME/plugins"
 mkdir -p "$superpowers_root/skills/brainstorming"
 mkdir -p "$superpowers_root/skills/writing-plans"
@@ -88,7 +122,7 @@ mkdir -p "$superpowers_root/skills/subagent-driven-development"
 mkdir -p "$superpowers_root/skills/requesting-code-review"
 mkdir -p "$superpowers_root/skills/executing-plans"
 mkdir -p "$OPENSPEC_ROOT/dist/core/templates/workflows"
-printf '{"name":"@fission-ai/openspec","version":"1.5.0"}\n' > "$OPENSPEC_ROOT/package.json"
+printf '{"name":"@fission-ai/openspec","version":"1.6.0"}\n' > "$OPENSPEC_ROOT/package.json"
 printf 'user local claude think\n' > "$CLAUDE_HOME/skills/forgevia-think/SKILL.md"
 printf 'user local claude brainstorming\n' > "$superpowers_root/skills/brainstorming/SKILL.md"
 printf 'user local claude tdd\n' > "$superpowers_root/skills/test-driven-development/SKILL.md"
@@ -123,6 +157,7 @@ assert_contains "$installer_output" "✅ Detected Claude superpowers plugin at $
 assert_contains "$installer_output" "✅ Applied Forgevia-managed Claude superpowers overrides"
 assert_contains "$installer_output" "💾 Backed up"
 assert_contains "$installer_output" "🎉 Forgevia Claude install complete"
+assert_contains "$(cat "$npm_log")" "install -g @fission-ai/openspec@1.6.0"
 
 for mirror_path in .claude assets scripts manifests; do
   assert_paths_equal "$ROOT_DIR/$mirror_path" "$CLAUDE_HOME/forgevia/$mirror_path"
@@ -194,6 +229,9 @@ assert_contains "$(<"$MANIFEST")" '"id": "openspec-sync-specs-skill"'
 expected_openspec_config="$(cat "$ROOT_DIR/assets/openspec/dist/core/config-prompts.js")"
 actual_openspec_config="$(cat "$OPENSPEC_ROOT/dist/core/config-prompts.js")"
 assert_contains "$actual_openspec_config" "$expected_openspec_config"
+assert_contains "$expected_openspec_config" "# Project context (optional)"
+assert_contains "$expected_openspec_config" "# Per-artifact rules (optional)"
+assert_contains "$expected_openspec_config" "所有产出物必须用简体中文撰写。"
 expected_openspec_propose="$(cat "$ROOT_DIR/assets/openspec/dist/core/templates/workflows/propose.js")"
 actual_openspec_propose="$(cat "$OPENSPEC_ROOT/dist/core/templates/workflows/propose.js")"
 assert_contains "$actual_openspec_propose" "$expected_openspec_propose"
@@ -316,7 +354,7 @@ if [[ "$mismatched_openspec_repair_status" != "1" ]]; then
   echo "expected mismatched openspec repair exit code 1 but got $mismatched_openspec_repair_status" >&2
   exit 1
 fi
-assert_contains "$mismatched_openspec_repair_output" "override target 1.5.0"
+assert_contains "$mismatched_openspec_repair_output" "override target 1.6.0"
 test_path_not_exists "$mismatched_openspec_root/dist/core/config-prompts.js"
 
 set +e
@@ -351,8 +389,6 @@ test_file_exists "$CLAUDE_HOME/skills/forgevia/SKILL.md"
 missing_openspec_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir" "$missing_openspec_dir"' EXIT
 export CLAUDE_HOME="$missing_openspec_dir/.claude"
-node_dir="$(dirname "$(command -v node)")"
-npm_dir="$(dirname "$(command -v npm)")"
 unset OPENSPEC_ROOT
 mkdir -p "$CLAUDE_HOME/plugins"
 cat > "$CLAUDE_HOME/plugins/installed_plugins.json" <<EOF
@@ -371,7 +407,7 @@ cat > "$CLAUDE_HOME/plugins/installed_plugins.json" <<EOF
 EOF
 
 set +e
-missing_openspec_output="$(PATH="$node_dir:$npm_dir:/usr/bin:/bin" "$INSTALLER" 2>&1)"
+missing_openspec_output="$(PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
 missing_openspec_status=$?
 set -e
 
@@ -379,7 +415,7 @@ if [[ "$missing_openspec_status" != "1" ]]; then
   echo "expected missing openspec exit code 1 but got $missing_openspec_status" >&2
   exit 1
 fi
-assert_contains "$missing_openspec_output" "openspec not found; skipping Forgevia-managed openspec overrides"
+assert_contains "$missing_openspec_output" "openspec install root not found"
 assert_contains "$missing_openspec_output" "Applied Forgevia-managed Claude assets"
 assert_contains "$missing_openspec_output" "Applied Forgevia-managed Claude superpowers overrides"
 assert_contains "$missing_openspec_output" "Forgevia Claude install incomplete"

@@ -25,7 +25,7 @@ Forgevia is an opinionated workflow bundle for agent coding.
 - Does not replace OpenSpec, superpowers, or playwright-interactive — it only orchestrates; the underlying capabilities still come from them.
 - Does not take over your project source: it only invokes `openspec init` when missing and never edits business code.
 - Does not auto-trigger: it works only when the user explicitly asks; it will not step in just because a coding request exists.
-- Does not hard-pin upstream versions: upstreams install as `latest`; Forgevia's override snapshots target specific versions (see Upstream Dependencies below), and the installer skips overlays protectively on version mismatch instead of downgrading upstream.
+- Pins OpenSpec to the verified `1.6.0` release; other upstream dependencies retain their own installation flows. The installer skips overlays protectively on version mismatch instead of downgrading upstream.
 
 ## Install For Codex
 
@@ -117,10 +117,10 @@ Forgevia layers managed customizations on the following upstreams. The gap betwe
 
 | Upstream | Purpose | Forgevia baseline | Latest upstream | URL |
 |----------|---------|-------------------|-----------------|-----|
-| OpenSpec (`@fission-ai/openspec`) | spec-driven change workflow CLI | override targets `1.5.0` | `1.5.0` (`1.6.0-beta.1`) | https://www.npmjs.com/package/@fission-ai/openspec |
+| OpenSpec (`@fission-ai/openspec`) | spec-driven change workflow CLI | override targets and pins `1.6.0` | `1.6.0` | https://www.npmjs.com/package/@fission-ai/openspec |
 | superpowers (`obra/superpowers`) | brainstorming / TDD / planning / review skill framework | test baseline `6.1.1` | `6.1.1` | https://github.com/obra/superpowers |
 | playwright-interactive | browser interaction verification skill | vendored (untracked) | — | see `LICENSE.txt` / `NOTICE.txt` inside the skill (Apache-2.0, © Microsoft Corporation) |
 | mermaid-cli (`mmdc`) | runtime dependency for `forgevia-draw` SVG rendering | runtime tool | — | https://github.com/mermaid-js/mermaid-cli |
 | ripgrep (`rg`) | runtime dependency for `forgevia-tasks` scanning (optional, falls back to grep) | runtime tool | — | https://github.com/BurntSushi/ripgrep |
 
-> Note: Forgevia's OpenSpec override is a content snapshot taken against `1.5.0`. When the upstream OpenSpec version differs from the snapshot, the installer and doctor skip the overlay protectively to avoid downgrading upstream. To restore Forgevia's customizations on a newer upstream, update the override snapshot together with `overrideTargetVersion` in `manifests/*.json`.
+> Note: Forgevia's OpenSpec override is a content snapshot taken against `1.6.0`, and the installer pins that version. When the local OpenSpec version differs from the snapshot, the installer and doctor skip the overlay protectively to avoid downgrading upstream. Upgrade the override snapshot, installation version, and `overrideTargetVersion` in `manifests/*.json` together.
