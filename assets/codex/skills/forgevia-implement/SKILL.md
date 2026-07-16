@@ -24,6 +24,22 @@ Use this skill only when the user explicitly names a change to implement.
 
 If a reviewer fails to start, times out, crashes, or returns an invalid verdict, reuse the unchanged review package with at most two new independent review agents. If both retries fail, return `ESCALATE` with the collected infrastructure evidence; never infer `APPROVE`. The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.
 
+Implementation runs continuously by default. A completed task group, passing verification, an `APPROVE` verdict, a refactor, or a progress report never ends the workflow or waits for feedback.
+
+Before returning a completion summary, confirm every completion gate:
+
+- `tasks.md` contains no unchecked implementation item.
+- No planned implementation task remains pending or in progress.
+- The required complete verification has succeeded.
+- The change scope has been reviewed and `git diff --check` succeeds.
+- The final independent review is `APPROVE`.
+
+Never use completion language or a final delivery format while any implementation task remains unchecked or in progress.
+
+The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer. That reviewer must not have produced the candidate or any repair in the current cycle.
+
+Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.
+
 - Verify the change with `openspec status --change "<change>" --json` and use its resolved `changeRoot`.
 - Verify the change is not archived.
 - Verify the change has `tasks.md`.

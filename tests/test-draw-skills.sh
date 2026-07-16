@@ -14,7 +14,7 @@ assert_file_contains() {
 }
 
 for path in \
-  "$ROOT_DIR/.claude/skills/mermaid-diagram-specialist/SKILL.md" \
+  "$ROOT_DIR/assets/claude/skills/mermaid-diagram-specialist/SKILL.md" \
   "$ROOT_DIR/assets/codex/skills/mermaid-diagram-specialist/SKILL.md"
 do
   assert_file_contains "$path" "Write notes in Chinese so readers can understand each key"
@@ -26,7 +26,7 @@ do
 done
 
 for path in \
-  "$ROOT_DIR/.claude/skills/forgevia-draw/SKILL.md" \
+  "$ROOT_DIR/assets/claude/skills/forgevia-draw/SKILL.md" \
   "$ROOT_DIR/assets/codex/skills/forgevia-draw/SKILL.md"
 do
   assert_file_contains "$path" "Request concise Chinese notes for key methods and critical intermediate steps."

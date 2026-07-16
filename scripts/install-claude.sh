@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MANIFEST_PATH="$ROOT_DIR/manifests/claude.json"
-ASSETS_DIR="$ROOT_DIR/.claude"
+ASSETS_DIR="$ROOT_DIR/assets/claude"
 CLAUDE_SUPERPOWERS_ASSETS_DIR="$ROOT_DIR/assets/claude/superpowers"
 OPENSPEC_ASSETS_DIR="$ROOT_DIR/assets/openspec"
 CLAUDE_ROOT="${CLAUDE_HOME:-$HOME/.claude}"
@@ -352,7 +352,6 @@ overlay_runtime_scripts() {
 overlay_forgevia_home() {
   local home_dir="$CLAUDE_ROOT/forgevia"
   log_step "Mirroring Forgevia source into $home_dir (baseline for global doctor/repair)"
-  sync_path "$ROOT_DIR/.claude" "$home_dir/.claude"
   sync_path "$ROOT_DIR/assets" "$home_dir/assets"
   sync_path "$ROOT_DIR/scripts" "$home_dir/scripts"
   sync_path "$ROOT_DIR/manifests" "$home_dir/manifests"

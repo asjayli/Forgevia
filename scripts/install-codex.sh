@@ -259,7 +259,6 @@ overlay_runtime_scripts() {
 overlay_forgevia_home() {
   local home_dir="$CODEX_ROOT/forgevia"
   log_step "Mirroring Forgevia source into $home_dir (baseline for global doctor/repair)"
-  sync_path "$ROOT_DIR/.claude" "$home_dir/.claude"
   sync_path "$ROOT_DIR/assets" "$home_dir/assets"
   sync_path "$ROOT_DIR/scripts" "$home_dir/scripts"
   sync_path "$ROOT_DIR/manifests" "$home_dir/manifests"

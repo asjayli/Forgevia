@@ -14,7 +14,17 @@ Execute plan by dispatching a fresh implementer subagent per task, a task review
 **Narration:** between tool calls, narrate at most one short line — the
 ledger and the tool results carry the record.
 
-**Continuous execution:** The main agent remains the sole controller across implementation, review, repair, and the next dependency-ready task group. Progress updates never pause the run. Stop only at an `ESCALATE` boundary, explicit user interruption, or the authorized terminal state.
+**Continuous execution:** Implementation runs continuously by default. The main agent remains the sole controller across implementation, review, repair, and the next dependency-ready task group. A completed task group, passing verification, an `APPROVE` verdict, a refactor, or a progress report never ends the workflow or waits for feedback. Only an `ESCALATE` boundary, explicit user interruption, or the completion gate may end the implementation workflow.
+
+Before returning a completion summary, confirm every completion gate:
+
+- `tasks.md` contains no unchecked implementation item.
+- No planned implementation task remains pending or in progress.
+- The required complete verification has succeeded.
+- The change scope has been reviewed and `git diff --check` succeeds.
+- The final independent review is `APPROVE`.
+
+Never use completion language or a final delivery format while any implementation task remains unchecked or in progress.
 
 ## When to Use
 
@@ -57,7 +67,7 @@ digraph process {
         "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)" [shape=box];
         "Task reviewer verdict?" [shape=diamond];
         "Repair authorized?" [shape=diamond];
-        "Dispatch fix subagent for Critical/Important findings" [shape=box];
+        "Dispatch repair subagent for authorized findings" [shape=box];
         "Return findings without editing" [shape=box];
         "Escalate with evidence" [shape=box];
         "Mark task complete in todo list and progress ledger" [shape=box];
@@ -68,7 +78,7 @@ digraph process {
     "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" [shape=box];
     "Final reviewer verdict?" [shape=diamond];
     "Final repair authorized?" [shape=diamond];
-    "Dispatch one final fix subagent" [shape=box];
+    "Dispatch final repair subagent" [shape=box];
     "Read objective authorization envelope" [shape=box];
     "Branch-finishing effects explicitly authorized?" [shape=diamond];
     "Return completion summary; keep change active" [shape=box style=filled fillcolor=lightgreen];
@@ -82,10 +92,10 @@ digraph process {
     "Implementer subagent implements, tests, conditionally commits, self-reviews" -> "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)";
     "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)" -> "Task reviewer verdict?";
     "Task reviewer verdict?" -> "Repair authorized?" [label="REVISE"];
-    "Repair authorized?" -> "Dispatch fix subagent for Critical/Important findings" [label="yes"];
+    "Repair authorized?" -> "Dispatch repair subagent for authorized findings" [label="yes"];
     "Repair authorized?" -> "Return findings without editing" [label="no"];
     "Task reviewer verdict?" -> "Escalate with evidence" [label="ESCALATE"];
-    "Dispatch fix subagent for Critical/Important findings" -> "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)" [label="re-review"];
+    "Dispatch repair subagent for authorized findings" -> "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)" [label="re-review"];
     "Task reviewer verdict?" -> "Mark task complete in todo list and progress ledger" [label="APPROVE"];
     "Mark task complete in todo list and progress ledger" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
@@ -97,17 +107,19 @@ digraph process {
     "Branch-finishing effects explicitly authorized?" -> "Return completion summary; keep change active" [label="no"];
     "Final reviewer verdict?" -> "Final repair authorized?" [label="REVISE"];
     "Final reviewer verdict?" -> "Escalate with evidence" [label="ESCALATE"];
-    "Final repair authorized?" -> "Dispatch one final fix subagent" [label="yes"];
+    "Final repair authorized?" -> "Dispatch final repair subagent" [label="yes"];
     "Final repair authorized?" -> "Return findings without editing" [label="no"];
-    "Dispatch one final fix subagent" -> "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" [label="re-review"];
+    "Dispatch final repair subagent" -> "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" [label="re-review"];
 }
 ```
 
 ## Controller Verdict Routing
 
 - `APPROVE` records progress and dispatches the next dependency-ready task group without requesting checkpoint feedback.
-- `REVISE` triggers repair only inside the active authorization envelope, followed by targeted verification and independent re-review. Without repair authorization, a standalone read-only run returns the findings without editing, updating task state, or converting them into a user decision request.
+- The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer. That reviewer must not have produced the candidate or any repair in the current cycle. Without repair authorization, a standalone read-only run returns the findings without editing, updating task state, or converting them into a user decision request.
 - `ESCALATE` requests user input only for a genuine plan conflict, missing authorization, an unrecoverable uncertainty about side effects, or a repair loop that meets the no-progress boundary below.
+
+Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.
 
 Ordinary errors and the first failing check are diagnostic inputs. Diagnose and repair them within scope, then run targeted verification. Escalate the same substantive issue only after three consecutive repair cycles make no verified progress; progress means fewer Important/Critical findings, fewer failing checks, or an unblocked dependency. Explanations, repeated commands, and unrelated diffs do not count.
 
@@ -216,7 +228,7 @@ final whole-branch review. When you fill a reviewer template:
   test hygiene, review method) — the constraints block is for what THIS
   project's spec demands.
 - Pass an explicit objective authorization envelope containing objective, scope, constraints, authorized effects, and terminal condition to every task and final reviewer.
-- Pass the five authorization-envelope fields to every implementer and fix dispatch, not only to reviewers.
+- Pass the five authorization-envelope fields to every implementer and repair-subagent dispatch, not only to reviewers.
 - Hand the reviewer its diff as a file: run this skill's
   `scripts/review-package BASE HEAD` for committed work or
   `scripts/review-package TASK_TREE WORKTREE` when commits were not authorized,
@@ -231,11 +243,9 @@ final whole-branch review. When you fill a reviewer template:
   was pasted history. A fresh subagent needs its task, the interfaces it
   touches, and the global constraints. Nothing else.
 - For a `REVISE` verdict, first classify every finding against the active
-  authorization envelope. Dispatch a fix subagent for authorized Critical and
-  Important findings. In a standalone read-only run, return all findings
-  without editing. Record Minor findings in the progress ledger only when the
-  run owns that ledger, and point the final whole-branch review at that list so
-  it can triage which must be fixed before merge.
+  authorization envelope. Dispatch an authorized repair subagent with every
+  `REVISE` finding. In a standalone read-only run, return all findings without
+  editing.
 - A finding labeled plan-mandated — or any finding that conflicts with
   what the plan's text requires — is the human's decision, like any plan
   contradiction: present the finding and the plan text, ask which governs.
@@ -248,17 +258,14 @@ final whole-branch review. When you fill a reviewer template:
   printed path and the objective authorization envelope in the final review
   dispatch, so the final reviewer reads one file instead of re-deriving the
   branch diff with git commands and can classify repair authorization.
-- Every fix dispatch carries the implementer contract: the fix subagent
-  re-runs the tests covering its change and reports the results. Name the
-  covering test files in the dispatch — a one-line fix does not need the
-  whole suite. Before re-dispatching the reviewer, confirm the fix report
-  contains the covering tests, the command run, and the output; dispatch
-  the re-review once all three are present.
+- Every repair subagent re-runs the tests covering its change and reports the
+  command and result before the controller dispatches a fresh independent
+  reviewer. A one-line fix does not need the whole suite, but it must include
+  the tests that cover the finding.
 - If the final whole-branch review returns `REVISE` and repair is authorized,
-  dispatch ONE fix subagent with the complete findings list — not one fixer
-  per finding. Without repair authorization, return the findings unchanged.
-  Per-finding fixers each rebuild context and re-run suites; a real
-  session's final-review fix wave cost more than all its tasks combined.
+  the controller dispatches one repair subagent with the complete findings
+  list, reruns full verification, and dispatches a fresh independent final
+  reviewer. Without repair authorization, return the findings unchanged.
 
 ## File Handoffs
 
@@ -377,8 +384,8 @@ Task reviewer: Verdict: REVISE. Spec ❌:
   - Extra: Added --json flag (not requested)
   Issues (Important): Magic number (100)
 
-[Dispatch fix subagent with all findings]
-Fixer: Removed --json flag, added progress reporting, extracted PROGRESS_INTERVAL constant
+[Dispatch one repair subagent with all findings; it runs the targeted tests and records their result]
+Repair subagent: Removed --json flag, added progress reporting, extracted PROGRESS_INTERVAL constant
 
 [Task reviewer reviews again]
 Task reviewer: Verdict: APPROVE. Spec ✅. Task quality: Approved.
@@ -458,16 +465,16 @@ Done!
 
 **If reviewer finds issues:**
 - Route the verdict against the active authorization envelope
-- For authorized `REVISE`, an implementer fixes the findings and reports targeted tests
-- An independent reviewer reviews again
+- For authorized `REVISE`, dispatch a repair subagent with the findings and require targeted tests
+- A fresh independent reviewer reviews again
 - Repeat while verified progress continues; apply the three-cycle no-progress boundary
 - Don't skip the re-review
 
 **If subagent fails task:**
-- Diagnose the failure and dispatch a fix subagent when repair is authorized
+- Diagnose the failure and either provide the missing context to the implementer or dispatch a repair subagent when authorized
 - Return findings without editing when the run is standalone and read-only
 - Escalate only at a Controller Verdict Routing boundary
-- Don't try to fix manually (context pollution)
+- Keep reviewer and candidate-producer identities separate on every repair cycle
 
 ## Integration
 
