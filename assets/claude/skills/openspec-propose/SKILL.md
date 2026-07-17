@@ -37,6 +37,15 @@ Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE`. On `APPROVE`, con
 
 If a reviewer fails to start, times out, crashes, or returns an invalid verdict, reuse the unchanged review package with at most two new independent review agents. If both retries fail, return `ESCALATE` with the collected infrastructure evidence; never infer `APPROVE`. The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.
 
+**Reviewer lifecycle:**
+
+- An active reviewer is not a terminal state. A reviewer remains active while queued, running, or awaiting collection of its verdict for the current candidate.
+- After dispatching a reviewer, retain control and poll internally; do not emit a final response, completion summary, or user-facing wait request while an active reviewer remains.
+- `APPROVE` is valid only when every required reviewer has returned a valid verdict for the same candidate.
+- On the first valid `REVISE`, invalidate reviews of that candidate, collect findings that have already returned, and do not wait for stale reviews. An invalidated reviewer is obsolete and non-blocking. Cancel it when the platform supports cancellation; otherwise ignore any late verdict, which cannot apply to a later candidate.
+- A final-state check counts only reviewers that remain required for the current candidate. Before any final response, confirm that no active reviewer remains and that the command has reached its explicit terminal state.
+- Repair the candidate, revalidate it, and dispatch a fresh independent review.
+
 **Steps**
 
 1. **If no clear input provided, ask what they want to build**

@@ -68,6 +68,15 @@ Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ES
 
 If a reviewer fails to start, times out, crashes, or returns an invalid verdict, reuse the unchanged review package with at most two new independent review agents. If both retries fail, return `ESCALATE` with the collected infrastructure evidence; never infer `APPROVE`. The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.
 
+**Reviewer lifecycle:**
+
+- An active reviewer is not a terminal state. A reviewer remains active while queued, running, or awaiting collection of its verdict for the current candidate.
+- After dispatching a reviewer, retain control and poll internally; do not emit a final response, completion summary, or user-facing wait request while an active reviewer remains.
+- `APPROVE` is valid only when every required reviewer has returned a valid verdict for the same candidate.
+- On the first valid `REVISE`, invalidate reviews of that candidate, collect findings that have already returned, and do not wait for stale reviews. An invalidated reviewer is obsolete and non-blocking. Cancel it when the platform supports cancellation; otherwise ignore any late verdict, which cannot apply to a later candidate.
+- A final-state check counts only reviewers that remain required for the current candidate. Before any final response, confirm that no active reviewer remains and that the command has reached its explicit terminal state.
+- Repair the candidate, revalidate it, and dispatch a fresh independent review.
+
 Only ESCALATE pauses the workflow for user input. Escalation is limited to a critical ambiguity that cannot be reasonably inferred, a required scope expansion, a conflicting higher-priority rule, an unauthorized external or irreversible effect, unavailable review capability after its retry policy, or a repair loop that no longer makes verifiable progress.
 
 Command names fix the terminal condition and do not grant unrelated effects. A complete Forgevia delivery ends after proposal, implementation, relevant verification, and final review with the change still active; it does not authorize archive, push, merge, or release. Standalone think and propose do not authorize implementation. Implement may edit and test, update its OpenSpec task facts, and create local task checkpoints only when branch policy permits; it does not authorize spec sync or archive. Archive authorizes spec sync and the local archive move, but not push or release.
