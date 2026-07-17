@@ -16,6 +16,12 @@ ledger and the tool results carry the record.
 
 **Continuous execution:** Implementation runs continuously by default. The main agent remains the sole controller across implementation, review, repair, and the next dependency-ready task group. A completed task group, passing verification, an `APPROVE` verdict, a refactor, or a progress report never ends the workflow or waits for feedback. Only an `ESCALATE` boundary, explicit user interruption, or the completion gate may end the implementation workflow.
 
+**Claude Code continuous controller:** Until the implementation workflow reaches every final completion gate, receives a valid `ESCALATE`, or the user explicitly stops it, the controller MUST continue execution. It MUST NOT send a `final` response after a child-agent callback, a review `REVISE`, or the end of a phase's verification.
+
+**Claude Code child-agent lifecycle:** After dispatching a child with the native `Task` mechanism, retain control and collect its lifecycle through Claude Code's native agent handling. When a callback arrives, automatically continue with its repair, verification, or next workflow phase, then continue tracking every remaining task, repair, or review child. Do not send a `final` response, completion summary, or user-facing wait request while any such child remains active; only an explicit user interruption or a valid `ESCALATE` boundary may break this lifecycle.
+
+**Status reports:** Any progress report MUST state the running agents, current phase, and next gate. A status report is not task completion and MUST NOT use `final` while the continuous-controller condition remains true.
+
 Before returning a completion summary, confirm every completion gate:
 
 - `tasks.md` contains no unchecked implementation item.
