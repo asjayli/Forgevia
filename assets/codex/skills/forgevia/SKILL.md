@@ -46,6 +46,12 @@ Continue inside that envelope until the terminal condition is met, a real blocke
 
 Implementation runs continuously by default. A completed task group, passing verification, an `APPROVE` verdict, a refactor, or a progress report never ends the workflow or waits for feedback.
 
+**Codex continuous controller:** Until the workflow reaches every final completion gate, receives a valid `ESCALATE`, or the user explicitly stops it, the controller MUST continue execution. It MUST NOT send a `final` response after a child-agent callback, a review `REVISE`, a single wait timeout, or the end of a phase's verification.
+
+**Codex child-agent waiting:** The single blocking-wait limit is 60 seconds. After dispatching an in-scope child agent with `spawn_agent`, repeatedly call `wait_agent` with `timeout_ms: 60000` and use `list_agents` to poll the active-agent set. When a wait times out, immediately begin the next 60-second wait while any in-scope child remains active. When a callback arrives, automatically continue with its repair, verification, or next workflow phase, then resume the wait loop for every remaining active child.
+
+**Status reports:** Any progress report MUST state the running agents, current phase, and next gate. A status report is not task completion and MUST NOT use `final` while the continuous-controller condition remains true.
+
 Before returning a completion summary, confirm every completion gate:
 
 - `tasks.md` contains no unchecked implementation item.
