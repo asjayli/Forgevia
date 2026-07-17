@@ -89,6 +89,41 @@ assert_review_contract() {
   assert_file_contains "$path" 'The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.'
 }
 
+assert_controller_lifecycle() {
+  local path="$1"
+
+  assert_file_contains "$path" 'An active reviewer is not a terminal state.'
+  assert_file_contains "$path" 'do not emit a final response, completion summary, or user-facing wait request'
+  assert_file_contains "$path" 'Before any final response, confirm that no active reviewer remains'
+  assert_file_contains "$path" 'On the first valid `REVISE`, invalidate reviews of that candidate'
+  assert_file_contains "$path" 'Repair the candidate, revalidate it, and dispatch a fresh independent review'
+}
+
+assert_obsolete_reviewer_lifecycle() {
+  local path="$1"
+
+  assert_file_contains "$path" 'An invalidated reviewer is obsolete and non-blocking.'
+  assert_file_contains "$path" 'A final-state check counts only reviewers that remain required for the current candidate.'
+}
+
+assert_template_function_contains() {
+  local path="$1"
+  local function_name="$2"
+  local needle="$3"
+  local function_body
+
+  function_body="$(awk -v function_name="$function_name" '
+    $0 == "export function " function_name "() {" { capture = 1 }
+    capture { print }
+    capture && /^}/ { exit }
+  ' "$path")"
+
+  if [[ "$function_body" != *"$needle"* ]]; then
+    echo "expected $path function $function_name to contain: $needle" >&2
+    exit 1
+  fi
+}
+
 forgevia_paths=(
   "$ROOT_DIR/assets/codex/skills/forgevia/SKILL.md"
   "$ROOT_DIR/assets/claude/skills/forgevia/SKILL.md"
@@ -107,6 +142,8 @@ for path in "${forgevia_paths[@]}"; do
   assert_file_contains "$path" 'The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer.'
   assert_file_contains "$path" 'Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.'
   assert_review_contract "$path"
+  assert_controller_lifecycle "$path"
+  assert_obsolete_reviewer_lifecycle "$path"
 done
 
 forgevia_propose_paths=(
@@ -122,6 +159,8 @@ for path in "${forgevia_propose_paths[@]}"; do
   assert_file_contains "$path" "the missing evidence, a recommended default, option impacts, and why work cannot continue"
   assert_file_not_contains "$path" "Stop and clarify"
   assert_review_contract "$path"
+  assert_controller_lifecycle "$path"
+  assert_obsolete_reviewer_lifecycle "$path"
 done
 
 forgevia_archive_paths=(
@@ -286,6 +325,8 @@ for path in "${openspec_propose_paths[@]}"; do
     'After all apply-required artifacts are complete, run `openspec validate "<name>" --strict --no-interactive` for the complete change' \
     'If strict validation fails, repair the indicated proposal, design, specs, or tasks and rerun strict validation.' \
     'Independently review every package changed by strict-validation repair before reporting the proposal apply-ready.'
+  assert_controller_lifecycle "$path"
+  assert_obsolete_reviewer_lifecycle "$path"
 done
 
 assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-propose/SKILL.md" '`spawn_agent`'
@@ -348,6 +389,15 @@ assert_file_in_order "$propose_template" \
   'collected infrastructure evidence' \
   'never infer \`APPROVE\`'
 assert_file_contains "$propose_template" 'The controller validates only reviewer identity, verdict structure, and supporting evidence; it does not recursively review the verdict.'
+assert_file_contains "$propose_template" 'An active reviewer is not a terminal state.'
+assert_file_contains "$propose_template" 'do not emit a final response, completion summary, or user-facing wait request'
+assert_file_contains "$propose_template" 'Before any final response, confirm that no active reviewer remains'
+assert_file_contains "$propose_template" 'On the first valid \`REVISE\`, invalidate reviews of that candidate'
+assert_file_contains "$propose_template" 'Repair the candidate, revalidate it, and dispatch a fresh independent review'
+assert_template_function_contains "$propose_template" 'getOpsxProposeSkillTemplate' 'An invalidated reviewer is obsolete and non-blocking.'
+assert_template_function_contains "$propose_template" 'getOpsxProposeCommandTemplate' 'An active reviewer is not a terminal state.'
+assert_template_function_contains "$propose_template" 'getOpsxProposeCommandTemplate' 'An invalidated reviewer is obsolete and non-blocking.'
+assert_template_function_contains "$propose_template" 'getOpsxProposeCommandTemplate' 'A final-state check counts only reviewers that remain required for the current candidate.'
 assert_file_in_order "$propose_template" \
   'Validate the current planning package before dispatching its reviewer.' \
   'If validation fails, repair only the matching planning artifact type and rerun the same validation.' \
