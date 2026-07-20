@@ -17,7 +17,7 @@ This is an **agent-driven** operation - you will read delta specs and directly e
 
 **Input**: Optionally specify a change name. Auto-select if only one active change exists. When multiple active changes remain equally plausible after checking conversation and repository evidence, present those candidates for one substantive selection.
 
-**Review protocol:** A sync request authorizes updates to the named change's corresponding main specs, but not archive, commit, push, or release. Use `Task` for an independent reviewer different from the plan or sync-result producer. Every review package contains:
+**Review protocol:** A sync request authorizes updates to the named change's corresponding main specs, but not archive, commit, push, or release. Use `{{PLATFORM_SPAWN}}` for an independent reviewer different from the plan or sync-result producer. Every review package contains:
 
 - Objective: the authorized outcome.
 - Scope: the allowed repositories, changes, files, and systems.
