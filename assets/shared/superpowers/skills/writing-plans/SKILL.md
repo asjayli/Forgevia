@@ -54,6 +54,40 @@ Traceability:
 - [ ] 1.5 REFACTOR: clean up while keeping tests green
 ```
 
+## Verification Contract (required)
+
+Every `tasks.md` must open with a Verification Contract that pins how this change is proven. Fill every field with concrete, runnable content — no placeholders.
+
+```markdown
+## Verification Contract
+
+### Baseline Commands
+- <safe command run before any code change to capture the starting state>
+
+### Targeted Commands
+- <task group number>: <command that verifies that group's deliverable>
+
+### Final Commands
+- <deduplicated union of every targeted command; the necessary full set, not a mechanical repeat>
+
+### Browser Verification
+- Required: yes | no
+- Reason: <why browser evidence is or is not needed>
+- Evidence: <expected artifact path or description when Required: yes>
+
+### Non-Replayable Checks
+- <external or manual criterion and the evidence that must accompany it>
+```
+
+Contract rules:
+
+- Baseline Commands must be safe and side-effect-free: never deploy, release, mutate a database, or write to an external system.
+- Targeted Commands are scoped per task group and must actually exercise that group's deliverable.
+- Final Commands are the necessary union of all targeted commands — deduplicated, not repeated verbatim.
+- Any Web/UI change must declare Browser Verification with `Required: yes` and name the evidence artifact.
+- If there is no browser surface, explicitly write `Required: no` and state why.
+- Non-Replayable Checks capture anything a command cannot re-run (external systems, manual sign-off) and the evidence required for each.
+
 ## Task Planning Rules
 
 1. One unified `tasks.md` per change (not per capability file).
@@ -67,6 +101,7 @@ Traceability:
 7. Enforce TDD loop in every implementation sequence:
    - RED -> verify fail -> GREEN -> verify pass -> REFACTOR
 8. No placeholders: every step must contain actual content. Never write "TBD", "TODO", "add appropriate error handling", "similar to group N", or reference types/functions not defined in any group's Interfaces.
+9. Include the Verification Contract as the first section of `tasks.md`, filled with concrete runnable commands (see Verification Contract above).
 
 ## Building Double-Link Traceability
 
@@ -93,11 +128,15 @@ This creates:
 
 ## Self-Review
 
-After writing `tasks.md`, look at the specs with fresh eyes and check the plan against them. This is a checklist you run yourself — not a subagent dispatch.
+After writing `tasks.md`, run this producer self-critique against the specs and the plan before any independent review. This is a checklist you run yourself — not a subagent dispatch; it reduces obvious problems but does not replace an independent reviewer.
 
-1. **Spec coverage:** Skim each requirement/scenario in the specs and test plans. Can you point to a task that implements it? Add tasks for any gaps.
-2. **Placeholder scan:** Search `tasks.md` for red flags — "TBD", "TODO", "add appropriate error handling", "similar to group N", references to undefined types/functions. Fix them.
-3. **Type consistency:** Do the Interfaces (Consumes/Produces) declared across groups match? A function named `clearLayers()` in group 3 but `clearFullLayers()` in group 7 is a bug.
+1. **Falsifiable acceptance criteria:** Can every requirement, scenario, and test resolve to a clear pass/fail? Any criterion that cannot be falsified is not a real acceptance gate — rewrite it.
+2. **Single delivery unit per group:** Does any task group bundle two distinct deliverables? Split it so each group is one delivery unit with one targeted verification command.
+3. **Acyclic dependencies:** Do the `Depends on` edges form any cycle? A circular dependency blocks execution — break it.
+4. **Test/verification path for every requirement:** Can you point to a task and a test for every requirement and scenario in the specs and test plans? Add tasks/tests for any gap. (Skim each requirement — this is spec coverage.)
+5. **No undeclared external side effects:** Do any tasks deploy, release, mutate a database, or write to an external system without that effect being declared in the proposal/design? Surface it or remove it.
+6. **Within authorized scope:** Do any tasks reach beyond the user-authorized outcome, repositories, or effects? Cut the out-of-scope work.
+7. **No placeholders or undefined interfaces:** Search `tasks.md` for "TBD", "TODO", "add appropriate error handling", "similar to group N", or references to types/functions not defined in any group's Interfaces. Fix them all. (This includes type consistency: a function named `clearLayers()` in group 3 but `clearFullLayers()` in group 7 is a bug.)
 
 Fix issues inline. No need to re-review — just fix and move on.
 

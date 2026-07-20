@@ -94,6 +94,7 @@ If a reviewer fails to start, times out, crashes, or returns an invalid verdict,
       - Create the artifact file using `template` as the structure and write it to `resolvedOutputPath`
       - Apply `context` and `rules` as constraints - but do NOT copy them into the file
       - Validate the current planning package before dispatching its reviewer. If validation fails, repair only the matching planning artifact type and rerun the same validation. Dispatch an independent review only after that planning validation passes.
+      - Run the producer self-critique on the current planning package before dispatching its reviewer: (1) every acceptance criterion is falsifiable; (2) no task group bundles two distinct delivery units; (3) dependency edges are acyclic; (4) every requirement has a test or verification path; (5) no undeclared external side effects; (6) nothing exceeds the user-authorized scope; (7) no `TBD`, `TODO`, vague placeholders, or undefined interfaces. Repair the findings inline against the matching artifact. This self-critique only reduces obvious problems; it does not replace the independent reviewer.
       - Independently review the proposal/design/specs package before tasks, and independently review the tasks package before declaring the change apply-ready
       - Show brief progress: "Created <artifact-id>"
 
