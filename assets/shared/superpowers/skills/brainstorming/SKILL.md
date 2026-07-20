@@ -100,8 +100,11 @@ Recommended sections per spec/test-plan:
 - **Artifact self-review** — look at each artifact with fresh eyes and fix inline:
   1. **Placeholder scan:** Any "TBD", "TODO", incomplete sections, or vague requirements?
   2. **Internal consistency:** Do artifacts contradict each other? Does the design match the proposal and specs?
-  3. **Scope check:** Is this focused enough for a single change, or does it need decomposition?
+  3. **Scope check:** Is this focused enough for a single change, or does it need decomposition? Does anything reach beyond the user-authorized outcome, repositories, or effects?
   4. **Ambiguity check:** Could any requirement be interpreted two ways? If so, pick one and make it explicit.
+  5. **Falsifiable acceptance criteria:** Can every requirement and scenario resolve to a clear pass/fail? Rewrite any criterion that cannot be falsified into a testable gate.
+  6. **Test/verification path:** Does every requirement have a corresponding case in `test-plan.md`? Add coverage for any gap.
+  7. **No undeclared external side effects:** Does the design deploy, release, mutate a database, or write to an external system? Declare every such effect in `design.md` or remove it.
 - Summarize capabilities produced and open questions.
 - If moving to planning, hand off to `superpowers:writing-plans` to generate unified `tasks.md`.
 

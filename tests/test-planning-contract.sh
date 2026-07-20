@@ -42,6 +42,44 @@ for platform in codex claude; do
   # Propose carries forward provenance and the read-only policy.
   assert_contains "$propose" "Context Provenance"
   assert_contains "$propose" "Read project memory read-only"
+
+  # Group 4: producer self-critique (7 items) before review + Verification Contract.
+  writing_plans="$ROOT_DIR/assets/$platform/superpowers/skills/writing-plans/SKILL.md"
+  openspec_propose="$ROOT_DIR/assets/$platform/skills/openspec-propose/SKILL.md"
+  brainstorming="$ROOT_DIR/assets/$platform/superpowers/skills/brainstorming/SKILL.md"
+
+  # forgevia-propose runs the 7-item producer self-critique before its reviewer.
+  assert_contains "$propose" "producer self-critique"
+  assert_contains "$propose" "falsifiable"
+  assert_contains "$propose" "acyclic"
+  assert_contains "$propose" "user-authorized scope"
+
+  # openspec-propose carries the same 7-item self-critique on both platforms.
+  assert_contains "$openspec_propose" "producer self-critique"
+  assert_contains "$openspec_propose" "falsifiable"
+  assert_contains "$openspec_propose" "acyclic"
+
+  # writing-plans Self-Review carries the 7-item critique.
+  assert_contains "$writing_plans" "Falsifiable acceptance criteria"
+  assert_contains "$writing_plans" "Single delivery unit per group"
+  assert_contains "$writing_plans" "Acyclic dependencies"
+  assert_contains "$writing_plans" "Test/verification path for every requirement"
+  assert_contains "$writing_plans" "No undeclared external side effects"
+  assert_contains "$writing_plans" "Within authorized scope"
+  assert_contains "$writing_plans" "No placeholders or undefined interfaces"
+
+  # writing-plans Verification Contract template (required in tasks.md).
+  assert_contains "$writing_plans" "Verification Contract"
+  assert_contains "$writing_plans" "Baseline Commands"
+  assert_contains "$writing_plans" "Targeted Commands"
+  assert_contains "$writing_plans" "Final Commands"
+  assert_contains "$writing_plans" "Browser Verification"
+  assert_contains "$writing_plans" "Non-Replayable Checks"
+
+  # brainstorming self-review aligned to the 7-item critique (spec layer).
+  assert_contains "$brainstorming" "Falsifiable acceptance criteria"
+  assert_contains "$brainstorming" "Test/verification path"
+  assert_contains "$brainstorming" "No undeclared external side effects"
 done
 
 # The single hand-edited source is assets/shared; rendered copies must stay in
