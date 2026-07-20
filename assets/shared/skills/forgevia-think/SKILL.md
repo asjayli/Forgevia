@@ -37,28 +37,54 @@ If a reviewer fails to start, times out, crashes, or returns an invalid verdict,
 1. **Treat the user's input as raw source material**
    - Use the requirement text, attached notes, `.mmd` design flow, and supporting documents when available.
 
-2. **Create the think artifact directory when missing**
+2. **Check requirement completeness (greenfield only)**
+   - For a greenfield requirement, walk these categories and surface a question only when an answer is missing AND it changes the design:
+
+     | Category | Ask only when missing and design-affecting |
+     |---|---|
+     | Target platform | web, mobile, desktop, CLI, multi-platform |
+     | Tech stack | framework, language, runtime |
+     | Design direction | visual style, interaction constraints |
+     | External integrations | identity, data, payments, storage, deployment |
+     | Scope boundaries | this phase, deferred, explicitly excluded |
+     | Users and scenarios | primary users, key flows |
+     | Performance constraints | traffic, latency, offline, real-time |
+     | Data model | core entities and relationships |
+
+   - Do not re-ask anything the prompt, project files, or memory already answer.
+   - For existing projects, answer from code and existing specs first; ask at most the forks that truly affect the plan.
+   - Leave micro implementation details to design/tasks; do not confirm them at the requirement stage.
+   - Request at most one decision per round for a material ambiguity.
+
+3. **Read project memory (read-only)**
+   - Discover and read only: `<project>/.codex/memory/`, `<project>/.claude/memory/`, and memory indices the host already exposes publicly.
+   - Do not create these directories when absent; do not scan global unrelated memory.
+   - Do not write memory back during think or propose.
+   - For each adopted fact, record its source, why it applies, and the decision it affects (see Context Provenance in the output template).
+   - A conflicting older memory must not silently override explicit user input.
+
+4. **Create the think artifact directory when missing**
    - Ensure `openspec/think/` exists before writing any artifact.
 
-3. **Restate the requirement first**
+5. **Restate the requirement first**
    - Rewrite the user's request in clearer terms.
    - Explain your current understanding.
    - Surface scope boundaries, assumptions, risks, and open questions.
 
-4. **Run an independent review**
+6. **Run an independent review**
    - Give a reviewer that did not produce the restatement the original request, repository evidence, proposed scope, assumptions, risks, and terminal condition.
    - Require an evidence-backed `APPROVE`, `REVISE`, or `ESCALATE` verdict.
    - On `APPROVE`, write the think artifact without waiting for user confirmation.
    - On `REVISE`, update the restatement and request another independent review.
    - On `ESCALATE`, ask once for the critical decision that cannot be inferred, including evidence, a recommendation, and option impacts.
 
-5. **Write the reviewed think artifact**
+7. **Write the reviewed think artifact**
    - Save the independently approved result as Markdown under `openspec/think/`.
    - Use the file name format `YYYY-MM-DD-<requirement-description>.md`.
    - If the same dated requirement already exists, create the next version as `YYYY-MM-DD-<requirement-description>-v2.md`, then `-v3.md`, and so on.
    - Do not overwrite an earlier iteration of the same requirement.
 
-6. **Recommend the next step**
+8. **Recommend the next step**
    - If the objective ends at think, return the reviewed artifact and stop.
    - If the original objective includes later Forgevia phases, continue to proposal after `APPROVE` without a stage confirmation.
    - If the user is still exploring, keep thinking instead of forcing structure too early.
@@ -75,6 +101,11 @@ If a reviewer fails to start, times out, crashes, or returns an invalid verdict,
 ## Restated Understanding
 
 [Forgevia's clearer restatement of the requirement]
+
+## Context Provenance
+
+| Fact | Source | Why Applicable | Decision Impact |
+|------|--------|----------------|-----------------|
 
 ## Scope And Boundaries
 
