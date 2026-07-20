@@ -3,6 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$(dirname "${BASH_SOURCE[0]}")/forgevia-common.sh"
 MANIFEST_PATH="$ROOT_DIR/manifests/claude.json"
 ASSETS_DIR="$ROOT_DIR/assets/claude"
 CLAUDE_SUPERPOWERS_ASSETS_DIR="$ROOT_DIR/assets/claude/superpowers"
@@ -140,7 +141,7 @@ is_managed_global_command() {
 }
 
 command_checksum() {
-  sha256sum "$1" | awk '{print $1}'
+  forgevia_sha256_file "$1"
 }
 
 write_global_command_state() {
@@ -384,7 +385,8 @@ overlay_runtime_scripts() {
   sync_path "$ROOT_DIR/scripts/doctor-claude.sh" "$runtime_dir/doctor-claude.sh"
   sync_path "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$runtime_dir/validate-openspec-cn.mjs"
   sync_path "$ROOT_DIR/scripts/forgevia.sh" "$runtime_dir/forgevia"
-  log_success "Installed Forgevia runtime scripts (forgevia/bootstrap/list-change-tasks/draw/doctor/validate-openspec-cn)"
+  sync_path "$ROOT_DIR/scripts/forgevia-common.sh" "$runtime_dir/forgevia-common.sh"
+  log_success "Installed Forgevia runtime scripts (forgevia/common/bootstrap/list-change-tasks/draw/doctor/validate-openspec-cn)"
 }
 
 install_global_command() {
@@ -478,8 +480,8 @@ main() {
   require_command rm
   require_command mkdir
   require_command node
-  require_command sha256sum
   require_command npm
+  forgevia_require_sha256
 
   install_openspec
 
