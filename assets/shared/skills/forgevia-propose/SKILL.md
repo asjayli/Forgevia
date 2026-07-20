@@ -35,6 +35,7 @@ If a reviewer fails to start, times out, crashes, or returns an invalid verdict,
 - A final-state check counts only reviewers that remain required for the current candidate. Before any final response, confirm that no active reviewer remains and that the command has reached its explicit terminal state.
 - Repair the candidate, revalidate it, and dispatch a fresh independent review.
 
+- Carry forward the think artifact's Context Provenance. If a memory fact is newly adopted during proposal, append it with source, applicability, and decision impact. Read project memory read-only (`<project>/.codex/memory/`, `<project>/.claude/memory/`, host-exposed memory indices); do not create these directories, scan global unrelated memory, or write back. The same read-only memory policy applies to `openspec-propose` and `brainstorming` when this skill routes through them.
 - Route the requirement source into `openspec-propose`.
 - Allow the change name to come from the user when explicitly provided.
 - Otherwise derive an appropriate kebab-case change name from the requirement source.
