@@ -25,7 +25,11 @@
     "skills/forgevia-propose",
     "skills/forgevia-review",
     "skills/forgevia-tasks",
-    "skills/openspec-sync-specs"
+    "skills/openspec-sync-specs",
+    "superpowers/skills/brainstorming",
+    "superpowers/skills/writing-plans",
+    "superpowers/skills/executing-plans",
+    "superpowers/skills/test-driven-development"
   ],
   "platformSpecific": [
     {
@@ -65,8 +69,12 @@
       "reason": "Codex carries a config.toml + sandbox flag block and codex.emitImage() calls; Claude uses environment-generic enablement and emitImage(). NOTICE.txt also differs."
     },
     {
-      "path": "superpowers/skills",
-      "reason": "Overlay targets the upstream superpowers install root. Byte-identical overrides (brainstorming, writing-plans, executing-plans, test-driven-development) are shared-candidates but retained per-platform this round; subagent-driven-development and requesting-code-review differ (model-selection frontmatter and sections)."
+      "path": "superpowers/skills/subagent-driven-development",
+      "reason": "Overlay targets the upstream superpowers install root. Continuous-controller and child-agent lifecycle diverge (Codex spawn_agent/wait_agent/list_agents polling vs Claude native Task lifecycle); the model-selection section is conditional on Codex but unconditional on Claude. Byte-identical siblings (brainstorming, writing-plans, executing-plans, test-driven-development) are rendered from assets/shared/superpowers/skills/."
+    },
+    {
+      "path": "superpowers/skills/requesting-code-review",
+      "reason": "Overlay targets the upstream superpowers install root. code-reviewer.md frontmatter carries an explicit-model directive only on Claude; Codex omits it."
     }
   ],
   "claudeOnly": [
