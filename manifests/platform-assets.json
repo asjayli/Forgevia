@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "description": "Classifies Forgevia managed assets by cross-platform sharing strategy. shared/ is the single hand-edited source rendered to assets/codex and assets/claude by scripts/sync-platform-assets.mjs. platformSpecific entries are kept per-platform with a recorded reason. sharedSemantics are cross-platform invariants enforced by --check even on platformSpecific assets, so non-platform meaning (e.g. openspec generatedBy) cannot silently drift.",
+  "tokens": {
+    "{{PLATFORM_HOME_ENV}}": {
+      "codex": "${CODEX_HOME:-$HOME/.codex}",
+      "claude": "${CLAUDE_HOME:-$HOME/.claude}"
+    },
+    "{{PLATFORM_HOME_ABS}}": {
+      "codex": "$HOME/.codex",
+      "claude": "$HOME/.claude"
+    },
+    "{{PLATFORM_SPAWN}}": {
+      "codex": "spawn_agent",
+      "claude": "Task"
+    }
+  },
+  "shared": [
+    "skills/forgevia-implement",
+    "skills/forgevia-think",
+    "skills/forgevia-verify-web",
+    "skills/mermaid-diagram-specialist",
+    "skills/forgevia-archive",
+    "skills/forgevia-draw",
+    "skills/forgevia-propose",
+    "skills/forgevia-review",
+    "skills/forgevia-tasks",
+    "skills/openspec-sync-specs"
+  ],
+  "platformSpecific": [
+    {
+      "path": "skills/forgevia",
+      "reason": "Router embeds divergent controller mechanisms: Codex spawn_agent/wait_agent/list_agents polling vs Claude native Task lifecycle, plus a phase-verification clause carried only by Codex."
+    },
+    {
+      "path": "skills/forgevia-init",
+      "reason": "Initialization guidance differs in framing (--tools recommendation wording) beyond a plain path token."
+    },
+    {
+      "path": "skills/forgevia-doctor",
+      "reason": "Prose references the platform by label ('Codex/Claude environment') in full sentences, not only path variables."
+    },
+    {
+      "path": "skills/forgevia-repair",
+      "reason": "Same platform-label sentence pattern as forgevia-doctor."
+    },
+    {
+      "path": "skills/openspec-apply-change",
+      "reason": "User-selection step uses AskUserQuestion only on Claude via a sentence-level rewrite."
+    },
+    {
+      "path": "skills/openspec-propose",
+      "reason": "AskUserQuestion prompt and progress-tracking (TodoWrite vs client mechanism) differ at sentence level."
+    },
+    {
+      "path": "skills/openspec-archive-change",
+      "reason": "Spec-sync step is described differently (openspec flow vs Task-invoked openspec-sync-specs)."
+    },
+    {
+      "path": "skills/openspec-explore",
+      "reason": "Explores are invoked differently (/opsx: prefix on Claude) and ASCII/table formatting differs."
+    },
+    {
+      "path": "skills/playwright-interactive",
+      "reason": "Codex carries a config.toml + sandbox flag block and codex.emitImage() calls; Claude uses environment-generic enablement and emitImage(). NOTICE.txt also differs."
+    },
+    {
+      "path": "superpowers/skills",
+      "reason": "Overlay targets the upstream superpowers install root. Byte-identical overrides (brainstorming, writing-plans, executing-plans, test-driven-development) are shared-candidates but retained per-platform this round; subagent-driven-development and requesting-code-review differ (model-selection frontmatter and sections)."
+    }
+  ],
+  "claudeOnly": [
+    "commands/opsx"
+  ],
+  "codexOnly": [],
+  "sharedSemantics": {
+    "generatedBy": "1.6.0",
+    "appliesTo": [
+      "skills/openspec-apply-change",
+      "skills/openspec-archive-change",
+      "skills/openspec-explore",
+      "skills/openspec-propose",
+      "skills/openspec-sync-specs"
+    ]
+  }
+}
