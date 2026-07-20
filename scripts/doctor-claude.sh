@@ -3,6 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$(dirname "${BASH_SOURCE[0]}")/forgevia-common.sh"
 MANIFEST_PATH="$ROOT_DIR/manifests/claude.json"
 ASSETS_DIR="$ROOT_DIR/assets/claude"
 CLAUDE_SUPERPOWERS_ASSETS_DIR="$ROOT_DIR/assets/claude/superpowers"
@@ -277,7 +278,7 @@ is_managed_global_command() {
 }
 
 command_checksum() {
-  sha256sum "$1" | awk '{print $1}'
+  forgevia_sha256_file "$1"
 }
 
 write_global_command_state() {
@@ -428,10 +429,7 @@ main() {
   echo "🔎 Forgevia Claude doctor"
   validate_root "$CLAUDE_ROOT" ".claude"
   validate_root "$FORGEVIA_BIN_DIR" ""
-  if ! command -v sha256sum >/dev/null 2>&1; then
-    echo "missing required command: sha256sum" >&2
-    exit 1
-  fi
+  forgevia_require_sha256
   if [[ "$repair_requested" == "true" ]]; then
     echo "🛠️ Repairing drifted or missing assets"
   fi
@@ -488,6 +486,7 @@ main() {
     "$ROOT_DIR/scripts/doctor-claude.sh::$CLAUDE_ROOT/forgevia/bin/doctor-claude.sh"
     "$ROOT_DIR/scripts/validate-openspec-cn.mjs::$CLAUDE_ROOT/forgevia/bin/validate-openspec-cn.mjs"
     "$ROOT_DIR/scripts/forgevia.sh::$CLAUDE_ROOT/forgevia/bin/forgevia"
+    "$ROOT_DIR/scripts/forgevia-common.sh::$CLAUDE_ROOT/forgevia/bin/forgevia-common.sh"
   )
 
   for pair in "${managed_pairs[@]}"

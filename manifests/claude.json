@@ -257,6 +257,14 @@
       "kind": "runtime-script"
     },
     {
+      "id": "runtime-common-script",
+      "source": "scripts/forgevia-common.sh",
+      "target": "~/.claude/forgevia/bin/forgevia-common.sh",
+      "owner": "forgevia",
+      "kind": "runtime-script",
+      "note": "Shared shell helpers sourced by runtime install/doctor scripts; provides portable SHA-256."
+    },
+    {
       "id": "runtime-chinese-openspec-validator",
       "source": "scripts/validate-openspec-cn.mjs",
       "target": "~/.claude/forgevia/bin/validate-openspec-cn.mjs",
