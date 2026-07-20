@@ -44,7 +44,7 @@ At entry, resolve an objective authorization envelope with these fields:
 
 Continue inside that envelope until the terminal condition is met, a real blocker requires new user input, or the user interrupts. Phase boundaries, progress reports, warnings, and ordinary recoverable failures are observations, not confirmation gates.
 
-Implementation runs continuously by default. A completed task group, passing verification, an `APPROVE` verdict, a refactor, or a progress report never ends the workflow or waits for feedback.
+Implementation runs continuously by default. A completed task group, passing verification, a refactor, or a progress report never ends the workflow or waits for feedback. The final independent review's `APPROVE` is the completion gate.
 
 **Codex continuous controller:** Until the workflow reaches every final completion gate, receives a valid `ESCALATE`, or the user explicitly stops it, the controller MUST continue execution. It MUST NOT send a `final` response after a child-agent callback, a review `REVISE`, a single wait timeout, or the end of a phase's verification.
 
@@ -136,9 +136,9 @@ Behavior:
 - use superpowers to complete the development for the named change
 - explicitly invoke `superpowers:test-driven-development` during implementation rather than treating TDD as implicit
 - prefer `subagent-driven-development` or `executing-plans` based on the task structure
-- use `requesting-code-review` at dependency-ready checkpoints
+- use `requesting-code-review` once for the complete branch before completion
 - diagnose and repair in-scope design issues, first test failures, and review findings before considering escalation
-- after each `APPROVE`, continue to the next dependency-ready task without a stage confirmation
+- after the final `APPROVE`, keep the change active; do not advance to a next dependency-ready task — the complete branch is the review scope
 
 Do not guess the change from conversation context when this command is used.
 
@@ -240,12 +240,7 @@ These variants are expected to be OpenSpec-oriented and to resolve artifact path
 
 ### 3. Trigger review checkpoints
 
-Use `requesting-code-review` at the intended checkpoints:
-
-- after each dependency-ready task group in execution flows
-- before merge or handoff
-
-Do not silently skip review because a change looks small.
+Use `requesting-code-review` once, for the complete branch before completion — the only review checkpoint during implementation. Do not silently skip it because a change looks small.
 
 Treat review as an internal control signal: `APPROVE` advances, authorized `REVISE` enters the matching repair loop, and only `ESCALATE` requests a user decision. The main agent validates verdict identity, structure, authorization, and evidence itself; it does not recursively dispatch another reviewer to review the verdict.
 

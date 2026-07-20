@@ -103,17 +103,18 @@ Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ES
    - Make the code changes required
    - Keep changes minimal and focused
    - Run the task's targeted verification
-   - Use `Task` to dispatch an independent review agent different from the candidate producer. Give it the objective and authorized scope, relevant artifacts, diff, verification evidence, assumptions, and risks.
-   - Require one evidence-backed verdict: `APPROVE`, `REVISE`, or `ESCALATE`.
-   - On `APPROVE`, mark the task complete in the tasks file (`- [ ]` → `- [x]`) and continue to the next task.
-   - On `REVISE`, diagnose, fix, run targeted verification, and dispatch a fresh independent review. A design issue or first test failure starts this repair loop; it is not a user confirmation gate.
+   - Follow the explicit TDD path (RED/GREEN/REFACTOR) for the task
+   - On completion, mark the task complete in the tasks file (`- [ ]` → `- [x]`) and continue to the next task
+   - Diagnose and repair in-scope design issues and first test failures within scope, then run targeted verification; this is not a user confirmation gate
    - On `ESCALATE`, combine the blocking evidence, recommended default, option impacts, and reason the workflow cannot continue into one user decision request.
 
    Only `ESCALATE` pauses for user input. Use it only for a critical ambiguity that cannot be reasonably inferred, a required scope or authorization expansion, a conflicting rule, an unavailable required capability, or a repair loop with no verifiable progress. The user may also interrupt explicitly.
 
 7. **Run final integration verification and full-branch review**
 
-   Complete every task and its task-level review. Run integration and global verification across the complete implementation. Build a commit-bounded full-branch review package covering the complete implementation range, or a WORKTREE package when commit authorization or branch policy left changes uncommitted. Dispatch a fresh full-branch reviewer that is independent from every candidate producer. Only a final `APPROVE` may produce `Implementation Complete`.
+   Complete every task. Run integration and global verification across the complete implementation. Build a commit-bounded full-branch review package covering the complete implementation range, or a WORKTREE package when commit authorization or branch policy left changes uncommitted. Dispatch a fresh full-branch reviewer that is independent from every candidate producer. Only a final `APPROVE` may produce `Implementation Complete`.
+
+   The final repair-review loop ends on `APPROVE`, or once every Critical and Important finding has been fixed and confirmed by a fresh re-review, after at most three further review rounds; remaining Minor findings are recorded as follow-up items in the coverage ledger, not silently dropped. This severity-gated closing does not override the no-progress `ESCALATE` boundary.
 
    On a final authorized `REVISE`, the controller dispatches an implementation repair subagent with the findings, reruns integration and global verification, builds a fresh full-branch package, and dispatches a fresh independent full-branch reviewer. Without repair authorization, return the findings unchanged. A final `ESCALATE` is limited to the substantive boundaries in the independent review contract.
 

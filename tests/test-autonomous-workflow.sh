@@ -188,7 +188,7 @@ for path in "${forgevia_implement_paths[@]}"; do
   assert_file_contains "$path" '`REVISE`'
   assert_file_contains "$path" '`ESCALATE`'
   assert_file_contains "$path" "first test failure"
-  assert_file_contains "$path" "automatically continue to the next dependency-ready work unit"
+  assert_file_contains "$path" 'After the final `APPROVE`, record completion and keep the change active'
   assert_file_contains "$path" 'Only `ESCALATE` requests user input'
   assert_file_contains "$path" "Implementation runs continuously by default."
   assert_file_contains "$path" "Before returning a completion summary, confirm every completion gate:"
@@ -248,7 +248,7 @@ openspec_apply_paths=(
 
 for path in "${openspec_apply_paths[@]}"; do
   assert_file_contains "$path" "first test failure"
-  assert_file_contains "$path" "diagnose, fix, run targeted verification"
+  assert_file_contains "$path" "Diagnose and repair in-scope design issues and first test failures within scope"
   assert_file_contains "$path" "independent review"
   assert_file_contains "$path" '`APPROVE`'
   assert_file_contains "$path" '`REVISE`'
@@ -258,7 +258,7 @@ for path in "${openspec_apply_paths[@]}"; do
   assert_file_not_contains "$path" "Pause on errors, blockers, or unclear requirements"
   assert_review_contract "$path"
   assert_file_in_order "$path" \
-    'Complete every task and its task-level review.' \
+    'Complete every task.' \
     'Run integration and global verification across the complete implementation.' \
     'Build a commit-bounded full-branch review package covering the complete implementation range, or a WORKTREE package when commit authorization or branch policy left changes uncommitted.' \
     'Dispatch a fresh full-branch reviewer that is independent from every candidate producer.' \
@@ -274,10 +274,6 @@ for path in "${openspec_apply_paths[@]}"; do
   assert_file_contains "$path" 'The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer.'
   assert_file_contains "$path" 'Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.'
 done
-
-assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-apply-change/SKILL.md" '`spawn_agent`'
-assert_file_contains "$ROOT_DIR/assets/claude/skills/openspec-apply-change/SKILL.md" '`Task`'
-assert_file_contains "$ROOT_DIR/assets/claude/commands/opsx/apply.md" '`Task`'
 
 openspec_archive_paths=(
   "$ROOT_DIR/assets/codex/skills/openspec-archive-change/SKILL.md"
