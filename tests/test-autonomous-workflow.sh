@@ -135,12 +135,20 @@ for path in "${forgevia_paths[@]}"; do
   assert_file_contains "$path" 'REVISE'
   assert_file_contains "$path" 'ESCALATE'
   assert_file_contains "$path" "Only ESCALATE pauses the workflow for user input"
-  assert_file_contains "$path" "does not authorize archive, push, merge, or release"
+  assert_file_contains "$path" "does not authorize spec sync, commit, archive, push, merge, or release"
+  assert_file_contains "$path" 'only when authorized effects explicitly allow commits and branch policy permits'
   assert_file_contains "$path" "different from the agent that produced the candidate"
   assert_file_contains "$path" "Implementation runs continuously by default."
   assert_file_contains "$path" "Before returning a completion summary, confirm every completion gate:"
   assert_file_contains "$path" 'The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer.'
   assert_file_contains "$path" 'Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.'
+  assert_file_contains "$path" 'A Forgevia request with a requirement but no named subcommand authorizes the complete delivery workflow by default.'
+  assert_file_contains "$path" 'Read-only, exploratory, status, and review intent does not authorize implementation.'
+  assert_file_contains "$path" 'Complete-delivery phase order is: proposal -> implementation -> browser verification when relevant -> final independent review.'
+  assert_file_contains "$path" 'Browser verification is a pre-review gate.'
+  assert_file_contains "$path" 'Only after browser verification passes or is explicitly not applicable may the controller dispatch the final independent review.'
+  assert_file_contains "$path" 'carry the resolved change name directly into implementation'
+  assert_file_contains "$path" 'Do not pause, summarize, or ask for confirmation between those phases.'
   assert_review_contract "$path"
   assert_controller_lifecycle "$path"
   assert_obsolete_reviewer_lifecycle "$path"
@@ -158,6 +166,9 @@ for path in "${forgevia_propose_paths[@]}"; do
   assert_file_contains "$path" "cannot be recovered from the provided input, referenced files, conversation, or repository evidence"
   assert_file_contains "$path" "the missing evidence, a recommended default, option impacts, and why work cannot continue"
   assert_file_not_contains "$path" "Stop and clarify"
+  assert_file_contains "$path" 'Report that the standalone `propose` command reached its apply-ready terminal condition'
+  assert_file_contains "$path" 'Do not describe normal command completion as an interruption or emphasize missing authorization.'
+  assert_file_contains "$path" 'Do not ask whether to start implementation.'
   assert_review_contract "$path"
   assert_controller_lifecycle "$path"
   assert_obsolete_reviewer_lifecycle "$path"
@@ -313,6 +324,9 @@ for path in "${openspec_propose_paths[@]}"; do
   assert_file_contains "$path" '`REVISE`'
   assert_file_contains "$path" '`ESCALATE`'
   assert_file_contains "$path" 'Only `ESCALATE` pauses for user input'
+  assert_file_contains "$path" 'State that the standalone proposal reached its apply-ready terminal condition.'
+  assert_file_contains "$path" 'Next command: `Forgevia implement <name>`'
+  assert_file_contains "$path" 'Do not ask whether to proceed'
   assert_review_contract "$path"
   assert_file_in_order "$path" \
     'Validate the current planning package before dispatching its reviewer.' \
@@ -368,6 +382,9 @@ assert_occurrences_at_least "$propose_template" '\`APPROVE\`' 2
 assert_occurrences_at_least "$propose_template" '\`REVISE\`' 2
 assert_occurrences_at_least "$propose_template" '\`ESCALATE\`' 2
 assert_occurrences_at_least "$propose_template" 'Only \`ESCALATE\` pauses for user input' 2
+assert_occurrences_at_least "$propose_template" 'State that the standalone proposal reached its apply-ready terminal condition.' 2
+assert_occurrences_at_least "$propose_template" 'Next command: \`Forgevia implement <name>\`' 2
+assert_occurrences_at_least "$propose_template" 'Do not ask whether to proceed' 2
 assert_file_in_order "$propose_template" \
   'Objective: the authorized outcome.' \
   'Scope: the allowed repositories, changes, files, and systems.' \

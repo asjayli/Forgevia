@@ -63,9 +63,9 @@ Forgevia 是一套面向 agent coding 的工作流整合方案。
 
 ### 完整版链路
 
-`forgevia` 是总入口。你只需要明确告诉 Forgevia 当前要执行哪个动作，它会把需求、开发、评审、验证和归档串成一条一致的流程。
+`forgevia` 是总入口。可以用显式子命令控制单个阶段，也可以直接提供要交付的需求，让 Forgevia 自动编排方案、开发、评审和验证。
 
-每个命令启动后，Forgevia 会在该命令授权的目标与范围内自动完成常规步骤、独立审查、修复与复验，无需逐步确认；只有关键歧义、授权缺口、未授权外部副作用或无法收敛的阻塞才会中断。未明确要求的后续阶段、归档、推送或发布不会自动执行。
+显式子命令以对应命令的终态为边界；未指定子命令的交付请求默认执行完整交付，按 `propose → implement → 必要的浏览器验证 → 最终独立评审` 连续推进，阶段之间无需逐步确认。浏览器验证发现问题时会先修复并复验，通过后才进入最终评审。只读、探索、状态查询或评审意图不会被升级为代码实现。只有关键歧义、授权缺口、未授权外部副作用或无法收敛的阻塞才会请求用户决策；归档、同步规格、提交、推送、合并和发布仍需单独明确授权。
 
 1. `Forgevia init`
    适合在新仓库开始使用时执行。它会检查当前项目是否已具备 Forgevia 工作流所需的基础文件；如果缺失，就补齐初始化内容。若这个仓库需要同时支持 Codex 和 Claude，建议按 `codex,claude` 初始化项目模板。
@@ -94,9 +94,11 @@ Forgevia 是一套面向 agent coding 的工作流整合方案。
 
 ### 简版链路
 
-`draw -> think -> propose -> implement -> review -> verify-web（如需要）-> openspec-sync-specs（如需提前同步）-> archive`
+`draw -> think -> propose -> implement -> verify-web（如需要）-> review -> openspec-sync-specs（如需提前同步）-> archive`
 
 Forgevia 把需求梳理、结构化开发、代码评审、效果验证和最终归档串成一条一致的交付流程。
+
+完整交付结束后 change 保持 active；`propose` 达到 apply-ready 只是内部阶段转换，不会停下来再次询问。显式执行 `Forgevia propose` 时则以 apply-ready 为命令终态，并返回可直接执行的 `Forgevia implement <change>`，不会用“中断”或“未授权”描述正常完成，也不会追加是否继续的确认问题。
 
 ### 中文 OpenSpec 严格校验
 

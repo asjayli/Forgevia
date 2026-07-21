@@ -114,8 +114,11 @@ If a reviewer fails to start, times out, crashes, or returns an invalid verdict,
 After completing all artifacts, summarize:
 - Change name and location
 - List of artifacts created with brief descriptions
-- What's ready: "All artifacts created! Ready for implementation."
-- Prompt: "Use Forgevia Implement to start implementation."
+- State that the standalone proposal reached its apply-ready terminal condition.
+- Next command: \`Forgevia implement <name>\`
+- Do not describe this normal terminal condition as a stop, interruption, or lack of authorization. Do not ask whether to proceed; the exact next command is sufficient.
+
+When invoked as a phase of an already-authorized complete Forgevia delivery, return the resolved change name to the controller instead of emitting this standalone completion summary. The controller continues directly into implementation.
 
 **Artifact Creation Guidelines**
 
@@ -256,8 +259,11 @@ If a reviewer fails to start, times out, crashes, or returns an invalid verdict,
 After completing all artifacts, summarize:
 - Change name and location
 - List of artifacts created with brief descriptions
-- What's ready: "All artifacts created! Ready for implementation."
-- Prompt: "Use Forgevia Implement to start implementation."
+- State that the standalone proposal reached its apply-ready terminal condition.
+- Next command: \`Forgevia implement <name>\`
+- Do not describe this normal terminal condition as a stop, interruption, or lack of authorization. Do not ask whether to proceed; the exact next command is sufficient.
+
+When invoked as a phase of an already-authorized complete Forgevia delivery, return the resolved change name to the controller instead of emitting this standalone completion summary. The controller continues directly into implementation.
 
 **Artifact Creation Guidelines**
 

@@ -47,5 +47,8 @@ If a reviewer fails to start, times out, crashes, or returns an invalid verdict,
 - After all apply-required artifacts are complete, run strict OpenSpec validation for the complete change. If strict validation fails, repair the indicated proposal, design, specs, or tasks and rerun strict validation. Independently review every package changed by strict-validation repair before reporting the proposal apply-ready.
 - Continue through all apply-ready planning artifacts after `APPROVE`; only `ESCALATE` may request a critical decision that cannot be inferred.
 - Proposal completion does not authorize implementation, commit, sync, archive, push, merge, or release.
+- Report that the standalone `propose` command reached its apply-ready terminal condition, then provide `Forgevia implement <resolved-change>` as the exact next command.
+- Do not describe normal command completion as an interruption or emphasize missing authorization. Do not ask whether to start implementation.
+- When this proposal is a phase of an already-authorized complete Forgevia delivery, return control internally with the resolved change name; do not emit a proposal completion response or wait for confirmation.
 - When writing Chinese requirements, use one of `必须、不得、禁止、应当` in the requirement body. Keep OpenSpec structure keywords in English, including `## Requirements` and `### Requirement:`.
 - After creating the change artifacts, run `"${CLAUDE_HOME:-$HOME/.claude}/forgevia/bin/forgevia" validate --root <project-root>`. Do not report the proposal as strictly valid if this command fails.
