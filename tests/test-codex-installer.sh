@@ -287,8 +287,8 @@ assert_contains "$actual_openspec_propose" "$expected_openspec_propose"
 expected_openspec_propose_skill="$(cat "$ROOT_DIR/assets/codex/skills/openspec-propose/SKILL.md")"
 actual_openspec_propose_skill="$(cat "$CODEX_HOME/skills/openspec-propose/SKILL.md")"
 assert_contains "$actual_openspec_propose_skill" "$expected_openspec_propose_skill"
-assert_contains "$actual_openspec_propose_skill" "Use Forgevia Implement"
-assert_contains "$actual_openspec_propose" "Use Forgevia Implement to start implementation."
+assert_contains "$actual_openspec_propose_skill" 'Next command: `Forgevia implement <name>`'
+assert_contains "$actual_openspec_propose" 'Next command: \`Forgevia implement <name>\`'
 
 echo "drift" >> "$CODEX_HOME/superpowers/skills/brainstorming/SKILL.md"
 

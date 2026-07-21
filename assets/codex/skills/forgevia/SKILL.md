@@ -30,7 +30,16 @@ If required pieces are missing, stop and tell the user which installation or doc
 
 ## Workflow
 
-Forgevia should behave like an explicit command router. The user is expected to name the Forgevia action they want.
+Forgevia uses deterministic routing:
+
+- A named subcommand authorizes that command's documented terminal condition.
+- A Forgevia request with a requirement but no named subcommand authorizes the complete delivery workflow by default. Clarify only consequential ambiguity, then propose, implement, run browser verification when relevant, and perform the final independent review.
+- A request that explicitly names multiple phases authorizes those phases in order.
+- Read-only, exploratory, status, and review intent does not authorize implementation.
+
+For a complete delivery, resolve the change name during proposal and carry the resolved change name directly into implementation. Do not require the user to repeat a controller-generated name. Do not pause, summarize, or ask for confirmation between those phases.
+
+Complete-delivery phase order is: proposal -> implementation -> browser verification when relevant -> final independent review. Browser verification is a pre-review gate. On a browser-verification failure or `REVISE`, repair within the authorization envelope, rerun targeted verification and browser verification, and repeat until it passes or returns `ESCALATE`. Only after browser verification passes or is explicitly not applicable may the controller dispatch the final independent review.
 
 ## Autonomous Execution Contract
 
@@ -85,7 +94,9 @@ If a reviewer fails to start, times out, crashes, or returns an invalid verdict,
 
 Only ESCALATE pauses the workflow for user input. Escalation is limited to a critical ambiguity that cannot be reasonably inferred, a required scope expansion, a conflicting higher-priority rule, an unauthorized external or irreversible effect, unavailable review capability after its retry policy, or a repair loop that no longer makes verifiable progress.
 
-Command names fix the terminal condition and do not grant unrelated effects. A complete Forgevia delivery ends after proposal, implementation, relevant verification, and final review with the change still active; it does not authorize archive, push, merge, or release. Standalone think and propose do not authorize implementation. Implement may edit and test, update its OpenSpec task facts, and create local task checkpoints only when branch policy permits; it does not authorize spec sync or archive. Archive authorizes spec sync and the local archive move, but not push or release.
+Command names fix the terminal condition and do not grant unrelated effects. A complete Forgevia delivery ends after proposal, implementation, relevant verification, and final review with the change still active; it does not authorize spec sync, commit, archive, push, merge, or release. Standalone think and propose do not authorize implementation. Implement may edit and test and update its OpenSpec task facts; it may create local checkpoint commits only when authorized effects explicitly allow commits and branch policy permits. Implement does not authorize spec sync or archive. Archive authorizes spec sync and the local archive move, but not push or release.
+
+Reaching apply-ready is an internal phase transition during a complete delivery, not a reporting or confirmation gate. Automatically route the resolved change into implementation and continue until the complete-delivery terminal condition.
 
 ## Commands
 
@@ -190,6 +201,8 @@ Behavior:
 - use an explicit user-provided change name when available
 - otherwise derive a kebab-case change name from the requirement source
 - independently review the planning artifacts and continue until the change is apply-ready
+- for standalone `Forgevia propose`, report apply-ready as the command's normal terminal condition and provide `Forgevia implement <resolved-change>` as the exact next command without asking whether to proceed
+- when proposal runs inside an already-authorized complete delivery, pass `<resolved-change>` directly to implementation without emitting a proposal completion response
 
 ### `Forgevia review`
 
@@ -238,17 +251,19 @@ When implementation planning or execution is needed, prefer the Forgevia-managed
 
 These variants are expected to be OpenSpec-oriented and to resolve artifact paths from `openspec status --json`.
 
-### 3. Trigger review checkpoints
+### 3. Trigger Playwright only when relevant
 
-Use `requesting-code-review` once, for the complete branch before completion — the only review checkpoint during implementation. Do not silently skip it because a change looks small.
-
-Treat review as an internal control signal: `APPROVE` advances, authorized `REVISE` enters the matching repair loop, and only `ESCALATE` requests a user decision. The main agent validates verdict identity, structure, authorization, and evidence itself; it does not recursively dispatch another reviewer to review the verdict.
-
-### 4. Trigger Playwright only when relevant
-
-If the change affects web behavior, UI, interaction flow, or visual output, require `playwright-interactive` before final completion claims.
+If the change affects web behavior, UI, interaction flow, or visual output, require `playwright-interactive` before the final independent review.
 
 If the change is backend-only or otherwise has no browser-facing impact, skip Playwright explicitly.
+
+Treat a browser-verification failure or `REVISE` as a repair signal: repair within scope, rerun targeted verification and browser verification, and do not dispatch the final independent review until this gate passes. Only `ESCALATE` requests a user decision.
+
+### 4. Trigger the final review
+
+Use `requesting-code-review` once, for the complete branch after all required verification — the only review checkpoint during implementation. Do not silently skip it because a change looks small.
+
+Treat review as an internal control signal: `APPROVE` completes the authorized delivery, authorized `REVISE` enters the matching repair loop and reruns affected verification before a fresh final review, and only `ESCALATE` requests a user decision. The main agent validates verdict identity, structure, authorization, and evidence itself; it does not recursively dispatch another reviewer to review the verdict.
 
 ### 5. Close the loop
 
