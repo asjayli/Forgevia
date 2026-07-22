@@ -5,11 +5,11 @@ description: Use when executing implementation plans with independent tasks in t
 
 # Subagent-Driven Development
 
-Execute plan by dispatching a fresh implementer subagent per task, a task review (spec compliance + code quality) after each, and a broad whole-branch review at the end.
+Execute plan by dispatching a fresh implementer subagent per task and a broad whole-branch review at the end. Independent review happens once at the end, not per task.
 
 **Why subagents:** You delegate tasks to specialized agents with isolated context. By precisely crafting their instructions and context, you ensure they stay focused and succeed at their task. They should never inherit your session's context or history — you construct exactly what they need. This also preserves your own context for coordination work.
 
-**Core principle:** Fresh subagent per task + task review (spec + quality) + broad final review = high quality, fast iteration
+**Core principle:** Fresh implementer per task (TDD) + broad final review = high quality, fast iteration
 
 **Narration:** between tool calls, narrate at most one short line — the
 ledger and the tool results carry the record.
@@ -55,7 +55,7 @@ digraph when_to_use {
 **vs. Executing Plans (parallel session):**
 - Same session (no context switch)
 - Fresh subagent per task (no context pollution)
-- Review after each task (spec compliance + code quality), broad review at the end
+- Broad whole-branch review at the end (no per-task review)
 - Faster iteration (no human-in-loop between tasks)
 
 ## The Process
@@ -70,12 +70,6 @@ digraph process {
         "Implementer subagent asks questions?" [shape=diamond];
         "Answer questions, provide context" [shape=box];
         "Implementer subagent implements, tests, conditionally commits, self-reviews" [shape=box];
-        "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)" [shape=box];
-        "Task reviewer verdict?" [shape=diamond];
-        "Repair authorized?" [shape=diamond];
-        "Dispatch repair subagent for authorized findings" [shape=box];
-        "Return findings without editing" [shape=box];
-        "Escalate with evidence" [shape=box];
         "Mark task complete in todo list and progress ledger" [shape=box];
     }
 
@@ -85,6 +79,8 @@ digraph process {
     "Final reviewer verdict?" [shape=diamond];
     "Final repair authorized?" [shape=diamond];
     "Dispatch final repair subagent" [shape=box];
+    "Return findings without editing" [shape=box];
+    "Escalate with evidence" [shape=box];
     "Read objective authorization envelope" [shape=box];
     "Branch-finishing effects explicitly authorized?" [shape=diamond];
     "Return completion summary; keep change active" [shape=box style=filled fillcolor=lightgreen];
@@ -95,14 +91,7 @@ digraph process {
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
     "Answer questions, provide context" -> "Dispatch implementer subagent (./implementer-prompt.md)";
     "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, conditionally commits, self-reviews" [label="no"];
-    "Implementer subagent implements, tests, conditionally commits, self-reviews" -> "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)";
-    "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)" -> "Task reviewer verdict?";
-    "Task reviewer verdict?" -> "Repair authorized?" [label="REVISE"];
-    "Repair authorized?" -> "Dispatch repair subagent for authorized findings" [label="yes"];
-    "Repair authorized?" -> "Return findings without editing" [label="no"];
-    "Task reviewer verdict?" -> "Escalate with evidence" [label="ESCALATE"];
-    "Dispatch repair subagent for authorized findings" -> "Write diff file, dispatch task reviewer subagent (./task-reviewer-prompt.md)" [label="re-review"];
-    "Task reviewer verdict?" -> "Mark task complete in todo list and progress ledger" [label="APPROVE"];
+    "Implementer subagent implements, tests, conditionally commits, self-reviews" -> "Mark task complete in todo list and progress ledger";
     "Mark task complete in todo list and progress ledger" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (./implementer-prompt.md)" [label="yes"];
     "More tasks remain?" -> "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" [label="no"];
@@ -121,11 +110,15 @@ digraph process {
 
 ## Controller Verdict Routing
 
-- `APPROVE` records progress and dispatches the next dependency-ready task group without requesting checkpoint feedback.
+Independent review happens once, at the final whole-branch stage. During development the controller dispatches a fresh implementer per task and advances on implementer completion plus targeted verification; it does not dispatch a task-level reviewer. The routing below governs the final review.
+
+- `APPROVE` records completion and proceeds to the authorization-envelope check below.
 - The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer. That reviewer must not have produced the candidate or any repair in the current cycle. Without repair authorization, a standalone read-only run returns the findings without editing, updating task state, or converting them into a user decision request.
 - `ESCALATE` requests user input only for a genuine plan conflict, missing authorization, an unrecoverable uncertainty about side effects, or a repair loop that meets the no-progress boundary below.
 
-Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.
+Repeat this repair-review loop until an `APPROVE` verdict, the severity-gated closing rule below, or the no-progress `ESCALATE` boundary.
+
+Severity-gated closing: the final repair-review loop ends on `APPROVE`, or once every Critical and Important finding has been fixed and confirmed by a fresh re-review, after at most three further review rounds; remaining Minor findings are recorded as follow-up items in the coverage ledger, not silently dropped. This closing rule does not override the no-progress `ESCALATE` below.
 
 Ordinary errors and the first failing check are diagnostic inputs. Diagnose and repair them within scope, then run targeted verification. Escalate the same substantive issue only after three consecutive repair cycles make no verified progress; progress means fewer Important/Critical findings, fewer failing checks, or an unblocked dependency. Explanations, repeated commands, and unrelated diffs do not count.
 
@@ -184,13 +177,11 @@ that implementer. Single-file mechanical fixes also take the cheapest tier.
 
 Implementer subagents report one of four statuses. Handle each appropriately:
 
-Before the initial implementer dispatch for each task, record a task-specific review baseline. Run `scripts/review-package --snapshot`, record its output as TASK_TREE and the current commit as BASE, then write `Task N: in_progress (base <base>, tree <task-tree>)` to the progress ledger. Keep the same BASE and TASK_TREE throughout that task's repair and re-review cycles. Capture the next task snapshot only after the previous task reaches `APPROVE`. Never reuse a commit SHA or an earlier task snapshot as the baseline for a later uncommitted task.
+Before the initial implementer dispatch for each task, write `Task N: in_progress` to the progress ledger. There is no per-task review baseline — independent review happens once, at the final whole-branch stage.
 
-**DONE:** Generate the review package, then dispatch the task reviewer. Use BASE..HEAD only when the candidate is fully committed; if any task change remains outside HEAD, use TASK_TREE..WORKTREE. Run `scripts/review-package BASE HEAD` for the first case and `scripts/review-package TASK_TREE WORKTREE` for the second. The snapshot mode includes staged, unstaged, and untracked task changes without including earlier uncommitted tasks.
+**DONE:** The implementer completed the task with passing targeted verification. Mark the task complete in the todo list and progress ledger, then dispatch the implementer for the next dependency-ready task. Do not dispatch a task-level reviewer.
 
-Verify that the review package exists and is readable before dispatch. If it is absent, regenerate it from the same BASE or TASK_TREE baseline; a regeneration failure enters the bounded review-infrastructure retry path and never falls back to an inferred commit diff.
-
-**DONE_WITH_CONCERNS:** The implementer completed the work but flagged doubts. Read the concerns before proceeding. If the concerns are about correctness or scope, address them before review. If they're observations (e.g., "this file is getting large"), note them and proceed to review.
+**DONE_WITH_CONCERNS:** The implementer completed the work but flagged doubts. Read the concerns before proceeding. If the concerns are about correctness or scope, address them (repair or re-dispatch with more context) before marking the task complete. If they're observations (e.g., "this file is getting large"), note them in the ledger and proceed.
 
 **NEEDS_CONTEXT:** The implementer needs information that wasn't provided. Provide the missing context and re-dispatch.
 
@@ -202,19 +193,9 @@ Verify that the review package exists and is readable before dispatch. If it is 
 
 **Never** ignore an escalation or force the same model to retry without changes. If the implementer said it's stuck, something needs to change.
 
-## Handling Reviewer ⚠️ Items
-
-The task reviewer may report "⚠️ Cannot verify from diff" items — requirements
-that live in unchanged code or span tasks. These do not block the rest of the
-review, but you must resolve each one yourself before marking the task
-complete: you hold the plan and cross-task context the reviewer
-lacks. If you confirm an item is a real gap, treat it as a failed spec
-review — send it back to the implementer and re-review.
-
 ## Constructing Reviewer Prompts
 
-Per-task reviews are task-scoped gates. The broad review happens once, at the
-final whole-branch review. When you fill a reviewer template:
+The broad review happens once, at the final whole-branch review. When you fill the final reviewer template:
 
 - Do not add open-ended directives like "check all uses" or "run race tests
   if useful" without a concrete, task-specific reason
@@ -233,7 +214,7 @@ final whole-branch review. When you fill a reviewer template:
   Y"). The reviewer's template already carries the process rules (YAGNI,
   test hygiene, review method) — the constraints block is for what THIS
   project's spec demands.
-- Pass an explicit objective authorization envelope containing objective, scope, constraints, authorized effects, and terminal condition to every task and final reviewer.
+- Pass an explicit objective authorization envelope containing objective, scope, constraints, authorized effects, and terminal condition to every implementer and the final reviewer.
 - Pass the five authorization-envelope fields to every implementer and repair-subagent dispatch, not only to reviewers.
 - Hand the reviewer its diff as a file: run this skill's
   `scripts/review-package BASE HEAD` for committed work or
@@ -294,9 +275,10 @@ and is re-read on every later turn. Hand artifacts over as files:
   (brief `…/task-N-brief.md` → report `…/task-N-report.md`) and put it in
   the dispatch prompt. The implementer writes the full report there and
   returns only status, commits, a one-line test summary, and concerns.
-- **Reviewer inputs:** the task reviewer gets three paths — the same brief
-  file, the report file, and the review package — plus the global constraints
-  and the objective authorization envelope fields that bind the task.
+- **Final reviewer inputs:** the final whole-branch reviewer gets the review
+  package path (from `scripts/review-package MERGE_BASE HEAD`, or `WORKTREE`
+  instead of HEAD when changes remain uncommitted), the objective
+  authorization envelope, and the global constraints.
 - Fix dispatches append their fix report (with test results) to the same
   report file and return a short summary; re-reviews read the updated file.
 
@@ -313,19 +295,18 @@ a ledger file, not only in todos.
   `scripts/sdd-workspace` resolves): `cat "$(git rev-parse --show-toplevel)/.superpowers/sdd/progress.md" 2>/dev/null`.
   An empty result means no ledger yet — start fresh. Treat each ledger completion line as evidence, not an unconditional DONE state. A task is
   complete only when the tasks checklist, named Git commits/diff, and
-  review/verification evidence corroborate it; resume at the first task whose
+  verification evidence corroborate it; resume at the first task whose
   completion cannot be established from those facts.
 - If tasks, Git, and progress disagree, inspect the actual diff and verification evidence before deciding whether to continue, repair bookkeeping, or `ESCALATE`.
   Repair bookkeeping only to reflect a completion state proven by repository
   evidence. Escalate when an external or irreversible side effect cannot be
   determined safely; never guess or replay it blindly.
-- When a task's review comes back clean, append one line to the ledger in
-  the same message as your other bookkeeping. Use
-  `Task N: complete (commits <base7>..<head7>, review clean)` for committed
-  work, or name the unique WORKTREE review package when commits were not
-  authorized.
+- When a task completes (implementer DONE with passing targeted verification),
+  append one line to the ledger in the same message as your other bookkeeping.
+  Use `Task N: complete (commits <base7>..<head7>)` for committed work, or
+  `Task N: complete (worktree <summary>)` when commits were not authorized.
 - The ledger is one recovery map: verify that its named commits exist and
-  match the task diff and review evidence after compaction. Do not prefer it
+  match the task diff and verification evidence after compaction. Do not prefer it
   over conflicting tasks or Git facts.
 - `git clean -fdx` will destroy the ledger (it's git-ignored scratch); if
   that happens, recover from `git log`.
@@ -334,14 +315,13 @@ a ledger file, not only in todos.
 
 When the plan is an OpenSpec change (`openspec/changes/<change-name>/tasks.md`), the progress ledger above tracks the SDD controller's recovery state; the OpenSpec `tasks.md` is the real-time checklist of record — keep both current. The "task" granularity here is the numbered capability group (`## N.`) that `scripts/task-brief` extracts; flip every item in that group together.
 
-- After a task group's review comes back clean (the same moment you append the ledger line), flip its items in `openspec/changes/<change-name>/tasks.md` from `[ ]` to `[x]`.
+- After a task group completes (the same moment you append the ledger line), flip its items in `openspec/changes/<change-name>/tasks.md` from `[ ]` to `[x]`.
 - When a task is blocked, add a short inline blocker note on the unfinished item instead of leaving it unchecked.
 - Do not batch `tasks.md` updates at the end of the run; do not claim progress that `tasks.md` does not reflect.
 
 ## Prompt Templates
 
 - [implementer-prompt.md](implementer-prompt.md) - Dispatch implementer subagent
-- [task-reviewer-prompt.md](task-reviewer-prompt.md) - Dispatch task reviewer subagent (spec compliance + code quality)
 - Final whole-branch review: use superpowers:requesting-code-review's [code-reviewer.md](../requesting-code-review/code-reviewer.md)
 
 ## Example Workflow
@@ -367,10 +347,6 @@ Implementer: "Got it. Implementing now..."
   - Self-review: Found I missed --force flag, added it
   - Committed
 
-[Run review-package, dispatch task reviewer with the printed path]
-Task reviewer: Verdict: APPROVE. Spec ✅ - all requirements met, nothing extra.
-  Strengths: Good test coverage, clean. Issues: None. Task quality: Approved.
-
 [Mark Task 1 complete]
 
 Task 2: Recovery modes
@@ -381,27 +357,15 @@ Implementer: [No questions, proceeds]
 Implementer:
   - Added verify/repair modes
   - 8/8 tests passing
-  - Self-review: All good
+  - Self-review: Caught a missing progress report (spec says "report every 100 items") and an unrequested --json flag; removed the flag and extracted PROGRESS_INTERVAL
   - Committed
-
-[Run review-package, dispatch task reviewer with the printed path]
-Task reviewer: Verdict: REVISE. Spec ❌:
-  - Missing: Progress reporting (spec says "report every 100 items")
-  - Extra: Added --json flag (not requested)
-  Issues (Important): Magic number (100)
-
-[Dispatch one repair subagent with all findings; it runs the targeted tests and records their result]
-Repair subagent: Removed --json flag, added progress reporting, extracted PROGRESS_INTERVAL constant
-
-[Task reviewer reviews again]
-Task reviewer: Verdict: APPROVE. Spec ✅. Task quality: Approved.
 
 [Mark Task 2 complete]
 
 ...
 
 [After all tasks]
-[Dispatch final code-reviewer]
+[Dispatch final code-reviewer with the whole-branch review package]
 Final reviewer: Verdict: APPROVE. All requirements met, ready to merge
 
 Done!
@@ -427,39 +391,39 @@ Done!
 - Questions surfaced before work begins (not after)
 
 **Quality gates:**
-- Self-review catches issues before handoff
-- Task review carries two verdicts: spec compliance and code quality
+- Self-review catches issues before the final review
+- Implementer TDD keeps each task verifiable as it is built
+- One broad final review catches integration and cross-task issues
 - Review loops ensure fixes actually work
 - Spec compliance prevents over/under-building
 - Code quality ensures implementation is well-built
 
 **Cost:**
-- More subagent invocations (implementer + reviewer per task)
+- One implementer dispatch per task plus one final review (fewer review subagents than per-task review)
 - Controller does more prep work (extracting all tasks upfront)
-- Review loops add iterations
-- But catches issues early (cheaper than debugging later)
+- Final review loop may iterate on Critical/Important findings
+- Defers cross-task findings to the end (trade-off for uninterrupted development)
 
 ## Red Flags
 
 **Never:**
 - Start implementation on main/master branch without explicit user consent
-- Skip task review, or accept a report missing either verdict (spec compliance AND task quality are both required)
 - Proceed with unfixed issues
 - Dispatch multiple implementation subagents in parallel (conflicts)
 - Make a subagent read the whole plan file (hand it its task brief —
   `scripts/task-brief` — instead)
 - Skip scene-setting context (subagent needs to understand where task fits)
 - Ignore subagent questions (answer before letting them proceed)
-- Accept "close enough" on spec compliance (reviewer found spec issues = not done)
-- Skip review loops (reviewer found issues = implementer fixes = review again)
-- Let implementer self-review replace actual review (both are needed)
+- Dispatch the final reviewer without a diff file — generate the whole-branch
+  review package first (`scripts/review-package MERGE_BASE HEAD`, or `WORKTREE`
+  instead of HEAD when changes remain uncommitted) and name the printed path
+  in the prompt
 - Tell a reviewer what not to flag, or pre-rate a finding's severity in the
   dispatch prompt ("treat it as Minor at most") — the plan's example code is
   a starting point, not evidence that its weaknesses were chosen
-- Dispatch a task reviewer without a diff file — generate it first
-  (`scripts/review-package BASE HEAD` or `TASK_TREE WORKTREE`) and name the printed path in the
-  prompt
-- Move to next task while the review has open Critical/Important issues
+- Let implementer self-review replace the independent final review (both are needed)
+- Skip the final review, or accept completion while the final review has open Critical/Important issues
+- Close the final review by severity-gated rounds while Critical/Important findings remain unfixed
 - Re-dispatch a task the progress ledger already marks complete — check
   the ledger (and `git log`) after any compaction or resume
 - Skip `openspec/changes/<change-name>/tasks.md` status updates after a task group completes or blocks

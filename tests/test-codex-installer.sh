@@ -219,7 +219,6 @@ test_file_exists "$codex_sp_root/writing-plans/SKILL.md"
 test_file_exists "$codex_sp_root/executing-plans/SKILL.md"
 test_file_exists "$codex_sp_root/test-driven-development/SKILL.md"
 test_file_exists "$codex_sp_root/subagent-driven-development/SKILL.md"
-test_file_exists "$codex_sp_root/subagent-driven-development/task-reviewer-prompt.md"
 test_file_exists "$codex_sp_root/subagent-driven-development/implementer-prompt.md"
 test_file_executable "$codex_sp_root/subagent-driven-development/scripts/task-brief"
 test_file_executable "$codex_sp_root/subagent-driven-development/scripts/review-package"
@@ -288,8 +287,8 @@ assert_contains "$actual_openspec_propose" "$expected_openspec_propose"
 expected_openspec_propose_skill="$(cat "$ROOT_DIR/assets/codex/skills/openspec-propose/SKILL.md")"
 actual_openspec_propose_skill="$(cat "$CODEX_HOME/skills/openspec-propose/SKILL.md")"
 assert_contains "$actual_openspec_propose_skill" "$expected_openspec_propose_skill"
-assert_contains "$actual_openspec_propose_skill" "Use Forgevia Implement"
-assert_contains "$actual_openspec_propose" "Use Forgevia Implement to start implementation."
+assert_contains "$actual_openspec_propose_skill" 'Next command: `Forgevia implement <name>`'
+assert_contains "$actual_openspec_propose" 'Next command: \`Forgevia implement <name>\`'
 
 echo "drift" >> "$CODEX_HOME/superpowers/skills/brainstorming/SKILL.md"
 

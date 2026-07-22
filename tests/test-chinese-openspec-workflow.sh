@@ -34,8 +34,12 @@ assert_normalized_equal() {
   local codex_normalized
   local claude_normalized
 
-  codex_normalized="$(sed -e 's/CODEX_HOME/CLIENT_HOME/g' -e 's/\.codex/.client/g' "$codex_path")"
-  claude_normalized="$(sed -e 's/CLAUDE_HOME/CLIENT_HOME/g' -e 's/\.claude/.client/g' "$claude_path")"
+  # Normalize both platform spellings to the same baseline on each side, so a
+  # skill that legitimately references BOTH platform directories (e.g. a
+  # read-only memory policy naming .codex/memory/ and .claude/memory/ together)
+  # still compares equal after normalization.
+  codex_normalized="$(sed -e 's/CODEX_HOME/CLIENT_HOME/g' -e 's/CLAUDE_HOME/CLIENT_HOME/g' -e 's/\.codex/.client/g' -e 's/\.claude/.client/g' "$codex_path")"
+  claude_normalized="$(sed -e 's/CODEX_HOME/CLIENT_HOME/g' -e 's/CLAUDE_HOME/CLIENT_HOME/g' -e 's/\.codex/.client/g' -e 's/\.claude/.client/g' "$claude_path")"
   if [[ "$codex_normalized" != "$claude_normalized" ]]; then
     echo "expected normalized mirror files to match: $codex_path $claude_path" >&2
     exit 1

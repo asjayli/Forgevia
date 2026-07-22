@@ -63,9 +63,9 @@ Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/For
 
 ### Full workflow
 
-`forgevia` is the top-level entry. You tell Forgevia which action to run, and it keeps the work on one consistent path from idea to completion.
+`forgevia` is the top-level entry. Use an explicit subcommand to control one phase, or provide a delivery requirement directly and let Forgevia orchestrate proposal, implementation, review, and verification.
 
-After a command starts, Forgevia automatically performs routine steps, independent review, authorized fixes, and re-verification within that command's objective and scope, without step-by-step confirmation. It pauses only for material ambiguity, missing authorization, unauthorized external side effects, or a blocker that cannot converge. It does not enter an unrequested later phase or archive, push, or release automatically.
+An explicit subcommand stops at that command's documented terminal condition. A delivery request without a subcommand runs the complete delivery workflow by default in this order: `propose → implement → browser verification when relevant → final independent review`, without step-by-step confirmation between phases. Browser findings are repaired and reverified before final review. Read-only, exploratory, status, and review intent is never upgraded to implementation. Forgevia requests a user decision only for material ambiguity, missing authorization, unauthorized external side effects, or a blocker that cannot converge. Archive, spec synchronization, commit, push, merge, and release still require separate explicit authorization.
 
 1. `Forgevia init`
    Use this when starting in a new repository. It checks whether the project is ready for the Forgevia workflow and creates the required project-side workflow files only when they are missing. If the repository should work from both Codex and Claude, initialize the project with `codex,claude`.
@@ -94,9 +94,11 @@ After a command starts, Forgevia automatically performs routine steps, independe
 
 ### Simple workflow
 
-`draw -> think -> propose -> implement -> review -> verify-web (if needed) -> openspec-sync-specs (when early synchronization is needed) -> archive`
+`draw -> think -> propose -> implement -> verify-web (if needed) -> review -> openspec-sync-specs (when early synchronization is needed) -> archive`
 
 Forgevia turns requirement shaping, structured implementation, review, validation, and closure into one consistent delivery workflow.
+
+During a complete delivery, reaching apply-ready is an internal transition and the resolved change continues directly into implementation. A standalone `Forgevia propose` ends normally at apply-ready and returns the exact next command, `Forgevia implement <change>`, without describing completion as an interruption or asking whether to continue. The change remains active after complete delivery.
 
 ### Chinese OpenSpec Strict Validation
 

@@ -10,7 +10,6 @@ REVIEW_PACKAGE="$CODEX_SCRIPTS/review-package"
 SDD_WORKSPACE="$CODEX_SCRIPTS/sdd-workspace"
 CODEX_SDD_SKILL="$ROOT_DIR/assets/codex/superpowers/skills/subagent-driven-development/SKILL.md"
 CODEX_IMPLEMENTER_PROMPT="$ROOT_DIR/assets/codex/superpowers/skills/subagent-driven-development/implementer-prompt.md"
-CODEX_REVIEWER_PROMPT="$ROOT_DIR/assets/codex/superpowers/skills/subagent-driven-development/task-reviewer-prompt.md"
 CODEX_BRANCH_REVIEWER_PROMPT="$ROOT_DIR/assets/codex/superpowers/skills/requesting-code-review/code-reviewer.md"
 
 EXECUTING_PLAN_SKILLS=(
@@ -34,15 +33,8 @@ IMPLEMENTER_PROMPTS=(
 )
 
 REVIEWER_PROMPTS=(
-  "$ROOT_DIR/assets/codex/superpowers/skills/subagent-driven-development/task-reviewer-prompt.md"
-  "$ROOT_DIR/assets/claude/superpowers/skills/subagent-driven-development/task-reviewer-prompt.md"
   "$ROOT_DIR/assets/codex/superpowers/skills/requesting-code-review/code-reviewer.md"
   "$ROOT_DIR/assets/claude/superpowers/skills/requesting-code-review/code-reviewer.md"
-)
-
-TASK_REVIEWER_PROMPTS=(
-  "$ROOT_DIR/assets/codex/superpowers/skills/subagent-driven-development/task-reviewer-prompt.md"
-  "$ROOT_DIR/assets/claude/superpowers/skills/subagent-driven-development/task-reviewer-prompt.md"
 )
 
 REQUESTING_REVIEW_SKILLS=(
@@ -103,22 +95,25 @@ done
 assert_contains "$(<"$CODEX_SDD_SKILL")" "does not expose model selection"
 assert_not_contains "$(<"$CODEX_SDD_SKILL")" "Always specify the model explicitly"
 assert_not_contains "$(<"$CODEX_IMPLEMENTER_PROMPT")" "model: [MODEL"
-assert_not_contains "$(<"$CODEX_REVIEWER_PROMPT")" "model: [MODEL"
 assert_not_contains "$(<"$CODEX_BRANCH_REVIEWER_PROMPT")" "model: [MODEL"
 
 for path in "${EXECUTING_PLAN_SKILLS[@]}"; do
   contents="$(<"$path")"
-  assert_contains "$contents" '`APPROVE` immediately advances to the next dependency-ready task group'
-  assert_contains "$contents" 'Only after an `APPROVE` verdict, mark the task group complete'
-  assert_contains "$contents" 'The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer.'
-  assert_contains "$contents" 'Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.'
-  assert_contains "$contents" 'three consecutive repair cycles'
-  assert_contains "$contents" '`tasks.md`, Git history, and `.superpowers/sdd/progress.md`'
+  assert_contains "$contents" 'Independent review is not per-task or per-group'
+  assert_contains "$contents" 'it happens once, at the final whole-branch stage (Step 5)'
+  assert_contains "$contents" 'The final repair-review loop ends on `APPROVE`'
+  assert_contains "$contents" 'after at most three further review rounds'
+  assert_contains "$contents" 'remaining Minor findings are recorded as follow-up items in the coverage ledger'
+  assert_contains "$contents" 'This severity-gated closing does not override the no-progress `ESCALATE` boundary'
   assert_contains "$contents" 'use the unchanged review package with a fresh independent reviewer for at most two infrastructure retries'
   assert_contains "$contents" 'If both retries fail, `ESCALATE` once with the collected infrastructure evidence; never infer `APPROVE`.'
+  assert_contains "$contents" 'three consecutive repair cycles'
+  assert_contains "$contents" '`tasks.md`, Git history, and `.superpowers/sdd/progress.md`'
+  assert_contains "$contents" 'The final independent review'"'"'s `APPROVE` is the completion gate'
   assert_not_contains "$contents" 'Ready for feedback.'
   assert_not_contains "$contents" 'Between dependency checkpoints: just report and wait'
   assert_not_contains "$contents" 'Verification fails repeatedly'
+  assert_not_contains "$contents" '`APPROVE` immediately advances to the next dependency-ready task group'
   assert_in_order "$contents" \
     'After the final `APPROVE`, read the objective authorization envelope.' \
     'Forgevia implement and a complete Forgevia workflow default to a completion summary with the change still active.' \
@@ -130,35 +125,28 @@ for path in "${EXECUTING_PLAN_SKILLS[@]}"; do
   assert_contains "$contents" 'never ends the workflow or waits for feedback.'
   assert_contains "$contents" 'Before returning a completion summary, confirm every completion gate:'
   assert_contains "$contents" '`git diff --check` succeeds'
-  assert_contains "$contents" 'The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer.'
-  assert_contains "$contents" 'Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.'
 done
 
 for path in "${SDD_SKILLS[@]}"; do
   contents="$(<"$path")"
-  assert_contains "$contents" '`APPROVE` records progress and dispatches the next dependency-ready task group'
+  assert_contains "$contents" 'Independent review happens once, at the final whole-branch stage.'
+  assert_contains "$contents" 'it does not dispatch a task-level reviewer'
   assert_contains "$contents" 'The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer.'
   assert_contains "$contents" 'standalone read-only run returns the findings without editing'
   assert_contains "$contents" 'three consecutive repair cycles'
   assert_contains "$contents" 'at most two infrastructure retries'
   assert_contains "$contents" '`tasks.md`, Git history, and `.superpowers/sdd/progress.md`'
-  assert_contains "$contents" 'Pass an explicit objective authorization envelope containing objective, scope, constraints, authorized effects, and terminal condition to every task and final reviewer.'
+  assert_contains "$contents" 'Pass an explicit objective authorization envelope containing objective, scope, constraints, authorized effects, and terminal condition to every implementer and the final reviewer.'
   assert_contains "$contents" 'Treat each ledger completion line as evidence, not an unconditional DONE state.'
   assert_contains "$contents" 'If tasks, Git, and progress disagree, inspect the actual diff and verification evidence before deciding whether to continue, repair bookkeeping, or `ESCALATE`.'
+  assert_contains "$contents" 'Severity-gated closing: the final repair-review loop ends on `APPROVE`'
+  assert_contains "$contents" 'remaining Minor findings are recorded as follow-up items in the coverage ledger, not silently dropped'
+  assert_contains "$contents" 'This closing rule does not override the no-progress `ESCALATE` below.'
   assert_not_contains "$contents" 'Dispatch fix subagents for Critical and Important findings.'
   assert_not_contains "$contents" 'Tasks listed there as complete are DONE'
   assert_contains "$contents" 'Pass the five authorization-envelope fields to every implementer and repair-subagent dispatch, not only to reviewers.'
-  assert_contains "$contents" 'Before the initial implementer dispatch for each task, record a task-specific review baseline.'
-  assert_contains "$contents" '`scripts/review-package --snapshot`'
-  assert_contains "$contents" '`scripts/review-package TASK_TREE WORKTREE`'
-  assert_contains "$contents" 'Never reuse a commit SHA or an earlier task snapshot as the baseline for a later uncommitted task.'
-  assert_contains "$contents" 'Keep the same BASE and TASK_TREE throughout that task'
-  assert_contains "$contents" '`Task N: in_progress (base <base>, tree <task-tree>)`'
-  assert_contains "$contents" 'Capture the next task snapshot only after the previous task reaches `APPROVE`.'
-  assert_not_contains "$contents" 'Before every implementer and repair-subagent dispatch'
-  assert_contains "$contents" 'Use BASE..HEAD only when the candidate is fully committed; if any task change remains outside HEAD, use TASK_TREE..WORKTREE.'
-  assert_contains "$contents" 'Verify that the review package exists and is readable before dispatch.'
-  assert_contains "$contents" 'regenerate it from the same BASE or TASK_TREE baseline'
+  assert_contains "$contents" 'There is no per-task review baseline'
+  assert_not_contains "$contents" 'record a task-specific review baseline'
   assert_in_order "$contents" \
     'Final reviewer verdict?' \
     'Read objective authorization envelope' \
@@ -167,7 +155,6 @@ for path in "${SDD_SKILLS[@]}"; do
   assert_contains "$contents" 'Implementation runs continuously by default.'
   assert_contains "$contents" 'Before returning a completion summary, confirm every completion gate:'
   assert_contains "$contents" '`git diff --check` succeeds'
-  assert_contains "$contents" 'The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer.'
   assert_contains "$contents" 'Dispatch an authorized repair subagent with every'
   assert_not_contains "$contents" 'Main controller repairs authorized findings'
   assert_not_contains "$contents" 'Dispatch a fix subagent'
@@ -213,15 +200,6 @@ for path in "${REVIEWER_PROMPTS[@]}"; do
   assert_contains "$contents" '**Terminal condition:** [TERMINAL_CONDITION]'
   assert_not_contains "$contents" 'confirm whether the deviation was intentional'
   assert_not_contains "$contents" 'actionable findings that can be repaired without changing the plan or authorization envelope'
-done
-
-for path in "${TASK_REVIEWER_PROMPTS[@]}"; do
-  contents="$(<"$path")"
-  assert_contains "$contents" 'REVIEW_PACKAGE_UNAVAILABLE'
-  assert_contains "$contents" 'Do not reconstruct a missing package with `git diff BASE..HEAD`'
-  assert_contains "$contents" 'The controller must regenerate the package from the same task baseline and apply its bounded infrastructure retry policy.'
-  assert_contains "$contents" 'The only non-verdict output is `REVIEW_PACKAGE_UNAVAILABLE` for this infrastructure failure.'
-  assert_not_contains "$contents" 'If the diff file is missing, fetch the diff yourself'
 done
 
 for path in "${REQUESTING_REVIEW_SKILLS[@]}"; do

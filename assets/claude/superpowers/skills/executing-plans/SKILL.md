@@ -15,7 +15,7 @@ Load the plan, review it critically, and execute OpenSpec task groups by depende
 
 ## Default Continuous Execution
 
-Implementation runs continuously by default. A completed task group, passing local or integration verification, an `APPROVE` verdict, a refactor, or a progress report never ends the workflow or waits for feedback.
+Implementation runs continuously by default. A completed task group, passing local or integration verification, a refactor, or a progress report never ends the workflow or waits for feedback. The final independent review's `APPROVE` is the completion gate, not a mid-run stopping point.
 
 Only an `ESCALATE` boundary, an explicit user interruption, or the completion gate may end the implementation workflow.
 
@@ -53,32 +53,23 @@ For each task in the selected group:
    - Complete `GREEN` items next and verify passing tests
    - Complete `REFACTOR` items last and keep tests green
 4. Run verifications as specified
-5. Keep the task group in progress until independent review returns a valid verdict
+5. Once the group's tasks pass their targeted verification, mark the group complete before moving on
 
-### Step 3: Review and Route
+### Step 3: Record Progress and Advance
 
-After each task group, obtain an independent structured verdict and validate its evidence:
+After a task group's tasks pass their targeted verification, mark the group complete and sync its checked items to `openspec/changes/<change-name>/tasks.md` together with SDD progress. Independent review is not per-task or per-group — it happens once, at the final whole-branch stage (Step 5).
 
-The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer. That reviewer must not have produced the candidate or any repair in the current cycle.
-
-Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.
-
-- `APPROVE` immediately advances to the next dependency-ready task group after progress is recorded.
-- Only after an `APPROVE` verdict, mark the task group complete and sync its checked items to `openspec/changes/<change-name>/tasks.md` together with SDD progress.
-- `REVISE` triggers repair only inside the active authorization envelope, followed by targeted verification and independent re-review. Without repair authorization, return the findings without editing or converting them into a confirmation request.
-- `ESCALATE` pauses for user input only when the evidence identifies a genuine plan conflict, missing authorization, or an unrecoverable engineering blocker.
-
-If a reviewer fails to start, times out, crashes, or returns an invalid verdict, use the unchanged review package with a fresh independent reviewer for at most two infrastructure retries. If both retries fail, `ESCALATE` once with the collected infrastructure evidence; never infer `APPROVE`.
-
-Do not escalate an ordinary error or the first failing check. Diagnose it, repair it within scope, run targeted verification, and continue. Escalate a repair loop only after the same substantive issue has made no verified progress for three consecutive repair cycles; progress means fewer important findings, fewer failing checks, or an unblocked dependency.
+Diagnose and repair ordinary errors or the first failing check within scope, then run targeted verification and continue. Escalate only a genuine plan conflict that repository evidence cannot resolve, a missing authorization required to continue, three consecutive repair cycles without verified progress, or an unrecoverable uncertainty about whether a side effect completed.
 
 ### Step 4: Report and Continue
 
-Report completed work and verification as non-blocking progress, recompute dependency-ready task groups, and continue until the plan is complete or the Step 3 `ESCALATE` boundary is met.
+Report completed work and verification as non-blocking progress, recompute dependency-ready task groups, and continue until the plan is complete or the escalation boundary is met.
 
 ### Step 5: Complete Development
 
-After all tasks complete and verified, obtain the final independent review. The controller dispatches an authorized final repair subagent, reruns full verification, and dispatches a fresh independent final reviewer; without repair authorization, return the findings unchanged. A final `ESCALATE` uses the same substantive boundaries as task review.
+After all tasks complete and verified, obtain the final independent review. The controller dispatches an authorized final repair subagent, reruns full verification, and dispatches a fresh independent final reviewer; without repair authorization, return the findings unchanged. The final repair-review loop ends on `APPROVE`, or once every Critical and Important finding has been fixed and confirmed by a fresh re-review, after at most three further review rounds; remaining Minor findings are recorded as follow-up items in the coverage ledger, not silently dropped. This severity-gated closing does not override the no-progress `ESCALATE` boundary. A final `ESCALATE` uses the same substantive boundaries as the controller verdict routing.
+
+If the final reviewer fails to start, times out, crashes, or returns an invalid verdict, use the unchanged review package with a fresh independent reviewer for at most two infrastructure retries. If both retries fail, `ESCALATE` once with the collected infrastructure evidence; never infer `APPROVE`.
 
 Use a commit-bounded review package when checkpoints were authorized. If changes remain uncommitted, use the SDD `review-package BASE WORKTREE` mode so the reviewer receives committed, staged, unstaged, and untracked files.
 
