@@ -224,7 +224,6 @@ test_file_exists "$superpowers_root/skills/executing-plans/SKILL.md"
 # scripts and prompt templates must land alongside SKILL.md, and the scripts
 # must keep their exec bit through the cp -R overlay.
 sdd_root="$superpowers_root/skills/subagent-driven-development"
-test_file_exists "$sdd_root/task-reviewer-prompt.md"
 test_file_exists "$sdd_root/implementer-prompt.md"
 test_file_executable "$sdd_root/scripts/task-brief"
 test_file_executable "$sdd_root/scripts/review-package"

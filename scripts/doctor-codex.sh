@@ -3,6 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$(dirname "${BASH_SOURCE[0]}")/forgevia-common.sh"
 MANIFEST_PATH="$ROOT_DIR/manifests/codex.json"
 CODEX_ROOT="${CODEX_HOME:-$HOME/.codex}"
 FORGEVIA_BIN_DIR="${FORGEVIA_BIN_DIR:-$HOME/.local/bin}"
@@ -199,7 +200,7 @@ is_managed_global_command() {
 }
 
 command_checksum() {
-  sha256sum "$1" | awk '{print $1}'
+  forgevia_sha256_file "$1"
 }
 
 write_global_command_state() {
@@ -323,10 +324,7 @@ main() {
   echo "🔎 Forgevia Codex doctor"
   validate_root "$CODEX_ROOT" ".codex"
   validate_root "$FORGEVIA_BIN_DIR" ""
-  if ! command -v sha256sum >/dev/null 2>&1; then
-    echo "missing required command: sha256sum" >&2
-    exit 1
-  fi
+  forgevia_require_sha256
   if [[ "$repair_requested" == "true" ]]; then
     echo "🛠️ Repairing drifted or missing assets"
   fi
@@ -378,7 +376,8 @@ main() {
     "$ROOT_DIR/scripts/forgevia-draw.sh::$CODEX_ROOT/forgevia/bin/forgevia-draw.sh" \
     "$ROOT_DIR/scripts/doctor-codex.sh::$CODEX_ROOT/forgevia/bin/doctor-codex.sh" \
     "$ROOT_DIR/scripts/validate-openspec-cn.mjs::$CODEX_ROOT/forgevia/bin/validate-openspec-cn.mjs" \
-    "$ROOT_DIR/scripts/forgevia.sh::$CODEX_ROOT/forgevia/bin/forgevia"
+    "$ROOT_DIR/scripts/forgevia.sh::$CODEX_ROOT/forgevia/bin/forgevia" \
+    "$ROOT_DIR/scripts/forgevia-common.sh::$CODEX_ROOT/forgevia/bin/forgevia-common.sh"
   do
     local source_path="${pair%%::*}"
     local target_path="${pair#*::}"

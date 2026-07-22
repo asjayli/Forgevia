@@ -35,15 +35,20 @@ If a reviewer fails to start, times out, crashes, or returns an invalid verdict,
 - A final-state check counts only reviewers that remain required for the current candidate. Before any final response, confirm that no active reviewer remains and that the command has reached its explicit terminal state.
 - Repair the candidate, revalidate it, and dispatch a fresh independent review.
 
+- Carry forward the think artifact's Context Provenance. If a memory fact is newly adopted during proposal, append it with source, applicability, and decision impact. Read project memory read-only (`<project>/.codex/memory/`, `<project>/.claude/memory/`, host-exposed memory indices); do not create these directories, scan global unrelated memory, or write back. The same read-only memory policy applies to `openspec-propose` and `brainstorming` when this skill routes through them.
 - Route the requirement source into `openspec-propose`.
 - Allow the change name to come from the user when explicitly provided.
 - Otherwise derive an appropriate kebab-case change name from the requirement source.
 - Treat the provided file as requirement input, not as implementation output.
 - If the requirement source cannot be recovered from the provided input, referenced files, conversation, or repository evidence, return `ESCALATE` through the three-state review protocol with the missing evidence, a recommended default, option impacts, and why work cannot continue.
 - Validate the current planning package before dispatching its reviewer. If validation fails, repair only the matching planning artifact type and rerun the same validation. Dispatch an independent review only after that planning validation passes.
+- Run the producer self-critique on the current planning package before dispatching its reviewer: (1) every acceptance criterion is falsifiable; (2) no task group bundles two distinct delivery units; (3) dependency edges are acyclic; (4) every requirement has a test or verification path; (5) no undeclared external side effects; (6) nothing exceeds the user-authorized scope; (7) no `TBD`, `TODO`, vague placeholders, or undefined interfaces. Repair the findings inline against the matching artifact. This self-critique only reduces obvious problems; it does not replace the independent reviewer.
 - Independently review the proposal/design/specs package and the tasks package. Require `APPROVE`, `REVISE`, or `ESCALATE`; automatically repair an authorized `REVISE`, revalidate, and review again.
 - After all apply-required artifacts are complete, run strict OpenSpec validation for the complete change. If strict validation fails, repair the indicated proposal, design, specs, or tasks and rerun strict validation. Independently review every package changed by strict-validation repair before reporting the proposal apply-ready.
 - Continue through all apply-ready planning artifacts after `APPROVE`; only `ESCALATE` may request a critical decision that cannot be inferred.
 - Proposal completion does not authorize implementation, commit, sync, archive, push, merge, or release.
+- Report that the standalone `propose` command reached its apply-ready terminal condition, then provide `Forgevia implement <resolved-change>` as the exact next command.
+- Do not describe normal command completion as an interruption or emphasize missing authorization. Do not ask whether to start implementation.
+- When this proposal is a phase of an already-authorized complete Forgevia delivery, return control internally with the resolved change name; do not emit a proposal completion response or wait for confirmation.
 - When writing Chinese requirements, use one of `必须、不得、禁止、应当` in the requirement body. Keep OpenSpec structure keywords in English, including `## Requirements` and `### Requirement:`.
 - After creating the change artifacts, run `"${CODEX_HOME:-$HOME/.codex}/forgevia/bin/forgevia" validate --root <project-root>`. Do not report the proposal as strictly valid if this command fails.
