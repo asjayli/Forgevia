@@ -96,6 +96,10 @@ Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ES
    - Remaining tasks overview
    - Dynamic instruction from CLI
 
+5.5. **Baseline preflight (once, before the first modification)**
+
+   Before the first code change in step 6, run the change's baseline verification once and record a `Preflight` section in `.superpowers/sdd/progress.md`: Baseline commit (`HEAD` sha or `no-git`), Worktree snapshot (hash of `git stash list` + `git status --porcelain`; `no-git` when no repo), Command (the safe baseline command from the Verification Contract), Exit (code), Classification (`clean | in-scope-red | unrelated-red | user-worktree-red`), Evidence (artifact path or summary). The baseline is identified by the current HEAD, the worktree state, and the Verification Contract; on resumption, if `progress.md`, Git, and `tasks.md` prove the same baseline already completed, do not rerun it. `clean` continues; `in-scope-red` records and continues; `user-worktree-red` stops for a decision; `unrelated-red` requests stop, widen scope, or accept as known-red (explicit authorization, stays visible in the final report); a missing command or unavailable capability diagnoses then `ESCALATE`.
+
 6. **Implement tasks (loop until done or blocked)**
 
    For each pending task:
