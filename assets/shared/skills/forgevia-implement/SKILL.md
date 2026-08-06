@@ -13,6 +13,8 @@ Use this skill only when the user explicitly names a change to implement.
 
 ## Behavior
 
+**Baseline preflight:** Before the first candidate file modification, run the change's baseline verification once and record a `Preflight` section in `.superpowers/sdd/progress.md` (Baseline commit, Worktree snapshot, Command, Exit, Classification, Evidence). The baseline is identified by the current HEAD, the worktree state, and the change's Verification Contract; on resumption, if `progress.md`, Git, and `tasks.md` prove the same baseline already completed, do not rerun it. Classify the baseline exit as `clean` (continue), `in-scope-red` (the change fixes this failure; record and continue), `user-worktree-red` (uncommitted user modifications; stop and request a decision), or `unrelated-red` (pre-existing failure; do not auto-fix; request stop, widen scope, or accept as known-red). A missing baseline command or unavailable capability diagnoses then `ESCALATE`. Accepting a known-red requires explicit authorization and stays visible in the final report; it is never presented as fully passing.
+
 **Independent review contract:** Every reviewer receives one review package containing:
 
 - Objective: the authorized outcome.
