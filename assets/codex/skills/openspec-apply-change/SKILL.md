@@ -35,8 +35,11 @@ Before returning a completion summary, confirm every completion gate:
 - `tasks.md` contains no unchecked implementation item.
 - No planned implementation task remains pending or in progress.
 - The required complete verification has succeeded.
+- The verification coverage ledger has `unverified=0`.
 - The change scope has been reviewed and `git diff --check` succeeds.
 - The final independent review is `APPROVE`.
+
+Every acceptance criterion must carry exactly one coverage status (`machine-reverified`, `browser-evidence`, `external-evidence`, `trusted-prior`, or `unverified`); `unverified` must be 0; no machine-verifiable criterion is downgraded to `trusted-prior`; Web/UI changes that declared browser verification have `browser-evidence`; every `trusted-prior` has a reason and original evidence. The final reviewer checks each row against the spec, test-plan, and tasks.
 
 Never use completion language or a final delivery format while any implementation task remains unchecked or in progress.
 
@@ -95,6 +98,10 @@ Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ES
    - Progress: "N/M tasks complete"
    - Remaining tasks overview
    - Dynamic instruction from CLI
+
+5.5. **Baseline preflight (once, before the first modification)**
+
+   Before the first code change in step 6, run the change's baseline verification once and record a `Preflight` section in `.superpowers/sdd/progress.md`: Baseline commit (`HEAD` sha or `no-git`), Worktree snapshot (hash of `git stash list` + `git status --porcelain`; `no-git` when no repo), Command (the safe baseline command from the Verification Contract), Exit (code), Classification (`clean | in-scope-red | unrelated-red | user-worktree-red`), Evidence (artifact path or summary). The baseline is identified by the current HEAD, the worktree state, and the Verification Contract; on resumption, if `progress.md`, Git, and `tasks.md` prove the same baseline already completed, do not rerun it. `clean` continues; `in-scope-red` records and continues; `user-worktree-red` stops for a decision; `unrelated-red` requests stop, widen scope, or accept as known-red (explicit authorization, stays visible in the final report); a missing command or unavailable capability diagnoses then `ESCALATE`.
 
 6. **Implement tasks (loop until done or blocked)**
 

@@ -42,6 +42,20 @@ Never use completion language or a final delivery format while any implementatio
 6. Escalate only a genuine plan conflict or missing decision/authorization that prevents safe execution
 7. Create todos for the plan items and proceed
 
+### Step 1.5: Baseline Preflight
+
+Before the first candidate file modification in Step 2, run the change's baseline verification once and record a `Preflight` section in `.superpowers/sdd/progress.md`: Baseline commit (`HEAD` sha or `no-git`), Worktree snapshot (hash of `git stash list` + `git status --porcelain`; `no-git` when no repo), Command (the safe baseline command from the Verification Contract), Exit (code), Classification (`clean | in-scope-red | unrelated-red | user-worktree-red`), Evidence (artifact path or summary).
+
+The baseline is identified by the current HEAD, the worktree state, and the Verification Contract. On resumption, if `progress.md`, Git, and `tasks.md` prove the same baseline already completed, do not rerun it.
+
+- `clean`: continue without asking.
+- `in-scope-red`: the change exists to fix this failure; record and continue.
+- `user-worktree-red`: uncommitted user modifications cause it; stop before writing and request a user decision.
+- `unrelated-red`: a pre-existing failure unrelated to the change; do not auto-fix; request one of stop, widen scope, or accept as known-red.
+- command missing or capability unavailable: diagnose, then `ESCALATE`.
+
+Accepting a known-red requires explicit authorization and stays visible in the final report; it must never be presented as fully passing.
+
 ### Step 2: Execute Dependency-Ready Group
 **Default: Execute the first group whose dependencies are complete**
 

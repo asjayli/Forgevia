@@ -22,5 +22,6 @@ If a reviewer fails to start, times out, crashes, or returns an invalid verdict,
 
 - Route to `playwright-interactive`.
 - Use this for web behavior, UI interaction, visual verification, and browser-facing regressions.
+- Produce `browser-evidence` for the coverage ledger: record the steps executed, the observed result, and an artifact path (screenshot, trace, or HAR) for each verified web behavior.
 - Require the independent browser reviewer to return `APPROVE`, `REVISE`, or `ESCALATE` with evidence. For this standalone read-only command, return `REVISE` findings without editing product code; only `ESCALATE` requests a user decision.
 - A `REVISE` verdict returns findings and stops without editing product files, `tasks.md`, or `.superpowers/sdd/progress.md`.
