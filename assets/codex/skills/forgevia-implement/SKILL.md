@@ -13,6 +13,8 @@ Use this skill only when the user explicitly names a change to implement.
 
 ## Behavior
 
+**Baseline preflight:** Before the first candidate file modification, run the change's baseline verification once and record a `Preflight` section in `.superpowers/sdd/progress.md` (Baseline commit, Worktree snapshot, Command, Exit, Classification, Evidence). The baseline is identified by the current HEAD, the worktree state, and the change's Verification Contract; on resumption, if `progress.md`, Git, and `tasks.md` prove the same baseline already completed, do not rerun it. Classify the baseline exit as `clean` (continue), `in-scope-red` (the change fixes this failure; record and continue), `user-worktree-red` (uncommitted user modifications; stop and request a decision), or `unrelated-red` (pre-existing failure; do not auto-fix; request stop, widen scope, or accept as known-red). A missing baseline command or unavailable capability diagnoses then `ESCALATE`. Accepting a known-red requires explicit authorization and stays visible in the final report; it is never presented as fully passing.
+
 **Independent review contract:** Every reviewer receives one review package containing:
 
 - Objective: the authorized outcome.
@@ -31,8 +33,11 @@ Before returning a completion summary, confirm every completion gate:
 - `tasks.md` contains no unchecked implementation item.
 - No planned implementation task remains pending or in progress.
 - The required complete verification has succeeded.
+- The verification coverage ledger has `unverified=0`.
 - The change scope has been reviewed and `git diff --check` succeeds.
 - The final independent review is `APPROVE`.
+
+**Verification coverage ledger:** Every acceptance criterion (requirement / scenario) carries exactly one status: `machine-reverified` (a final-stage command rerun with a real exit code), `browser-evidence` (browser verification produced steps, result, and artifact), `external-evidence` (external system or non-replayable check with explicit evidence), `trusted-prior` (cannot be replayed at the final stage; prior evidence with a stated reason and the original artifact), or `unverified` (no sufficient evidence). `unverified` must be 0; a machine-verifiable criterion must not be downgraded to `trusted-prior`; a Web/UI change that declared browser verification must have `browser-evidence`; every `trusted-prior` entry needs a reason and the original evidence. The final reviewer checks each row against the spec, test-plan, and tasks; coverage is not self-certified by the candidate producer. Emit the ledger in the completion report (`## Verification Coverage` table with Criterion / Status / Evidence / Reviewer, plus counts). Warn when `trusted-prior / total > 30%`; the real failure conditions are any `unverified`, or a machine-verifiable item downgraded.
 
 Never use completion language or a final delivery format while any implementation task remains unchecked or in progress.
 

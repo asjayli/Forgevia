@@ -27,8 +27,11 @@ Before returning a completion summary, confirm every completion gate:
 - `tasks.md` contains no unchecked implementation item.
 - No planned implementation task remains pending or in progress.
 - The required complete verification has succeeded.
+- The verification coverage ledger has `unverified=0`.
 - The change scope has been reviewed and `git diff --check` succeeds.
 - The final independent review is `APPROVE`.
+
+Every acceptance criterion must carry exactly one coverage status (`machine-reverified`, `browser-evidence`, `external-evidence`, `trusted-prior`, or `unverified`); `unverified` must be 0; no machine-verifiable criterion is downgraded to `trusted-prior`; Web/UI changes that declared browser verification have `browser-evidence`; every `trusted-prior` has a reason and original evidence. The final reviewer checks each row against the spec, test-plan, and tasks.
 
 Never use completion language or a final delivery format while any implementation task remains unchecked or in progress.
 
@@ -139,6 +142,20 @@ each finding beside the plan text that mandates it, asking which governs —
 before execution begins, not one interrupt per discovery mid-plan. If the
 scan is clean, proceed without comment. The review loop remains the net for
 conflicts that only emerge from implementation.
+
+## Baseline Verification
+
+Before dispatching the first implementer, run the change's baseline verification once and record a `Preflight` section in `.superpowers/sdd/progress.md`: Baseline commit (`HEAD` sha or `no-git`), Worktree snapshot (hash of `git stash list` + `git status --porcelain`; `no-git` when no repo), Command (the safe baseline command from the Verification Contract), Exit (code), Classification (`clean | in-scope-red | unrelated-red | user-worktree-red`), Evidence (artifact path or summary). This is distinct from the plan-conflict scan above: it runs a real command to capture the starting state.
+
+The baseline is identified by the current HEAD, the worktree state, and the Verification Contract. On resumption, if `progress.md`, Git, and `tasks.md` prove the same baseline already completed, do not rerun it.
+
+- `clean`: continue without asking.
+- `in-scope-red`: the change exists to fix this failure; record and continue.
+- `user-worktree-red`: uncommitted user modifications cause it; stop before writing and request a user decision.
+- `unrelated-red`: a pre-existing failure unrelated to the change; do not auto-fix; request one of stop, widen scope, or accept as known-red.
+- command missing or capability unavailable: diagnose, then `ESCALATE`.
+
+Accepting a known-red requires explicit authorization and stays visible in the final report; it must never be presented as fully passing.
 
 ## Model Selection
 
