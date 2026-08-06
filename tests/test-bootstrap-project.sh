@@ -22,6 +22,23 @@ assert_file_exists() {
   fi
 }
 
+# Run bootstrap under the fake openspec PATH and assert it fails with the
+# expected reason. Asserting stderr prevents a wrong-cause failure from passing.
+run_fail() {
+  local desc="$1"
+  local expect="$2"
+  shift 2
+  local out
+  if out="$(PATH="$bin_dir:$PATH" "$@" 2>&1)"; then
+    echo "expected failure but succeeded: $desc" >&2
+    exit 1
+  fi
+  if [[ -n "$expect" && "$out" != *"$expect"* ]]; then
+    echo "$desc: expected stderr to contain [$expect]; got: $out" >&2
+    exit 1
+  fi
+}
+
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
@@ -85,5 +102,47 @@ mkdir -p "$third_project_dir"
 normalized_output="$(PATH="$bin_dir:$PATH" "$BOOTSTRAP" --tools claude,codex "$third_project_dir")"
 assert_contains "$normalized_output" "Running openspec init --tools codex,claude"
 assert_contains "$(cat "$fake_log")" "init --tools codex,claude $third_project_dir"
+
+# Robustness: a symbolic link anywhere in the project_dir path is refused.
+real_parent="$tmp_dir/real-parent"
+link_parent="$tmp_dir/link-parent"
+mkdir -p "$real_parent"
+ln -s "$real_parent" "$link_parent"
+symlink_project="$link_parent/project"
+mkdir -p "$symlink_project"
+run_fail "symlinked project path component" "refusing symlinked project path component" "$BOOTSTRAP" "$symlink_project"
+
+# Robustness: an explicitly empty project_dir is refused.
+run_fail "empty project_dir" "project_dir must not be empty" "$BOOTSTRAP" ""
+
+# Robustness: a newline embedded in project_dir is refused.
+run_fail "newline in project_dir" "must not contain newline" "$BOOTSTRAP" $'proj\nname'
+
+# Robustness: a symlinked openspec output is refused before initialization.
+symlink_openspec_project="$tmp_dir/project-openspec-symlink"
+mkdir -p "$symlink_openspec_project"
+ln -s "$tmp_dir" "$symlink_openspec_project/openspec"
+run_fail "symlinked openspec output" "refusing symlinked initializer output" "$BOOTSTRAP" "$symlink_openspec_project"
+
+# Robustness: a symlinked openspec internal entry is refused before init scans it.
+symlink_inside_project="$tmp_dir/project-openspec-inside"
+mkdir -p "$symlink_inside_project/openspec"
+ln -s "$tmp_dir" "$symlink_inside_project/openspec/changes"
+run_fail "symlinked openspec internal entry" "refusing symlinked initializer output" "$BOOTSTRAP" "$symlink_inside_project"
+
+# Robustness: a symlinked platform output root is refused before initialization.
+symlink_root_project="$tmp_dir/project-root-symlink"
+mkdir -p "$symlink_root_project"
+ln -s "$tmp_dir" "$symlink_root_project/.codex"
+run_fail "symlinked platform output root" "refusing symlinked initializer output" "$BOOTSTRAP" "$symlink_root_project"
+
+# Robustness: an unknown option is refused.
+run_fail "unknown option" "unsupported option" "$BOOTSTRAP" "--bogus" "$tmp_dir/project-bogus"
+
+# Robustness: more than one project_dir is refused.
+multi_a="$tmp_dir/project-multi-a"
+multi_b="$tmp_dir/project-multi-b"
+mkdir -p "$multi_a" "$multi_b"
+run_fail "multiple project_dir" "only one project_dir" "$BOOTSTRAP" "$multi_a" "$multi_b"
 
 echo "bootstrap project test passed"
