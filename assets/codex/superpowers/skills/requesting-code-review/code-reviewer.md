@@ -69,6 +69,14 @@ Subagent (general-purpose):
     - Integration tests where they matter?
     - All tests passing?
 
+    **Verification coverage:**
+    - Does every acceptance criterion carry exactly one coverage status (`machine-reverified` / `browser-evidence` / `external-evidence` / `trusted-prior` / `unverified`)?
+    - Is `unverified` zero?
+    - Is any machine-verifiable criterion downgraded to `trusted-prior`?
+    - For Web/UI changes that declared browser verification, is there `browser-evidence`?
+    - Does every `trusted-prior` entry state a reason and cite original evidence?
+    - Does each coverage row trace back to the spec, test-plan, and tasks?
+
     **Production readiness:**
     - Migration strategy if schema changed?
     - Backward compatibility considered?

@@ -35,8 +35,11 @@ Before returning a completion summary, confirm every completion gate:
 - `tasks.md` contains no unchecked implementation item.
 - No planned implementation task remains pending or in progress.
 - The required complete verification has succeeded.
+- The verification coverage ledger has `unverified=0`.
 - The change scope has been reviewed and `git diff --check` succeeds.
 - The final independent review is `APPROVE`.
+
+Every acceptance criterion must carry exactly one coverage status (`machine-reverified`, `browser-evidence`, `external-evidence`, `trusted-prior`, or `unverified`); `unverified` must be 0; no machine-verifiable criterion is downgraded to `trusted-prior`; Web/UI changes that declared browser verification have `browser-evidence`; every `trusted-prior` has a reason and original evidence. The final reviewer checks each row against the spec, test-plan, and tasks.
 
 Never use completion language or a final delivery format while any implementation task remains unchecked or in progress.
 
