@@ -11,7 +11,7 @@ First formal release of firefly as a versioned, licensed distribution.
 
 ### Added
 
-- Release metadata: `VERSION`, `CHANGELOG.md`, `LICENSE` (Apache-2.0), and
+- Release metadata: `VERSION`, `CHANGELOG.md`, `LICENSE` (MIT), and
   `THIRD_PARTY_NOTICES.md`, plus `fireflyVersion` in both platform manifests
   and `scripts/check-release-metadata.sh` to keep them consistent.
 - Portable SHA-256 resolution across installers and doctor scripts
