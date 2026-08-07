@@ -8,7 +8,7 @@
 
 </div>
 
-**Current version: 0.1.0** ([CHANGELOG](CHANGELOG.md)) · License: [Apache-2.0](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+**Current version: 0.1.0** ([CHANGELOG](CHANGELOG.md)) · License: [MIT](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)
 
 Forge your agent workflow into steel.
 

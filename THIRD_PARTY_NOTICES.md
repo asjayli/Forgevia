@@ -2,7 +2,7 @@
 
 firefly redistributes or layers managed overrides on the following third-party
 components. Each component retains its own license; the root `LICENSE`
-(Apache-2.0) applies to firefly's original work only and does not replace or
+(MIT) applies to firefly's original work only and does not replace or
 remove any third-party license or notice.
 
 ## Redistributed (vendored) components

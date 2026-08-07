@@ -5,7 +5,7 @@
 #   - Both platform manifests expose the same fireflyVersion as VERSION.
 #   - README.md / README_EN.md display the current version.
 #   - CHANGELOG.md documents the current version.
-#   - LICENSE is present and identifies Apache-2.0.
+#   - LICENSE is present and identifies MIT.
 #   - THIRD_PARTY_NOTICES.md declares every vendored/override upstream
 #     (playwright-interactive, OpenSpec, superpowers), and the vendored
 #     playwright-interactive LICENSE.txt/NOTICE.txt are retained.
@@ -83,9 +83,9 @@ require_contains "$ROOT_DIR/README_EN.md" "$version" "README_EN.md"
 # 5. CHANGELOG documents the current version.
 require_contains "$ROOT_DIR/CHANGELOG.md" "[$version]" "CHANGELOG.md"
 
-# 6. LICENSE identifies Apache-2.0.
-require_contains "$ROOT_DIR/LICENSE" "Apache License" "LICENSE"
-require_contains "$ROOT_DIR/LICENSE" "Version 2.0" "LICENSE"
+# 6. LICENSE identifies MIT.
+require_contains "$ROOT_DIR/LICENSE" "MIT License" "LICENSE"
+require_contains "$ROOT_DIR/LICENSE" "Permission is hereby granted" "LICENSE"
 
 # 7. Every vendored/override third-party component is declared.
 for component in "playwright-interactive" "OpenSpec" "superpowers" "Microsoft"; do
