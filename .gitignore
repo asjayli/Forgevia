@@ -3,6 +3,7 @@
 /docs/plans/
 /openspec/
 /.forgevia/
+/.firefly/
 /.superpowers/
 # Local client state; distributable client assets live under assets/.
 /.claude/

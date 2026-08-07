@@ -39,9 +39,9 @@ minor='Minor findings are recorded as follow-up items in the coverage ledger, no
 for platform in codex claude; do
   sdd="$ROOT_DIR/assets/$platform/superpowers/skills/subagent-driven-development/SKILL.md"
   ep="$ROOT_DIR/assets/$platform/superpowers/skills/executing-plans/SKILL.md"
-  impl="$ROOT_DIR/assets/$platform/skills/forgevia-implement/SKILL.md"
-  router="$ROOT_DIR/assets/$platform/skills/forgevia/SKILL.md"
-  review="$ROOT_DIR/assets/$platform/skills/forgevia-review/SKILL.md"
+  impl="$ROOT_DIR/assets/$platform/skills/firefly-implement/SKILL.md"
+  router="$ROOT_DIR/assets/$platform/skills/firefly/SKILL.md"
+  review="$ROOT_DIR/assets/$platform/skills/firefly-review/SKILL.md"
   apply="$ROOT_DIR/assets/$platform/skills/openspec-apply-change/SKILL.md"
 
   sdd_c="$(<"$sdd")"

@@ -10,7 +10,7 @@ I'll create a change with artifacts:
 - design.md (how)
 - tasks.md (implementation steps)
 
-When ready to implement, use Forgevia Implement
+When ready to implement, use firefly Implement
 
 ---
 
@@ -115,10 +115,10 @@ After completing all artifacts, summarize:
 - Change name and location
 - List of artifacts created with brief descriptions
 - State that the standalone proposal reached its apply-ready terminal condition.
-- Next command: \`Forgevia implement <name>\`
+- Next command: \`firefly implement <name>\`
 - Do not describe this normal terminal condition as a stop, interruption, or lack of authorization. Do not ask whether to proceed; the exact next command is sufficient.
 
-When invoked as a phase of an already-authorized complete Forgevia delivery, return the resolved change name to the controller instead of emitting this standalone completion summary. The controller continues directly into implementation.
+When invoked as a phase of an already-authorized complete firefly delivery, return the resolved change name to the controller instead of emitting this standalone completion summary. The controller continues directly into implementation.
 
 **Artifact Creation Guidelines**
 
@@ -155,7 +155,7 @@ I'll create a change with artifacts:
 - design.md (how)
 - tasks.md (implementation steps)
 
-When ready to implement, use Forgevia Implement
+When ready to implement, use firefly Implement
 
 ---
 
@@ -260,10 +260,10 @@ After completing all artifacts, summarize:
 - Change name and location
 - List of artifacts created with brief descriptions
 - State that the standalone proposal reached its apply-ready terminal condition.
-- Next command: \`Forgevia implement <name>\`
+- Next command: \`firefly implement <name>\`
 - Do not describe this normal terminal condition as a stop, interruption, or lack of authorization. Do not ask whether to proceed; the exact next command is sufficient.
 
-When invoked as a phase of an already-authorized complete Forgevia delivery, return the resolved change name to the controller instead of emitting this standalone completion summary. The controller continues directly into implementation.
+When invoked as a phase of an already-authorized complete firefly delivery, return the resolved change name to the controller instead of emitting this standalone completion summary. The controller continues directly into implementation.
 
 **Artifact Creation Guidelines**
 

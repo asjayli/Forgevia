@@ -3,9 +3,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-COMMON="$ROOT_DIR/scripts/forgevia-common.sh"
+COMMON="$ROOT_DIR/scripts/firefly-common.sh"
 
-# Forgevia must support both `sha256sum` (Linux) and `shasum -a 256` (macOS)
+# firefly must support both `sha256sum` (Linux) and `shasum -a 256` (macOS)
 # without silently downgrading to a weaker hash. This test exercises the
 # provider-selection helper under controlled PATH sandboxes so it does not
 # depend on which tool the host happens to have installed.
@@ -28,7 +28,7 @@ tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
 fixture="$tmp_dir/fixture.txt"
-printf 'forgevia portability fixture\n' > "$fixture"
+printf 'firefly portability fixture\n' > "$fixture"
 
 only_sha256sum_bin="$tmp_dir/only-sha256sum"
 only_shasum_bin="$tmp_dir/only-shasum"
@@ -53,7 +53,7 @@ chmod +x "$only_shasum_bin/shasum"
 
 hash_under_path() {
   local bin="$1"
-  PATH="$bin" "$BASH" -c '. "$1"; forgevia_sha256_file "$2"' _ "$COMMON" "$fixture"
+  PATH="$bin" "$BASH" -c '. "$1"; firefly_sha256_file "$2"' _ "$COMMON" "$fixture"
 }
 
 # Scenario 1: only sha256sum available (Linux-like).
@@ -66,7 +66,7 @@ assert_eq "MACOS_FIXTURE_HASH" "$out" "only shasum selects shasum -a 256"
 
 # Scenario 3: neither provider -> non-zero exit with a clear dependency message.
 set +e
-err_output="$(PATH="$empty_bin" "$BASH" -c '. "$1"; forgevia_sha256_file "$2"' _ "$COMMON" "$fixture" 2>&1 >/dev/null)"
+err_output="$(PATH="$empty_bin" "$BASH" -c '. "$1"; firefly_sha256_file "$2"' _ "$COMMON" "$fixture" 2>&1 >/dev/null)"
 neither_status=$?
 set -e
 if [[ "$neither_status" -eq 0 ]]; then
@@ -78,9 +78,9 @@ if [[ "$err_output" != *"sha256sum or shasum"* ]]; then
   exit 1
 fi
 
-# forgevia_require_sha256 must refuse to run when no provider is available.
+# firefly_require_sha256 must refuse to run when no provider is available.
 set +e
-req_err="$(PATH="$empty_bin" "$BASH" -c '. "$1"; forgevia_require_sha256' _ "$COMMON" 2>&1 >/dev/null)"
+req_err="$(PATH="$empty_bin" "$BASH" -c '. "$1"; firefly_require_sha256' _ "$COMMON" 2>&1 >/dev/null)"
 req_status=$?
 set -e
 if [[ "$req_status" -eq 0 ]]; then
@@ -105,7 +105,7 @@ else
   direct=""
 fi
 if [[ -n "$direct" ]]; then
-  forged="$(forgevia_sha256_file "$fixture")"
+  forged="$(firefly_sha256_file "$fixture")"
   assert_eq "$direct" "$forged" "real provider digest matches direct call"
 fi
 

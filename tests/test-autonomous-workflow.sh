@@ -124,12 +124,12 @@ assert_template_function_contains() {
   fi
 }
 
-forgevia_paths=(
-  "$ROOT_DIR/assets/codex/skills/forgevia/SKILL.md"
-  "$ROOT_DIR/assets/claude/skills/forgevia/SKILL.md"
+firefly_paths=(
+  "$ROOT_DIR/assets/codex/skills/firefly/SKILL.md"
+  "$ROOT_DIR/assets/claude/skills/firefly/SKILL.md"
 )
 
-for path in "${forgevia_paths[@]}"; do
+for path in "${firefly_paths[@]}"; do
   assert_file_contains "$path" "objective authorization envelope"
   assert_file_contains "$path" 'APPROVE'
   assert_file_contains "$path" 'REVISE'
@@ -142,7 +142,7 @@ for path in "${forgevia_paths[@]}"; do
   assert_file_contains "$path" "Before returning a completion summary, confirm every completion gate:"
   assert_file_contains "$path" 'The controller dispatches an authorized repair subagent for every `REVISE` finding, requires targeted verification, and dispatches a fresh independent reviewer.'
   assert_file_contains "$path" 'Repeat this repair-review loop until an `APPROVE` verdict or the no-progress `ESCALATE` boundary.'
-  assert_file_contains "$path" 'A Forgevia request with a requirement but no named subcommand authorizes the complete delivery workflow by default.'
+  assert_file_contains "$path" 'A firefly request with a requirement but no named subcommand authorizes the complete delivery workflow by default.'
   assert_file_contains "$path" 'Read-only, exploratory, status, and review intent does not authorize implementation.'
   assert_file_contains "$path" 'Complete-delivery phase order is: proposal -> implementation -> browser verification when relevant -> final independent review.'
   assert_file_contains "$path" 'Browser verification is a pre-review gate.'
@@ -154,12 +154,12 @@ for path in "${forgevia_paths[@]}"; do
   assert_obsolete_reviewer_lifecycle "$path"
 done
 
-forgevia_propose_paths=(
-  "$ROOT_DIR/assets/codex/skills/forgevia-propose/SKILL.md"
-  "$ROOT_DIR/assets/claude/skills/forgevia-propose/SKILL.md"
+firefly_propose_paths=(
+  "$ROOT_DIR/assets/codex/skills/firefly-propose/SKILL.md"
+  "$ROOT_DIR/assets/claude/skills/firefly-propose/SKILL.md"
 )
 
-for path in "${forgevia_propose_paths[@]}"; do
+for path in "${firefly_propose_paths[@]}"; do
   assert_file_contains "$path" '`APPROVE`'
   assert_file_contains "$path" '`REVISE`'
   assert_file_contains "$path" '`ESCALATE`'
@@ -174,12 +174,12 @@ for path in "${forgevia_propose_paths[@]}"; do
   assert_obsolete_reviewer_lifecycle "$path"
 done
 
-forgevia_archive_paths=(
-  "$ROOT_DIR/assets/codex/skills/forgevia-archive/SKILL.md"
-  "$ROOT_DIR/assets/claude/skills/forgevia-archive/SKILL.md"
+firefly_archive_paths=(
+  "$ROOT_DIR/assets/codex/skills/firefly-archive/SKILL.md"
+  "$ROOT_DIR/assets/claude/skills/firefly-archive/SKILL.md"
 )
 
-for path in "${forgevia_archive_paths[@]}"; do
+for path in "${firefly_archive_paths[@]}"; do
   assert_file_contains "$path" '`APPROVE`'
   assert_file_contains "$path" '`REVISE`'
   assert_file_contains "$path" '`ESCALATE`'
@@ -189,12 +189,12 @@ for path in "${forgevia_archive_paths[@]}"; do
   assert_review_contract "$path"
 done
 
-forgevia_implement_paths=(
-  "$ROOT_DIR/assets/codex/skills/forgevia-implement/SKILL.md"
-  "$ROOT_DIR/assets/claude/skills/forgevia-implement/SKILL.md"
+firefly_implement_paths=(
+  "$ROOT_DIR/assets/codex/skills/firefly-implement/SKILL.md"
+  "$ROOT_DIR/assets/claude/skills/firefly-implement/SKILL.md"
 )
 
-for path in "${forgevia_implement_paths[@]}"; do
+for path in "${firefly_implement_paths[@]}"; do
   assert_file_contains "$path" '`APPROVE`'
   assert_file_contains "$path" '`REVISE`'
   assert_file_contains "$path" '`ESCALATE`'
@@ -208,7 +208,7 @@ for path in "${forgevia_implement_paths[@]}"; do
   assert_review_contract "$path"
 done
 
-for skill_name in forgevia-review forgevia-verify-web; do
+for skill_name in firefly-review firefly-verify-web; do
   for path in \
     "$ROOT_DIR/assets/codex/skills/$skill_name/SKILL.md" \
     "$ROOT_DIR/assets/claude/skills/$skill_name/SKILL.md"
@@ -225,8 +225,8 @@ for skill_name in forgevia-review forgevia-verify-web; do
 done
 
 for path in \
-  "$ROOT_DIR/assets/codex/skills/forgevia-review/SKILL.md" \
-  "$ROOT_DIR/assets/claude/skills/forgevia-review/SKILL.md"
+  "$ROOT_DIR/assets/codex/skills/firefly-review/SKILL.md" \
+  "$ROOT_DIR/assets/claude/skills/firefly-review/SKILL.md"
 do
   assert_file_contains "$path" 'Generate the review package before routing to `requesting-code-review`.'
   assert_file_contains "$path" '`review-package BASE HEAD`'
@@ -234,12 +234,12 @@ do
   assert_file_contains "$path" 'Pass the printed path as `DIFF_FILE`.'
 done
 
-assert_file_contains "$ROOT_DIR/assets/codex/skills/forgevia/SKILL.md" '`spawn_agent`'
-assert_file_contains "$ROOT_DIR/assets/claude/skills/forgevia/SKILL.md" '`Task`'
+assert_file_contains "$ROOT_DIR/assets/codex/skills/firefly/SKILL.md" '`spawn_agent`'
+assert_file_contains "$ROOT_DIR/assets/claude/skills/firefly/SKILL.md" '`Task`'
 
 for path in \
-  "$ROOT_DIR/assets/codex/skills/forgevia-think/SKILL.md" \
-  "$ROOT_DIR/assets/claude/skills/forgevia-think/SKILL.md"
+  "$ROOT_DIR/assets/codex/skills/firefly-think/SKILL.md" \
+  "$ROOT_DIR/assets/claude/skills/firefly-think/SKILL.md"
 do
   assert_file_contains "$path" "independent review"
   assert_file_contains "$path" '`APPROVE`'
@@ -325,7 +325,7 @@ for path in "${openspec_propose_paths[@]}"; do
   assert_file_contains "$path" '`ESCALATE`'
   assert_file_contains "$path" 'Only `ESCALATE` pauses for user input'
   assert_file_contains "$path" 'State that the standalone proposal reached its apply-ready terminal condition.'
-  assert_file_contains "$path" 'Next command: `Forgevia implement <name>`'
+  assert_file_contains "$path" 'Next command: `firefly implement <name>`'
   assert_file_contains "$path" 'Do not ask whether to proceed'
   assert_review_contract "$path"
   assert_file_in_order "$path" \
@@ -383,7 +383,7 @@ assert_occurrences_at_least "$propose_template" '\`REVISE\`' 2
 assert_occurrences_at_least "$propose_template" '\`ESCALATE\`' 2
 assert_occurrences_at_least "$propose_template" 'Only \`ESCALATE\` pauses for user input' 2
 assert_occurrences_at_least "$propose_template" 'State that the standalone proposal reached its apply-ready terminal condition.' 2
-assert_occurrences_at_least "$propose_template" 'Next command: \`Forgevia implement <name>\`' 2
+assert_occurrences_at_least "$propose_template" 'Next command: \`firefly implement <name>\`' 2
 assert_occurrences_at_least "$propose_template" 'Do not ask whether to proceed' 2
 assert_file_in_order "$propose_template" \
   'Objective: the authorized outcome.' \
@@ -422,7 +422,7 @@ assert_file_in_order "$propose_template" \
 tracked_internal_planning="$(git -C "$ROOT_DIR" ls-files -- \
   'openspec/**' \
   'docs/plans/**' \
-  '.forgevia/**' \
+  '.firefly/**' \
   '.superpowers/**')"
 if [[ -n "$tracked_internal_planning" ]]; then
   echo "repository-local planning or runtime artifacts must not be tracked:" >&2
@@ -437,7 +437,7 @@ if [[ -n "$tracked_local_client_state" ]]; then
   exit 1
 fi
 
-for internal_path in openspec/ docs/plans/ .forgevia/ .superpowers/; do
+for internal_path in openspec/ docs/plans/ .firefly/ .superpowers/; do
   if ! git -C "$ROOT_DIR" check-ignore -q "$internal_path"; then
     echo "expected repository-local path to be ignored: $internal_path" >&2
     exit 1

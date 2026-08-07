@@ -26,8 +26,8 @@ do
 done
 
 for path in \
-  "$ROOT_DIR/assets/claude/skills/forgevia-draw/SKILL.md" \
-  "$ROOT_DIR/assets/codex/skills/forgevia-draw/SKILL.md"
+  "$ROOT_DIR/assets/claude/skills/firefly-draw/SKILL.md" \
+  "$ROOT_DIR/assets/codex/skills/firefly-draw/SKILL.md"
 do
   assert_file_contains "$path" "Request concise Chinese notes for key methods and critical intermediate steps."
   assert_file_contains "$path" "Optimize for fast understanding, not maximum annotation density."

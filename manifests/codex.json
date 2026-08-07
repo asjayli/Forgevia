@@ -13,7 +13,7 @@
     "superpowers": {
       "type": "upstream-install-doc",
       "url": "https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.codex/INSTALL.md",
-      "notes": "Forgevia relies on upstream superpowers installation, then overlays managed customizations."
+      "notes": "firefly relies on upstream superpowers installation, then overlays managed customizations."
     }
   },
   "managedAssets": [
@@ -21,7 +21,7 @@
       "id": "openspec-config-prompts",
       "source": "assets/openspec/dist/core/config-prompts.js",
       "target": "<openspec-root>/dist/core/config-prompts.js",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "openspec-override",
       "upstream": "openspec"
     },
@@ -29,7 +29,7 @@
       "id": "openspec-propose-workflow",
       "source": "assets/openspec/dist/core/templates/workflows/propose.js",
       "target": "<openspec-root>/dist/core/templates/workflows/propose.js",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "openspec-override",
       "upstream": "openspec"
     },
@@ -37,134 +37,134 @@
       "id": "openspec-propose-skill",
       "source": "assets/codex/skills/openspec-propose",
       "target": "~/.codex/skills/openspec-propose",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
       "id": "openspec-apply-change-skill",
       "source": "assets/codex/skills/openspec-apply-change",
       "target": "~/.codex/skills/openspec-apply-change",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
       "id": "openspec-archive-change-skill",
       "source": "assets/codex/skills/openspec-archive-change",
       "target": "~/.codex/skills/openspec-archive-change",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
       "id": "openspec-explore-skill",
       "source": "assets/codex/skills/openspec-explore",
       "target": "~/.codex/skills/openspec-explore",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
       "id": "openspec-sync-specs-skill",
       "source": "assets/codex/skills/openspec-sync-specs",
       "target": "~/.codex/skills/openspec-sync-specs",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
-      "id": "forgevia-skill",
-      "source": "assets/codex/skills/forgevia",
-      "target": "~/.codex/skills/forgevia",
-      "owner": "forgevia",
+      "id": "firefly-skill",
+      "source": "assets/codex/skills/firefly",
+      "target": "~/.codex/skills/firefly",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
-      "id": "forgevia-init-skill",
-      "source": "assets/codex/skills/forgevia-init",
-      "target": "~/.codex/skills/forgevia-init",
-      "owner": "forgevia",
+      "id": "firefly-init-skill",
+      "source": "assets/codex/skills/firefly-init",
+      "target": "~/.codex/skills/firefly-init",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
-      "id": "forgevia-doctor-skill",
-      "source": "assets/codex/skills/forgevia-doctor",
-      "target": "~/.codex/skills/forgevia-doctor",
-      "owner": "forgevia",
+      "id": "firefly-doctor-skill",
+      "source": "assets/codex/skills/firefly-doctor",
+      "target": "~/.codex/skills/firefly-doctor",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
-      "id": "forgevia-repair-skill",
-      "source": "assets/codex/skills/forgevia-repair",
-      "target": "~/.codex/skills/forgevia-repair",
-      "owner": "forgevia",
+      "id": "firefly-repair-skill",
+      "source": "assets/codex/skills/firefly-repair",
+      "target": "~/.codex/skills/firefly-repair",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
-      "id": "forgevia-implement-skill",
-      "source": "assets/codex/skills/forgevia-implement",
-      "target": "~/.codex/skills/forgevia-implement",
-      "owner": "forgevia",
+      "id": "firefly-implement-skill",
+      "source": "assets/codex/skills/firefly-implement",
+      "target": "~/.codex/skills/firefly-implement",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
-      "id": "forgevia-archive-skill",
-      "source": "assets/codex/skills/forgevia-archive",
-      "target": "~/.codex/skills/forgevia-archive",
-      "owner": "forgevia",
+      "id": "firefly-archive-skill",
+      "source": "assets/codex/skills/firefly-archive",
+      "target": "~/.codex/skills/firefly-archive",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
-      "id": "forgevia-tasks-skill",
-      "source": "assets/codex/skills/forgevia-tasks",
-      "target": "~/.codex/skills/forgevia-tasks",
-      "owner": "forgevia",
+      "id": "firefly-tasks-skill",
+      "source": "assets/codex/skills/firefly-tasks",
+      "target": "~/.codex/skills/firefly-tasks",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
-      "id": "forgevia-think-skill",
-      "source": "assets/codex/skills/forgevia-think",
-      "target": "~/.codex/skills/forgevia-think",
-      "owner": "forgevia",
+      "id": "firefly-think-skill",
+      "source": "assets/codex/skills/firefly-think",
+      "target": "~/.codex/skills/firefly-think",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
-      "id": "forgevia-propose-skill",
-      "source": "assets/codex/skills/forgevia-propose",
-      "target": "~/.codex/skills/forgevia-propose",
-      "owner": "forgevia",
+      "id": "firefly-propose-skill",
+      "source": "assets/codex/skills/firefly-propose",
+      "target": "~/.codex/skills/firefly-propose",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
-      "id": "forgevia-review-skill",
-      "source": "assets/codex/skills/forgevia-review",
-      "target": "~/.codex/skills/forgevia-review",
-      "owner": "forgevia",
+      "id": "firefly-review-skill",
+      "source": "assets/codex/skills/firefly-review",
+      "target": "~/.codex/skills/firefly-review",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
-      "id": "forgevia-verify-web-skill",
-      "source": "assets/codex/skills/forgevia-verify-web",
-      "target": "~/.codex/skills/forgevia-verify-web",
-      "owner": "forgevia",
+      "id": "firefly-verify-web-skill",
+      "source": "assets/codex/skills/firefly-verify-web",
+      "target": "~/.codex/skills/firefly-verify-web",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
-      "id": "forgevia-draw-skill",
-      "source": "assets/codex/skills/forgevia-draw",
-      "target": "~/.codex/skills/forgevia-draw",
-      "owner": "forgevia",
+      "id": "firefly-draw-skill",
+      "source": "assets/codex/skills/firefly-draw",
+      "target": "~/.codex/skills/firefly-draw",
+      "owner": "firefly",
       "kind": "skill-directory"
     },
     {
       "id": "mermaid-diagram-specialist-skill",
       "source": "assets/codex/skills/mermaid-diagram-specialist",
       "target": "~/.codex/skills/mermaid-diagram-specialist",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "skill-directory",
-      "origin": "forgevia-original"
+      "origin": "firefly-original"
     },
     {
       "id": "playwright-interactive-skill",
       "source": "assets/codex/skills/playwright-interactive",
       "target": "~/.codex/skills/playwright-interactive",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "skill-directory",
       "upstream": "vendored third-party: Apache-2.0, © Microsoft Corporation (LICENSE.txt/NOTICE.txt retained)"
     },
@@ -172,7 +172,7 @@
       "id": "brainstorming-skill",
       "source": "assets/codex/superpowers/skills/brainstorming/SKILL.md",
       "target": "~/.codex/superpowers/skills/brainstorming/SKILL.md",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "superpowers-override",
       "upstream": "superpowers"
     },
@@ -180,7 +180,7 @@
       "id": "writing-plans-skill",
       "source": "assets/codex/superpowers/skills/writing-plans/SKILL.md",
       "target": "~/.codex/superpowers/skills/writing-plans/SKILL.md",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "superpowers-override",
       "upstream": "superpowers"
     },
@@ -188,7 +188,7 @@
       "id": "subagent-driven-development-skill",
       "source": "assets/codex/superpowers/skills/subagent-driven-development",
       "target": "~/.codex/superpowers/skills/subagent-driven-development",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "superpowers-override",
       "upstream": "superpowers"
     },
@@ -196,7 +196,7 @@
       "id": "requesting-code-review-skill",
       "source": "assets/codex/superpowers/skills/requesting-code-review",
       "target": "~/.codex/superpowers/skills/requesting-code-review",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "superpowers-override",
       "upstream": "superpowers"
     },
@@ -204,7 +204,7 @@
       "id": "test-driven-development-skill",
       "source": "assets/codex/superpowers/skills/test-driven-development/SKILL.md",
       "target": "~/.codex/superpowers/skills/test-driven-development/SKILL.md",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "superpowers-override",
       "upstream": "superpowers"
     },
@@ -212,75 +212,75 @@
       "id": "executing-plans-skill",
       "source": "assets/codex/superpowers/skills/executing-plans/SKILL.md",
       "target": "~/.codex/superpowers/skills/executing-plans/SKILL.md",
-      "owner": "forgevia",
+      "owner": "firefly",
       "kind": "superpowers-override",
       "upstream": "superpowers"
     },
     {
       "id": "runtime-bootstrap-script",
       "source": "scripts/bootstrap-project.sh",
-      "target": "~/.codex/forgevia/bin/bootstrap-project.sh",
-      "owner": "forgevia",
+      "target": "~/.codex/firefly/bin/bootstrap-project.sh",
+      "owner": "firefly",
       "kind": "runtime-script"
     },
     {
       "id": "runtime-list-change-tasks-script",
       "source": "scripts/list-change-tasks.sh",
-      "target": "~/.codex/forgevia/bin/list-change-tasks.sh",
-      "owner": "forgevia",
+      "target": "~/.codex/firefly/bin/list-change-tasks.sh",
+      "owner": "firefly",
       "kind": "runtime-script"
     },
     {
-      "id": "runtime-forgevia-draw-script",
-      "source": "scripts/forgevia-draw.sh",
-      "target": "~/.codex/forgevia/bin/forgevia-draw.sh",
-      "owner": "forgevia",
+      "id": "runtime-firefly-draw-script",
+      "source": "scripts/firefly-draw.sh",
+      "target": "~/.codex/firefly/bin/firefly-draw.sh",
+      "owner": "firefly",
       "kind": "runtime-script"
     },
     {
       "id": "runtime-doctor-script",
       "source": "scripts/doctor-codex.sh",
-      "target": "~/.codex/forgevia/bin/doctor-codex.sh",
-      "owner": "forgevia",
+      "target": "~/.codex/firefly/bin/doctor-codex.sh",
+      "owner": "firefly",
       "kind": "runtime-script"
     },
     {
       "id": "runtime-common-script",
-      "source": "scripts/forgevia-common.sh",
-      "target": "~/.codex/forgevia/bin/forgevia-common.sh",
-      "owner": "forgevia",
+      "source": "scripts/firefly-common.sh",
+      "target": "~/.codex/firefly/bin/firefly-common.sh",
+      "owner": "firefly",
       "kind": "runtime-script",
       "note": "Shared shell helpers sourced by runtime install/doctor scripts; provides portable SHA-256."
     },
     {
       "id": "runtime-chinese-openspec-validator",
       "source": "scripts/validate-openspec-cn.mjs",
-      "target": "~/.codex/forgevia/bin/validate-openspec-cn.mjs",
-      "owner": "forgevia",
+      "target": "~/.codex/firefly/bin/validate-openspec-cn.mjs",
+      "owner": "firefly",
       "kind": "runtime-script"
     },
     {
-      "id": "runtime-forgevia-command",
-      "source": "scripts/forgevia.sh",
-      "target": "~/.codex/forgevia/bin/forgevia",
-      "owner": "forgevia",
+      "id": "runtime-firefly-command",
+      "source": "scripts/firefly.sh",
+      "target": "~/.codex/firefly/bin/firefly",
+      "owner": "firefly",
       "kind": "runtime-command"
     },
     {
-      "id": "global-forgevia-command",
-      "source": "scripts/forgevia-global.sh",
-      "target": "~/.local/bin/forgevia",
-      "owner": "forgevia",
+      "id": "global-firefly-command",
+      "source": "scripts/firefly-global.sh",
+      "target": "~/.local/bin/firefly",
+      "owner": "firefly",
       "kind": "global-command",
-      "note": "A platform-neutral command that dispatches to installed Forgevia runtimes."
+      "note": "A platform-neutral command that dispatches to installed firefly runtimes."
     },
     {
-      "id": "forgevia-home-mirror",
+      "id": "firefly-home-mirror",
       "source": "repo root (assets, scripts, manifests)",
-      "target": "~/.codex/forgevia",
-      "owner": "forgevia",
+      "target": "~/.codex/firefly",
+      "owner": "firefly",
       "kind": "source-mirror",
-      "note": "Source baseline mirrored by install so global doctor/repair can diff installed assets against Forgevia-owned copies from any directory."
+      "note": "Source baseline mirrored by install so global doctor/repair can diff installed assets against firefly-owned copies from any directory."
     }
   ]
 }
