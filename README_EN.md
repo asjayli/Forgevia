@@ -8,6 +8,8 @@
 
 </div>
 
+**Current version: 0.1.0** ([CHANGELOG](CHANGELOG.md)) · License: [MIT](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+
 Forge your agent workflow into steel.
 
 firefly is an opinionated workflow bundle for agent coding.
@@ -32,7 +34,7 @@ firefly is an opinionated workflow bundle for agent coding.
 Tell Codex:
 
 ```text
-Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/firefly/refs/heads/main/INSTALL.codex.md
+Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/Forgevia/refs/heads/main/INSTALL.codex.md
 ```
 
 ## Install For Claude
@@ -40,7 +42,7 @@ Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/fir
 Tell Claude:
 
 ```text
-Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/firefly/refs/heads/main/INSTALL.claude.md
+Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/Forgevia/refs/heads/main/INSTALL.claude.md
 ```
 
 ## Skills

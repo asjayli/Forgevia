@@ -31,7 +31,6 @@ The Codex installer manages:
 
 ## Prerequisites
 
-- `node` and `npm` are available
 - `node` and `npm` are available; the installer always installs OpenSpec `1.6.0`, replacing any local version
 - `superpowers` is installed under `~/.codex/superpowers` from the upstream guide:
 
@@ -43,7 +42,7 @@ applying firefly assets, replacing any locally installed OpenSpec version.
 ## Install
 
 ```bash
-git clone https://github.com/asjayli/firefly.git
+git clone https://github.com/asjayli/Forgevia.git
 cd firefly
 bash scripts/install-codex.sh
 ```
