@@ -32,7 +32,7 @@ firefly 是一套面向 agent coding 的工作流整合方案。
 直接对 Codex 说：
 
 ```text
-帮我安装，交互过程请使用中文：Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/firefly/refs/heads/main/INSTALL.codex.md
+帮我安装，交互过程请使用中文：Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/Forgevia/refs/heads/main/INSTALL.codex.md
 ```
 
 ## Claude 安装方式
@@ -40,7 +40,7 @@ firefly 是一套面向 agent coding 的工作流整合方案。
 直接对 Claude 说：
 
 ```text
-帮我安装，交互过程请使用中文：Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/firefly/refs/heads/main/INSTALL.claude.md
+帮我安装，交互过程请使用中文：Fetch and follow instructions from https://raw.githubusercontent.com/asjayli/Forgevia/refs/heads/main/INSTALL.claude.md
 ```
 
 ## 技能能力
