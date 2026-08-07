@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SCRIPT="$ROOT_DIR/scripts/forgevia-draw.sh"
+SCRIPT="$ROOT_DIR/scripts/firefly-draw.sh"
 
 assert_contains() {
   local haystack="$1"
@@ -79,7 +79,7 @@ chmod +x "$bin_dir/mmdc"
 help_output="$("$SCRIPT" --help)"
 assert_contains "$help_output" "Generate timestamped Mermaid sequence diagram outputs"
 
-draw_output="$(printf 'sequenceDiagram\nA->>B: Login\n' | PATH="$bin_dir:$PATH" ARGS_LOG="$args_log" CONFIG_LOG="$config_log" MMDC_BIN="$bin_dir/mmdc" FORGEVIA_DRAW_CHROME_PATH="$fake_chrome" FORGEVIA_DRAW_TIMESTAMP="20260320-120101" "$SCRIPT" "login-flow" "$tmp_dir/out")"
+draw_output="$(printf 'sequenceDiagram\nA->>B: Login\n' | PATH="$bin_dir:$PATH" ARGS_LOG="$args_log" CONFIG_LOG="$config_log" MMDC_BIN="$bin_dir/mmdc" FIREFLY_DRAW_CHROME_PATH="$fake_chrome" FIREFLY_DRAW_TIMESTAMP="20260320-120101" "$SCRIPT" "login-flow" "$tmp_dir/out")"
 
 expected_base="$tmp_dir/out/20260320-120101-login-flow"
 mmd_path="${expected_base}.mmd"
@@ -98,7 +98,7 @@ assert_file_contains "$config_log" "\"executablePath\": \"$fake_chrome\""
 # A timestamp is part of the generated filename, so an environment override
 # must not be able to escape the caller-selected output directory.
 set +e
-invalid_timestamp_output="$(printf 'sequenceDiagram\nA->>B: Login\n' | PATH="$bin_dir:$PATH" ARGS_LOG="$args_log" CONFIG_LOG="$config_log" MMDC_BIN="$bin_dir/mmdc" FORGEVIA_DRAW_TIMESTAMP="../outside" "$SCRIPT" "login-flow" "$tmp_dir/out" 2>&1)"
+invalid_timestamp_output="$(printf 'sequenceDiagram\nA->>B: Login\n' | PATH="$bin_dir:$PATH" ARGS_LOG="$args_log" CONFIG_LOG="$config_log" MMDC_BIN="$bin_dir/mmdc" FIREFLY_DRAW_TIMESTAMP="../outside" "$SCRIPT" "login-flow" "$tmp_dir/out" 2>&1)"
 invalid_timestamp_status=$?
 set -e
 
@@ -106,7 +106,7 @@ if [[ "$invalid_timestamp_status" != "1" ]]; then
   echo "expected invalid timestamp exit code 1 but got $invalid_timestamp_status" >&2
   exit 1
 fi
-assert_contains "$invalid_timestamp_output" "invalid Forgevia draw timestamp"
+assert_contains "$invalid_timestamp_output" "invalid firefly draw timestamp"
 if [[ -e "$tmp_dir/outside-login-flow.mmd" ]]; then
   echo "timestamp override escaped the output directory" >&2
   exit 1

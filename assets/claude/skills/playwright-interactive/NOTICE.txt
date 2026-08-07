@@ -1,4 +1,4 @@
-This skill reuses the bundled Playwright icon assets shipped with Forgevia.
+This skill reuses the bundled Playwright icon assets shipped with firefly.
 
 The local `playwright` skill attributes those assets to the Microsoft
 `playwright-cli` repository.

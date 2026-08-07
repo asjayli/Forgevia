@@ -127,7 +127,7 @@ Ordinary errors and the first failing check are diagnostic inputs. Diagnose and 
 
 If a reviewer fails to start, times out, crashes, or returns an invalid verdict, use the unchanged review package with a fresh independent reviewer for at most two infrastructure retries. If both retries fail, `ESCALATE` once with the collected infrastructure evidence; never infer `APPROVE`.
 
-After final `APPROVE`, read the authorization envelope. Forgevia implement and a complete Forgevia workflow default to a completion summary with the change active. Invoke `finishing-a-development-branch` only when the envelope separately and explicitly authorizes the relevant merge, push, or cleanup effects.
+After final `APPROVE`, read the authorization envelope. firefly implement and a complete firefly workflow default to a completion summary with the change active. Invoke `finishing-a-development-branch` only when the envelope separately and explicitly authorizes the relevant merge, push, or cleanup effects.
 
 ## Pre-Flight Plan Review
 

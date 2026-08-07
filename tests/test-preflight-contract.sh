@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Pins the baseline preflight contract introduced in task group 5 on both
-# rendered platforms. forgevia-implement, executing-plans,
+# rendered platforms. firefly-implement, executing-plans,
 # subagent-driven-development and openspec-apply-change must each carry:
 #   - the once-before-first-modification baseline verification
 #   - a Preflight section recorded in the SDD progress ledger
@@ -25,7 +25,7 @@ assert_contains() {
 }
 
 for platform in codex claude; do
-  implement="$ROOT_DIR/assets/$platform/skills/forgevia-implement/SKILL.md"
+  implement="$ROOT_DIR/assets/$platform/skills/firefly-implement/SKILL.md"
   executing="$ROOT_DIR/assets/$platform/superpowers/skills/executing-plans/SKILL.md"
   sdd="$ROOT_DIR/assets/$platform/superpowers/skills/subagent-driven-development/SKILL.md"
   apply="$ROOT_DIR/assets/$platform/skills/openspec-apply-change/SKILL.md"

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 MMDC_BIN="${MMDC_BIN:-mmdc}"
-DEFAULT_OUTPUT_DIR="./forgevia-drawings"
+DEFAULT_OUTPUT_DIR="./firefly-drawings"
 
 usage() {
   cat <<EOF
@@ -22,8 +22,8 @@ EOF
 }
 
 timestamp() {
-  if [[ -n "${FORGEVIA_DRAW_TIMESTAMP:-}" ]]; then
-    printf '%s\n' "$FORGEVIA_DRAW_TIMESTAMP"
+  if [[ -n "${FIREFLY_DRAW_TIMESTAMP:-}" ]]; then
+    printf '%s\n' "$FIREFLY_DRAW_TIMESTAMP"
     return
   fi
 
@@ -34,7 +34,7 @@ validate_timestamp() {
   local value="$1"
 
   if [[ ! "$value" =~ ^[0-9]{8}-[0-9]{6}$ ]]; then
-    echo "invalid Forgevia draw timestamp: $value (expected YYYYMMDD-HHMMSS)" >&2
+    echo "invalid firefly draw timestamp: $value (expected YYYYMMDD-HHMMSS)" >&2
     exit 1
   fi
 }
@@ -51,7 +51,7 @@ detect_chrome_path() {
   local candidate
 
   for candidate in \
-    "${FORGEVIA_DRAW_CHROME_PATH:-}" \
+    "${FIREFLY_DRAW_CHROME_PATH:-}" \
     "${PUPPETEER_EXECUTABLE_PATH:-}" \
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
     "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary" \
@@ -121,7 +121,7 @@ main() {
   mmdc_cmd=("$MMDC_BIN" -i "$mmd_path" -o "$svg_path")
 
   if chrome_path="$(detect_chrome_path)"; then
-    puppeteer_config="$(mktemp "${TMPDIR:-/tmp}/forgevia-draw-puppeteer.XXXXXX")"
+    puppeteer_config="$(mktemp "${TMPDIR:-/tmp}/firefly-draw-puppeteer.XXXXXX")"
     trap 'rm -f "${puppeteer_config:-}"' EXIT
     write_puppeteer_config "$chrome_path" "$puppeteer_config"
     mmdc_cmd+=(-p "$puppeteer_config")

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-# Forgevia global command shim
+# firefly global command shim
 set -euo pipefail
 
-CODEX_RUNTIME="${CODEX_HOME:-$HOME/.codex}/forgevia/bin/forgevia"
-CLAUDE_RUNTIME="${CLAUDE_HOME:-$HOME/.claude}/forgevia/bin/forgevia"
+CODEX_RUNTIME="${CODEX_HOME:-$HOME/.codex}/firefly/bin/firefly"
+CLAUDE_RUNTIME="${CLAUDE_HOME:-$HOME/.claude}/firefly/bin/firefly"
 
 runtime_exists() {
   [[ -x "$1" ]]
@@ -26,7 +26,7 @@ run_global_doctor() {
   fi
 
   if [[ "$found" == "false" ]]; then
-    echo "Forgevia is not installed for Codex or Claude" >&2
+    echo "firefly is not installed for Codex or Claude" >&2
     return 1
   fi
   return "$status"
@@ -45,7 +45,7 @@ case "$command_name" in
     if runtime_exists "$CLAUDE_RUNTIME"; then
       exec "$CLAUDE_RUNTIME" "$@"
     fi
-    echo "Forgevia is not installed for Codex or Claude" >&2
+    echo "firefly is not installed for Codex or Claude" >&2
     exit 1
     ;;
 esac

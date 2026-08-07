@@ -123,7 +123,7 @@ if grep -q '^MUST ' "$project_dir/openspec/changes/change/specs/capability/spec.
   echo "validator modified the source change spec" >&2
   exit 1
 fi
-if compgen -G "$tmp_dir/staging/forgevia-openspec-cn-*" >/dev/null; then
+if compgen -G "$tmp_dir/staging/firefly-openspec-cn-*" >/dev/null; then
   echo "validator left a staging directory after success" >&2
   exit 1
 fi
@@ -237,7 +237,7 @@ set -e
 
 assert_exit_code "$native_failure_status" "9"
 assert_contains "$(cat "$log_file")" "validate --changes --strict --no-interactive"
-if compgen -G "$tmp_dir/staging/forgevia-openspec-cn-*" >/dev/null; then
+if compgen -G "$tmp_dir/staging/firefly-openspec-cn-*" >/dev/null; then
   echo "validator left a staging directory after native failure" >&2
   exit 1
 fi
