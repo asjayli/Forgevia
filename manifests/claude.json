@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "fireflyVersion": "0.1.0",
   "platform": "claude",
   "managedRoot": "~/.claude",
@@ -290,6 +290,7 @@
     {
       "id": "firefly-home-mirror",
       "source": "repo root (assets, scripts, manifests)",
+      "paths": ["assets", "scripts", "manifests"],
       "target": "~/.claude/firefly",
       "owner": "firefly",
       "kind": "source-mirror",

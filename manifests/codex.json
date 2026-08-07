@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "fireflyVersion": "0.1.0",
   "platform": "codex",
   "managedRoot": "~/.codex",
@@ -174,7 +174,7 @@
       "source": "assets/codex/superpowers/skills/brainstorming/SKILL.md",
       "target": "~/.codex/superpowers/skills/brainstorming/SKILL.md",
       "owner": "firefly",
-      "kind": "superpowers-override",
+      "kind": "superpowers-plugin-override",
       "upstream": "superpowers"
     },
     {
@@ -182,7 +182,7 @@
       "source": "assets/codex/superpowers/skills/writing-plans/SKILL.md",
       "target": "~/.codex/superpowers/skills/writing-plans/SKILL.md",
       "owner": "firefly",
-      "kind": "superpowers-override",
+      "kind": "superpowers-plugin-override",
       "upstream": "superpowers"
     },
     {
@@ -190,7 +190,7 @@
       "source": "assets/codex/superpowers/skills/subagent-driven-development",
       "target": "~/.codex/superpowers/skills/subagent-driven-development",
       "owner": "firefly",
-      "kind": "superpowers-override",
+      "kind": "superpowers-plugin-override",
       "upstream": "superpowers"
     },
     {
@@ -198,7 +198,7 @@
       "source": "assets/codex/superpowers/skills/requesting-code-review",
       "target": "~/.codex/superpowers/skills/requesting-code-review",
       "owner": "firefly",
-      "kind": "superpowers-override",
+      "kind": "superpowers-plugin-override",
       "upstream": "superpowers"
     },
     {
@@ -206,7 +206,7 @@
       "source": "assets/codex/superpowers/skills/test-driven-development/SKILL.md",
       "target": "~/.codex/superpowers/skills/test-driven-development/SKILL.md",
       "owner": "firefly",
-      "kind": "superpowers-override",
+      "kind": "superpowers-plugin-override",
       "upstream": "superpowers"
     },
     {
@@ -214,7 +214,7 @@
       "source": "assets/codex/superpowers/skills/executing-plans/SKILL.md",
       "target": "~/.codex/superpowers/skills/executing-plans/SKILL.md",
       "owner": "firefly",
-      "kind": "superpowers-override",
+      "kind": "superpowers-plugin-override",
       "upstream": "superpowers"
     },
     {
@@ -278,6 +278,7 @@
     {
       "id": "firefly-home-mirror",
       "source": "repo root (assets, scripts, manifests)",
+      "paths": ["assets", "scripts", "manifests"],
       "target": "~/.codex/firefly",
       "owner": "firefly",
       "kind": "source-mirror",

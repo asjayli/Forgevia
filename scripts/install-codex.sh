@@ -5,11 +5,12 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$(dirname "${BASH_SOURCE[0]}")/firefly-common.sh"
 MANIFEST_PATH="$ROOT_DIR/manifests/codex.json"
-ASSETS_DIR="$ROOT_DIR/assets/codex"
-OPENSPEC_ASSETS_DIR="$ROOT_DIR/assets/openspec"
+export FIREFLY_MANIFEST_HELPER="$ROOT_DIR/scripts/manifest-assets.mjs"
 CODEX_ROOT="${CODEX_HOME:-$HOME/.codex}"
 FIREFLY_BIN_DIR="${FIREFLY_BIN_DIR:-$HOME/.local/bin}"
-GLOBAL_COMMAND_STATE_PATH="$FIREFLY_BIN_DIR/.firefly-global-command.sha256"
+export GLOBAL_COMMAND_STATE_PATH="$FIREFLY_BIN_DIR/.firefly-global-command.sha256"
+export GLOBAL_COMMAND_SOURCE=""
+export GLOBAL_COMMAND_PATH=""
 SUPERPOWERS_INSTALL_URL="https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.codex/INSTALL.md"
 OPENSPEC_ROOT="${OPENSPEC_ROOT:-}"
 # firefly's openspec override files are snapshots taken against this upstream
@@ -34,172 +35,10 @@ Behavior:
   - requires upstream superpowers to already exist
   - directly overlays firefly-managed assets into ~/.codex
   - exposes the firefly command at ~/.local/bin/firefly
+
+The managed-asset list comes from the manifest above via manifest-assets.mjs;
+this script only adds behavior (version gating, checksum state, backups).
 EOF
-}
-
-log_info() {
-  echo "ℹ️  $1"
-}
-
-log_step() {
-  echo "🧱 $1"
-}
-
-log_success() {
-  echo "✅ $1"
-}
-
-log_backup() {
-  echo "💾 $1"
-}
-
-require_command() {
-  local command_name="$1"
-  if ! command -v "$command_name" >/dev/null 2>&1; then
-    echo "missing required command: $command_name" >&2
-    exit 1
-  fi
-}
-
-validate_root() {
-  local root_path="$1"
-  local expected_suffix="$2"
-
-  if [[ -z "$root_path" ]]; then
-    echo "root path is empty" >&2
-    exit 1
-  fi
-  if [[ "$root_path" != /* ]]; then
-    echo "root path must be absolute: $root_path" >&2
-    exit 1
-  fi
-  if [[ "$root_path" == "/" ]]; then
-    echo "root path must not be /" >&2
-    exit 1
-  fi
-  if [[ -n "$expected_suffix" && "$root_path" != *"$expected_suffix" ]]; then
-    echo "root path must end with $expected_suffix: $root_path" >&2
-    exit 1
-  fi
-}
-
-ensure_under_root() {
-  local target_path="$1"
-  local root_path="$2"
-
-  if [[ "$target_path" != "$root_path" && "$target_path" != "$root_path"/* ]]; then
-    echo "target path escapes root: $target_path" >&2
-    exit 1
-  fi
-}
-
-copy_path() {
-  local source_path="$1"
-  local target_path="$2"
-
-  mkdir -p "$(dirname "$target_path")"
-  rm -rf "$target_path"
-  cp -R "$source_path" "$target_path"
-}
-
-resolve_managed_target() {
-  local target_path="$1"
-  local resolved_path="$target_path"
-  local link_target
-  local depth=0
-
-  # Preserve a user-managed final symlink while replacing its resolved target.
-  while [[ -L "$resolved_path" ]]; do
-    ((depth += 1))
-    if [[ "$depth" -gt 40 ]]; then
-      echo "too many symbolic links while resolving managed target: $target_path" >&2
-      exit 1
-    fi
-
-    link_target="$(readlink "$resolved_path")"
-    if [[ "$link_target" == /* ]]; then
-      resolved_path="$link_target"
-    else
-      resolved_path="$(dirname "$resolved_path")/$link_target"
-    fi
-  done
-
-  printf '%s\n' "$resolved_path"
-}
-
-backup_target_if_present() {
-  local target_path="$1"
-  local backup_path="${target_path}.firefly.bak"
-
-  if [[ ! -e "$target_path" ]]; then
-    return
-  fi
-
-  rm -rf "$backup_path"
-  cp -R "$target_path" "$backup_path"
-  log_backup "Backed up $target_path -> $backup_path"
-}
-
-remove_stale_backup() {
-  local target_path="$1"
-  local backup_path="${target_path}.firefly.bak"
-
-  rm -rf "$backup_path"
-}
-
-sync_path() {
-  local source_path="$1"
-  local target_path="$2"
-  local resolved_target
-
-  resolved_target="$(resolve_managed_target "$target_path")"
-  backup_target_if_present "$resolved_target"
-  copy_path "$source_path" "$resolved_target"
-  remove_stale_backup "$resolved_target"
-}
-
-install_openspec() {
-  log_step "Installing OpenSpec $OPENSPEC_OVERRIDE_VERSION with npm"
-  npm install -g @fission-ai/openspec@1.6.0
-  log_success "Installed OpenSpec $OPENSPEC_OVERRIDE_VERSION from npm"
-}
-
-resolve_openspec_root() {
-  if [[ -n "$OPENSPEC_ROOT" ]]; then
-    validate_root "$OPENSPEC_ROOT" ""
-    echo "$OPENSPEC_ROOT"
-    return
-  fi
-
-  local npm_global_root
-  npm_global_root="$(npm root -g)"
-  local resolved="$npm_global_root/@fission-ai/openspec"
-  validate_root "$resolved" "@fission-ai/openspec"
-  echo "$resolved"
-}
-
-read_openspec_version() {
-  local openspec_root="$1"
-  local pkg="$openspec_root/package.json"
-  [[ -f "$pkg" ]] || return 0
-  node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.stdout.write(p.version||"")' "$pkg" 2>/dev/null
-}
-
-is_valid_openspec_package() {
-  local openspec_root="$1"
-  local pkg="$openspec_root/package.json"
-
-  [[ -f "$pkg" ]] || return 1
-  node -e 'const p=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); process.exit(p.name === "@fission-ai/openspec" ? 0 : 1)' "$pkg" 2>/dev/null
-}
-
-openspec_version_matches() {
-  local openspec_root="$1"
-  local ver
-
-  is_valid_openspec_package "$openspec_root" || return 1
-  ver="$(read_openspec_version "$openspec_root")"
-  [[ "$ver" == "$OPENSPEC_OVERRIDE_VERSION" ]]
 }
 
 verify_superpowers_present() {
@@ -216,69 +55,23 @@ EOF
   exit 1
 }
 
-validate_global_command_target() {
-  local command_path="$FIREFLY_BIN_DIR/firefly"
-
-  validate_root "$FIREFLY_BIN_DIR" ""
-  if [[ ( -e "$command_path" || -L "$command_path" ) ]] && ! is_managed_global_command "$command_path" && ! is_legacy_runtime_link "$command_path"; then
-    echo "refusing to replace existing command: $command_path" >&2
-    exit 1
-  fi
-}
-
-is_managed_global_command() {
-  local command_path="$1"
-
-  [[ -f "$command_path" && ! -L "$command_path" ]] || return 1
-  cmp -s "$ROOT_DIR/scripts/firefly-global.sh" "$command_path" && return 0
-  [[ -f "$GLOBAL_COMMAND_STATE_PATH" ]] && [[ "$(<"$GLOBAL_COMMAND_STATE_PATH")" == "$(command_checksum "$command_path")" ]]
-}
-
-command_checksum() {
-  firefly_sha256_file "$1"
-}
-
-write_global_command_state() {
-  command_checksum "$FIREFLY_BIN_DIR/firefly" > "$GLOBAL_COMMAND_STATE_PATH"
-}
-
-is_legacy_runtime_link() {
-  local command_path="$1"
-  local target_path
-
-  [[ -L "$command_path" ]] || return 1
-  target_path="$(readlink "$command_path")"
-  [[ "$target_path" == "$CODEX_ROOT/firefly/bin/firefly" || "$target_path" == "${CLAUDE_HOME:-$HOME/.claude}/firefly/bin/firefly" ]]
+install_openspec() {
+  log_step "Installing OpenSpec $OPENSPEC_OVERRIDE_VERSION with npm"
+  npm install -g @fission-ai/openspec@1.6.0
+  log_success "Installed OpenSpec $OPENSPEC_OVERRIDE_VERSION from npm"
 }
 
 overlay_assets() {
   log_step "Overlaying firefly-managed assets into $CODEX_ROOT"
 
-  sync_path "$ASSETS_DIR/skills/openspec-propose" "$CODEX_ROOT/skills/openspec-propose"
-  sync_path "$ASSETS_DIR/skills/openspec-apply-change" "$CODEX_ROOT/skills/openspec-apply-change"
-  sync_path "$ASSETS_DIR/skills/openspec-archive-change" "$CODEX_ROOT/skills/openspec-archive-change"
-  sync_path "$ASSETS_DIR/skills/openspec-explore" "$CODEX_ROOT/skills/openspec-explore"
-  sync_path "$ASSETS_DIR/skills/openspec-sync-specs" "$CODEX_ROOT/skills/openspec-sync-specs"
-  sync_path "$ASSETS_DIR/skills/firefly" "$CODEX_ROOT/skills/firefly"
-  sync_path "$ASSETS_DIR/skills/firefly-init" "$CODEX_ROOT/skills/firefly-init"
-  sync_path "$ASSETS_DIR/skills/firefly-doctor" "$CODEX_ROOT/skills/firefly-doctor"
-  sync_path "$ASSETS_DIR/skills/firefly-repair" "$CODEX_ROOT/skills/firefly-repair"
-  sync_path "$ASSETS_DIR/skills/firefly-implement" "$CODEX_ROOT/skills/firefly-implement"
-  sync_path "$ASSETS_DIR/skills/firefly-archive" "$CODEX_ROOT/skills/firefly-archive"
-  sync_path "$ASSETS_DIR/skills/firefly-tasks" "$CODEX_ROOT/skills/firefly-tasks"
-  sync_path "$ASSETS_DIR/skills/firefly-think" "$CODEX_ROOT/skills/firefly-think"
-  sync_path "$ASSETS_DIR/skills/firefly-propose" "$CODEX_ROOT/skills/firefly-propose"
-  sync_path "$ASSETS_DIR/skills/firefly-review" "$CODEX_ROOT/skills/firefly-review"
-  sync_path "$ASSETS_DIR/skills/firefly-verify-web" "$CODEX_ROOT/skills/firefly-verify-web"
-  sync_path "$ASSETS_DIR/skills/firefly-draw" "$CODEX_ROOT/skills/firefly-draw"
-  sync_path "$ASSETS_DIR/skills/mermaid-diagram-specialist" "$CODEX_ROOT/skills/mermaid-diagram-specialist"
-  sync_path "$ASSETS_DIR/skills/playwright-interactive" "$CODEX_ROOT/skills/playwright-interactive"
-  sync_path "$ASSETS_DIR/superpowers/skills/brainstorming/SKILL.md" "$CODEX_ROOT/superpowers/skills/brainstorming/SKILL.md"
-  sync_path "$ASSETS_DIR/superpowers/skills/writing-plans/SKILL.md" "$CODEX_ROOT/superpowers/skills/writing-plans/SKILL.md"
-  sync_path "$ASSETS_DIR/superpowers/skills/executing-plans/SKILL.md" "$CODEX_ROOT/superpowers/skills/executing-plans/SKILL.md"
-  sync_path "$ASSETS_DIR/superpowers/skills/subagent-driven-development" "$CODEX_ROOT/superpowers/skills/subagent-driven-development"
-  sync_path "$ASSETS_DIR/superpowers/skills/requesting-code-review" "$CODEX_ROOT/superpowers/skills/requesting-code-review"
-  sync_path "$ASSETS_DIR/superpowers/skills/test-driven-development/SKILL.md" "$CODEX_ROOT/superpowers/skills/test-driven-development/SKILL.md"
+  local manifest_lines
+  local kind source_path target_path
+  manifest_lines="$(firefly_manifest_assets "skill-directory,command-directory,superpowers-plugin-override")"
+  while IFS=$'\t' read -r kind source_path target_path; do
+    [[ -n "$kind" ]] || continue
+    sync_path "$source_path" "$target_path"
+  done <<< "$manifest_lines"
+
   log_success "Applied firefly-managed Codex assets"
 }
 
@@ -286,35 +79,30 @@ overlay_runtime_scripts() {
   local runtime_dir="$CODEX_ROOT/firefly/bin"
   log_step "Installing firefly runtime scripts into $runtime_dir"
   mkdir -p "$runtime_dir"
-  sync_path "$ROOT_DIR/scripts/bootstrap-project.sh" "$runtime_dir/bootstrap-project.sh"
-  sync_path "$ROOT_DIR/scripts/list-change-tasks.sh" "$runtime_dir/list-change-tasks.sh"
-  sync_path "$ROOT_DIR/scripts/firefly-draw.sh" "$runtime_dir/firefly-draw.sh"
-  sync_path "$ROOT_DIR/scripts/doctor-codex.sh" "$runtime_dir/doctor-codex.sh"
-  sync_path "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$runtime_dir/validate-openspec-cn.mjs"
-  sync_path "$ROOT_DIR/scripts/firefly.sh" "$runtime_dir/firefly"
-  sync_path "$ROOT_DIR/scripts/firefly-common.sh" "$runtime_dir/firefly-common.sh"
+
+  local manifest_lines
+  local kind source_path target_path
+  manifest_lines="$(firefly_manifest_assets "runtime-script,runtime-command")"
+  while IFS=$'\t' read -r kind source_path target_path; do
+    [[ -n "$kind" ]] || continue
+    sync_path "$source_path" "$target_path"
+  done <<< "$manifest_lines"
+
   log_success "Installed firefly runtime scripts (firefly/common/bootstrap/list-change-tasks/draw/doctor/validate-openspec-cn)"
-}
-
-install_global_command() {
-  local command_path="$FIREFLY_BIN_DIR/firefly"
-
-  log_step "Installing firefly command at $command_path"
-  mkdir -p "$FIREFLY_BIN_DIR"
-  if [[ -e "$command_path" || -L "$command_path" ]]; then
-    rm -f "$command_path"
-  fi
-  cp "$ROOT_DIR/scripts/firefly-global.sh" "$command_path"
-  write_global_command_state
-  log_success "Installed firefly command: $command_path"
 }
 
 overlay_firefly_home() {
   local home_dir="$CODEX_ROOT/firefly"
   log_step "Mirroring firefly source into $home_dir (baseline for global doctor/repair)"
-  sync_path "$ROOT_DIR/assets" "$home_dir/assets"
-  sync_path "$ROOT_DIR/scripts" "$home_dir/scripts"
-  sync_path "$ROOT_DIR/manifests" "$home_dir/manifests"
+
+  local manifest_lines
+  local kind source_path target_path
+  manifest_lines="$(firefly_manifest_assets "source-mirror")"
+  while IFS=$'\t' read -r kind source_path target_path; do
+    [[ -n "$kind" ]] || continue
+    sync_path "$source_path" "$target_path"
+  done <<< "$manifest_lines"
+
   log_success "Mirrored firefly source baseline"
 }
 
@@ -340,10 +128,15 @@ overlay_openspec_assets() {
     return 1
   fi
 
-  sync_path "$OPENSPEC_ASSETS_DIR/dist/core/config-prompts.js" "$openspec_root/dist/core/config-prompts.js"
-  sync_path "$OPENSPEC_ASSETS_DIR/dist/core/templates/workflows/propose.js" "$openspec_root/dist/core/templates/workflows/propose.js"
-  log_success "Applied openspec override: $openspec_root/dist/core/config-prompts.js"
-  log_success "Applied openspec override: $openspec_root/dist/core/templates/workflows/propose.js"
+  local -x FIREFLY_OPENSPEC_ROOT="$openspec_root"
+  local manifest_lines
+  local kind source_path target_path
+  manifest_lines="$(firefly_manifest_assets "openspec-override")"
+  while IFS=$'\t' read -r kind source_path target_path; do
+    [[ -n "$kind" ]] || continue
+    sync_path "$source_path" "$target_path"
+    log_success "Applied openspec override: $target_path"
+  done <<< "$manifest_lines"
 }
 
 main() {
@@ -365,14 +158,15 @@ main() {
 
   log_step "firefly Codex installer"
   validate_root "$CODEX_ROOT" ".codex"
-  validate_global_command_target
   require_command cp
   require_command rm
   require_command mkdir
   require_command node
-
   require_command npm
   firefly_require_sha256
+  resolve_global_command
+  validate_global_command_target
+
   install_openspec
 
   if ! overlay_openspec_assets; then
