@@ -18,7 +18,7 @@ test_file_exists() {
 
 test_file_exists "$SYNC"
 test_file_exists "$MANIFEST"
-test_file_exists "$ROOT_DIR/assets/shared/skills/forgevia-implement/SKILL.md"
+test_file_exists "$ROOT_DIR/assets/shared/skills/firefly-implement/SKILL.md"
 
 # 1. A clean tree must pass --check.
 node "$SYNC" --check
@@ -31,14 +31,14 @@ for platform in codex claude; do
 done
 
 # 3. Tampering a rendered file is detected and --check fails.
-target="$ROOT_DIR/assets/codex/skills/forgevia-archive/SKILL.md"
+target="$ROOT_DIR/assets/codex/skills/firefly-archive/SKILL.md"
 backup="$(mktemp)"
 cp "$target" "$backup"
 trap 'cp "$backup" "$target"; rm -f "$backup"' EXIT
 printf '\n<!-- parity tamper -->\n' >> "$target"
 
 set +e
-node "$SYNC" --check >/tmp/forgevia-parity.out 2>&1
+node "$SYNC" --check >/tmp/firefly-parity.out 2>&1
 status=$?
 set -e
 
@@ -46,9 +46,9 @@ if [[ "$status" -eq 0 ]]; then
   echo "FAIL: --check did not detect a tampered rendered file" >&2
   exit 1
 fi
-grep -q "DRIFT.*forgevia-archive" /tmp/forgevia-parity.out || {
-  echo "FAIL: expected DRIFT report for forgevia-archive" >&2
-  cat /tmp/forgevia-parity.out >&2
+grep -q "DRIFT.*firefly-archive" /tmp/firefly-parity.out || {
+  echo "FAIL: expected DRIFT report for firefly-archive" >&2
+  cat /tmp/firefly-parity.out >&2
   exit 1
 }
 

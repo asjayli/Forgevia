@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Classifies Forgevia managed assets by cross-platform sharing strategy. shared/ is the single hand-edited source rendered to assets/codex and assets/claude by scripts/sync-platform-assets.mjs. platformSpecific entries are kept per-platform with a recorded reason. sharedSemantics are cross-platform invariants enforced by --check even on platformSpecific assets, so non-platform meaning (e.g. openspec generatedBy) cannot silently drift.",
+  "description": "Classifies firefly managed assets by cross-platform sharing strategy. shared/ is the single hand-edited source rendered to assets/codex and assets/claude by scripts/sync-platform-assets.mjs. platformSpecific entries are kept per-platform with a recorded reason. sharedSemantics are cross-platform invariants enforced by --check even on platformSpecific assets, so non-platform meaning (e.g. openspec generatedBy) cannot silently drift.",
   "tokens": {
     "{{PLATFORM_HOME_ENV}}": {
       "codex": "${CODEX_HOME:-$HOME/.codex}",
@@ -16,15 +16,15 @@
     }
   },
   "shared": [
-    "skills/forgevia-implement",
-    "skills/forgevia-think",
-    "skills/forgevia-verify-web",
+    "skills/firefly-implement",
+    "skills/firefly-think",
+    "skills/firefly-verify-web",
     "skills/mermaid-diagram-specialist",
-    "skills/forgevia-archive",
-    "skills/forgevia-draw",
-    "skills/forgevia-propose",
-    "skills/forgevia-review",
-    "skills/forgevia-tasks",
+    "skills/firefly-archive",
+    "skills/firefly-draw",
+    "skills/firefly-propose",
+    "skills/firefly-review",
+    "skills/firefly-tasks",
     "skills/openspec-sync-specs",
     "superpowers/skills/brainstorming",
     "superpowers/skills/writing-plans",
@@ -33,20 +33,20 @@
   ],
   "platformSpecific": [
     {
-      "path": "skills/forgevia",
+      "path": "skills/firefly",
       "reason": "Router embeds divergent controller mechanisms: Codex spawn_agent/wait_agent/list_agents polling vs Claude native Task lifecycle, plus a phase-verification clause carried only by Codex."
     },
     {
-      "path": "skills/forgevia-init",
+      "path": "skills/firefly-init",
       "reason": "Initialization guidance differs in framing (--tools recommendation wording) beyond a plain path token."
     },
     {
-      "path": "skills/forgevia-doctor",
+      "path": "skills/firefly-doctor",
       "reason": "Prose references the platform by label ('Codex/Claude environment') in full sentences, not only path variables."
     },
     {
-      "path": "skills/forgevia-repair",
-      "reason": "Same platform-label sentence pattern as forgevia-doctor."
+      "path": "skills/firefly-repair",
+      "reason": "Same platform-label sentence pattern as firefly-doctor."
     },
     {
       "path": "skills/openspec-apply-change",

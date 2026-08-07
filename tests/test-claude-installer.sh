@@ -88,26 +88,26 @@ assert_contains "$(<"$INSTALLER")" 'npm install -g @fission-ai/openspec@1.6.0'
 
 installer_help="$("$INSTALLER" --help)"
 doctor_help="$("$DOCTOR" --help)"
-assert_contains "$installer_help" "Install Forgevia Claude assets"
+assert_contains "$installer_help" "Install firefly Claude assets"
 assert_contains "$installer_help" "$MANIFEST"
 assert_contains "$installer_help" "installs OpenSpec 1.6.0 on every run"
-assert_contains "$doctor_help" "Check Forgevia Claude managed assets"
+assert_contains "$doctor_help" "Check firefly Claude managed assets"
 assert_contains "$doctor_help" "$MANIFEST"
 assert_contains "$doctor_help" "--repair"
-assert_contains "$doctor_help" "Forgevia runtime command dispatcher"
+assert_contains "$doctor_help" "firefly runtime command dispatcher"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
 export CLAUDE_HOME="$tmp_dir/.claude"
-export FORGEVIA_BIN_DIR="$tmp_dir/.local/bin"
+export FIREFLY_BIN_DIR="$tmp_dir/.local/bin"
 bin_dir="$tmp_dir/bin"
 superpowers_root="$CLAUDE_HOME/plugins/cache/superpowers/6.1.1"
 export OPENSPEC_ROOT="$tmp_dir/openspec"
 npm_log="$tmp_dir/npm.log"
 export FAKE_NPM_ROOT="$tmp_dir/npm-global"
 export FAKE_NPM_LOG="$npm_log"
-mkdir -p "$CLAUDE_HOME/skills/forgevia-think" "$bin_dir"
+mkdir -p "$CLAUDE_HOME/skills/firefly-think" "$bin_dir"
 cat > "$bin_dir/npm" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -144,7 +144,7 @@ mkdir -p "$superpowers_root/skills/requesting-code-review"
 mkdir -p "$superpowers_root/skills/executing-plans"
 mkdir -p "$OPENSPEC_ROOT/dist/core/templates/workflows"
 printf '{"name":"@fission-ai/openspec","version":"1.6.0"}\n' > "$OPENSPEC_ROOT/package.json"
-printf 'user local claude think\n' > "$CLAUDE_HOME/skills/forgevia-think/SKILL.md"
+printf 'user local claude think\n' > "$CLAUDE_HOME/skills/firefly-think/SKILL.md"
 printf 'user local claude brainstorming\n' > "$superpowers_root/skills/brainstorming/SKILL.md"
 printf 'user local claude tdd\n' > "$superpowers_root/skills/test-driven-development/SKILL.md"
 printf 'user local claude review\n' > "$superpowers_root/skills/requesting-code-review/SKILL.md"
@@ -170,9 +170,9 @@ cat > "$CLAUDE_HOME/plugins/installed_plugins.json" <<EOF
 }
 EOF
 
-mkdir -p "$FORGEVIA_BIN_DIR"
-printf '#!/usr/bin/env bash\n# Forgevia global command shim\necho user-command\n' > "$FORGEVIA_BIN_DIR/forgevia"
-chmod +x "$FORGEVIA_BIN_DIR/forgevia"
+mkdir -p "$FIREFLY_BIN_DIR"
+printf '#!/usr/bin/env bash\n# firefly global command shim\necho user-command\n' > "$FIREFLY_BIN_DIR/firefly"
+chmod +x "$FIREFLY_BIN_DIR/firefly"
 
 set +e
 command_collision_output="$(PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
@@ -182,31 +182,31 @@ if [[ "$command_collision_status" != "1" ]]; then
   echo "expected command collision exit code 1 but got $command_collision_status" >&2
   exit 1
 fi
-assert_contains "$command_collision_output" "refusing to replace existing command: $FORGEVIA_BIN_DIR/forgevia"
-rm "$FORGEVIA_BIN_DIR/forgevia"
+assert_contains "$command_collision_output" "refusing to replace existing command: $FIREFLY_BIN_DIR/firefly"
+rm "$FIREFLY_BIN_DIR/firefly"
 
 installer_output="$(PATH="$bin_dir:$PATH" "$INSTALLER")"
-assert_contains "$installer_output" "🧱 Forgevia Claude installer"
+assert_contains "$installer_output" "🧱 firefly Claude installer"
 assert_contains "$installer_output" "✅ Applied openspec override"
-assert_contains "$installer_output" "✅ Applied Forgevia-managed Claude assets"
+assert_contains "$installer_output" "✅ Applied firefly-managed Claude assets"
 assert_contains "$installer_output" "✅ Detected Claude superpowers plugin at $superpowers_root"
-assert_contains "$installer_output" "✅ Applied Forgevia-managed Claude superpowers overrides"
+assert_contains "$installer_output" "✅ Applied firefly-managed Claude superpowers overrides"
 assert_contains "$installer_output" "💾 Backed up"
-assert_contains "$installer_output" "🎉 Forgevia Claude install complete"
+assert_contains "$installer_output" "🎉 firefly Claude install complete"
 assert_contains "$(cat "$npm_log")" "install -g @fission-ai/openspec@1.6.0"
 
 for mirror_path in assets scripts manifests; do
-  assert_paths_equal "$ROOT_DIR/$mirror_path" "$CLAUDE_HOME/forgevia/$mirror_path"
+  assert_paths_equal "$ROOT_DIR/$mirror_path" "$CLAUDE_HOME/firefly/$mirror_path"
 done
 
-test_path_not_exists "$CLAUDE_HOME/skills/forgevia-think.forgevia.bak"
-test_path_not_exists "$superpowers_root/skills/brainstorming/SKILL.md.forgevia.bak"
-test_path_not_exists "$superpowers_root/skills/test-driven-development/SKILL.md.forgevia.bak"
-test_path_not_exists "$superpowers_root/skills/requesting-code-review/SKILL.md.forgevia.bak"
-test_path_not_exists "$OPENSPEC_ROOT/dist/core/config-prompts.js.forgevia.bak"
-test_path_not_exists "$OPENSPEC_ROOT/dist/core/templates/workflows/propose.js.forgevia.bak"
-test_file_exists "$CLAUDE_HOME/skills/forgevia-think/SKILL.md"
-test_file_exists "$CLAUDE_HOME/skills/forgevia/SKILL.md"
+test_path_not_exists "$CLAUDE_HOME/skills/firefly-think.firefly.bak"
+test_path_not_exists "$superpowers_root/skills/brainstorming/SKILL.md.firefly.bak"
+test_path_not_exists "$superpowers_root/skills/test-driven-development/SKILL.md.firefly.bak"
+test_path_not_exists "$superpowers_root/skills/requesting-code-review/SKILL.md.firefly.bak"
+test_path_not_exists "$OPENSPEC_ROOT/dist/core/config-prompts.js.firefly.bak"
+test_path_not_exists "$OPENSPEC_ROOT/dist/core/templates/workflows/propose.js.firefly.bak"
+test_file_exists "$CLAUDE_HOME/skills/firefly-think/SKILL.md"
+test_file_exists "$CLAUDE_HOME/skills/firefly/SKILL.md"
 test_file_exists "$CLAUDE_HOME/skills/openspec-propose/SKILL.md"
 test_file_exists "$CLAUDE_HOME/skills/openspec-sync-specs/SKILL.md"
 test_file_exists "$CLAUDE_HOME/skills/mermaid-diagram-specialist/SKILL.md"
@@ -229,25 +229,25 @@ test_file_executable "$sdd_root/scripts/task-brief"
 test_file_executable "$sdd_root/scripts/review-package"
 test_file_executable "$sdd_root/scripts/sdd-workspace"
 
-# Runtime scripts are installed to ~/.claude/forgevia/bin and must stay executable.
-test_file_executable "$CLAUDE_HOME/forgevia/bin/bootstrap-project.sh"
-test_file_executable "$CLAUDE_HOME/forgevia/bin/list-change-tasks.sh"
-test_file_executable "$CLAUDE_HOME/forgevia/bin/forgevia-draw.sh"
-test_file_executable "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
-test_file_executable "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
-cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
-test_file_executable "$CLAUDE_HOME/forgevia/bin/forgevia"
-cmp "$ROOT_DIR/scripts/forgevia.sh" "$CLAUDE_HOME/forgevia/bin/forgevia"
-test_file_executable "$FORGEVIA_BIN_DIR/forgevia"
-cmp "$ROOT_DIR/scripts/forgevia-global.sh" "$FORGEVIA_BIN_DIR/forgevia"
-global_command_output="$(CODEX_HOME="$tmp_dir/.codex" PATH="$bin_dir:$PATH" "$FORGEVIA_BIN_DIR/forgevia" doctor)"
-assert_contains "$global_command_output" "Forgevia Claude doctor passed"
+# Runtime scripts are installed to ~/.claude/firefly/bin and must stay executable.
+test_file_executable "$CLAUDE_HOME/firefly/bin/bootstrap-project.sh"
+test_file_executable "$CLAUDE_HOME/firefly/bin/list-change-tasks.sh"
+test_file_executable "$CLAUDE_HOME/firefly/bin/firefly-draw.sh"
+test_file_executable "$CLAUDE_HOME/firefly/bin/doctor-claude.sh"
+test_file_executable "$CLAUDE_HOME/firefly/bin/validate-openspec-cn.mjs"
+cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CLAUDE_HOME/firefly/bin/validate-openspec-cn.mjs"
+test_file_executable "$CLAUDE_HOME/firefly/bin/firefly"
+cmp "$ROOT_DIR/scripts/firefly.sh" "$CLAUDE_HOME/firefly/bin/firefly"
+test_file_executable "$FIREFLY_BIN_DIR/firefly"
+cmp "$ROOT_DIR/scripts/firefly-global.sh" "$FIREFLY_BIN_DIR/firefly"
+global_command_output="$(CODEX_HOME="$tmp_dir/.codex" PATH="$bin_dir:$PATH" "$FIREFLY_BIN_DIR/firefly" doctor)"
+assert_contains "$global_command_output" "firefly Claude doctor passed"
 
-expected_skill="$(cat "$ROOT_DIR/assets/claude/skills/forgevia-think/SKILL.md")"
-actual_skill="$(cat "$CLAUDE_HOME/skills/forgevia-think/SKILL.md")"
+expected_skill="$(cat "$ROOT_DIR/assets/claude/skills/firefly-think/SKILL.md")"
+actual_skill="$(cat "$CLAUDE_HOME/skills/firefly-think/SKILL.md")"
 assert_contains "$actual_skill" "$expected_skill"
-expected_router="$(cat "$ROOT_DIR/assets/claude/skills/forgevia/SKILL.md")"
-actual_router="$(cat "$CLAUDE_HOME/skills/forgevia/SKILL.md")"
+expected_router="$(cat "$ROOT_DIR/assets/claude/skills/firefly/SKILL.md")"
+actual_router="$(cat "$CLAUDE_HOME/skills/firefly/SKILL.md")"
 assert_contains "$actual_router" "$expected_router"
 expected_brainstorming="$(cat "$ROOT_DIR/assets/claude/superpowers/skills/brainstorming/SKILL.md")"
 actual_brainstorming="$(cat "$superpowers_root/skills/brainstorming/SKILL.md")"
@@ -276,18 +276,18 @@ actual_openspec_propose="$(cat "$OPENSPEC_ROOT/dist/core/templates/workflows/pro
 assert_contains "$actual_openspec_propose" "$expected_openspec_propose"
 
 doctor_output="$(PATH="$bin_dir:$PATH" "$DOCTOR")"
-assert_contains "$doctor_output" "🔎 Forgevia Claude doctor"
+assert_contains "$doctor_output" "🔎 firefly Claude doctor"
 assert_contains "$doctor_output" "✅ OK"
 assert_contains "$doctor_output" "📋 Summary"
-assert_contains "$doctor_output" "Forgevia Claude doctor passed"
+assert_contains "$doctor_output" "firefly Claude doctor passed"
 assert_contains "$doctor_output" "$OPENSPEC_ROOT/dist/core/config-prompts.js"
 assert_contains "$doctor_output" "$OPENSPEC_ROOT/dist/core/templates/workflows/propose.js"
-assert_contains "$doctor_output" "$CLAUDE_HOME/skills/forgevia-think"
-assert_contains "$doctor_output" "$CLAUDE_HOME/skills/forgevia"
+assert_contains "$doctor_output" "$CLAUDE_HOME/skills/firefly-think"
+assert_contains "$doctor_output" "$CLAUDE_HOME/skills/firefly"
 assert_contains "$doctor_output" "$CLAUDE_HOME/commands/opsx"
 assert_contains "$doctor_output" "$superpowers_root/skills/requesting-code-review"
 
-rm "$FORGEVIA_BIN_DIR/forgevia"
+rm "$FIREFLY_BIN_DIR/firefly"
 
 set +e
 global_command_drift_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" 2>&1)"
@@ -297,22 +297,22 @@ if [[ "$global_command_drift_status" != "1" ]]; then
   echo "expected global command drift exit code 1 but got $global_command_drift_status" >&2
   exit 1
 fi
-assert_contains "$global_command_drift_output" "$FORGEVIA_BIN_DIR/forgevia"
+assert_contains "$global_command_drift_output" "$FIREFLY_BIN_DIR/firefly"
 
 global_command_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
-assert_contains "$global_command_repair_output" "$FORGEVIA_BIN_DIR/forgevia"
-test_file_executable "$FORGEVIA_BIN_DIR/forgevia"
-cmp "$ROOT_DIR/scripts/forgevia-global.sh" "$FORGEVIA_BIN_DIR/forgevia"
+assert_contains "$global_command_repair_output" "$FIREFLY_BIN_DIR/firefly"
+test_file_executable "$FIREFLY_BIN_DIR/firefly"
+cmp "$ROOT_DIR/scripts/firefly-global.sh" "$FIREFLY_BIN_DIR/firefly"
 
-rm "$FORGEVIA_BIN_DIR/forgevia"
-rm "$FORGEVIA_BIN_DIR/.forgevia-global-command.sha256"
-ln -s "$CLAUDE_HOME/forgevia/bin/forgevia" "$FORGEVIA_BIN_DIR/forgevia"
+rm "$FIREFLY_BIN_DIR/firefly"
+rm "$FIREFLY_BIN_DIR/.firefly-global-command.sha256"
+ln -s "$CLAUDE_HOME/firefly/bin/firefly" "$FIREFLY_BIN_DIR/firefly"
 
 legacy_command_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
-assert_contains "$legacy_command_repair_output" "$FORGEVIA_BIN_DIR/forgevia"
-test_file_executable "$FORGEVIA_BIN_DIR/forgevia"
-test_path_not_exists "$FORGEVIA_BIN_DIR/forgevia.forgevia.bak"
-cmp "$ROOT_DIR/scripts/forgevia-global.sh" "$FORGEVIA_BIN_DIR/forgevia"
+assert_contains "$legacy_command_repair_output" "$FIREFLY_BIN_DIR/firefly"
+test_file_executable "$FIREFLY_BIN_DIR/firefly"
+test_path_not_exists "$FIREFLY_BIN_DIR/firefly.firefly.bak"
+cmp "$ROOT_DIR/scripts/firefly-global.sh" "$FIREFLY_BIN_DIR/firefly"
 
 echo "drift" >> "$superpowers_root/skills/brainstorming/SKILL.md"
 
@@ -332,13 +332,13 @@ repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
 assert_contains "$repair_output" "🛠️ Repairing drifted or missing assets"
 assert_contains "$repair_output" "💾 Backed up"
 assert_contains "$repair_output" "✅ Repaired"
-test_path_not_exists "$superpowers_root/skills/brainstorming/SKILL.md.forgevia.bak"
+test_path_not_exists "$superpowers_root/skills/brainstorming/SKILL.md.firefly.bak"
 
 post_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR")"
 assert_contains "$post_repair_output" "✨ No drift detected"
-assert_contains "$post_repair_output" "Forgevia Claude doctor passed"
+assert_contains "$post_repair_output" "firefly Claude doctor passed"
 
-chmod -x "$CLAUDE_HOME/forgevia/bin/forgevia-draw.sh"
+chmod -x "$CLAUDE_HOME/firefly/bin/firefly-draw.sh"
 
 set +e
 mode_drift_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" 2>&1)"
@@ -350,13 +350,13 @@ if [[ "$mode_drift_status" != "1" ]]; then
   exit 1
 fi
 assert_contains "$mode_drift_output" "❌ DRIFT"
-assert_contains "$mode_drift_output" "$CLAUDE_HOME/forgevia/bin/forgevia-draw.sh"
+assert_contains "$mode_drift_output" "$CLAUDE_HOME/firefly/bin/firefly-draw.sh"
 
 mode_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
-assert_contains "$mode_repair_output" "$CLAUDE_HOME/forgevia/bin/forgevia-draw.sh"
-test_file_executable "$CLAUDE_HOME/forgevia/bin/forgevia-draw.sh"
+assert_contains "$mode_repair_output" "$CLAUDE_HOME/firefly/bin/firefly-draw.sh"
+test_file_executable "$CLAUDE_HOME/firefly/bin/firefly-draw.sh"
 
-rm "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
+rm "$CLAUDE_HOME/firefly/bin/validate-openspec-cn.mjs"
 
 set +e
 validator_drift_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" 2>&1)"
@@ -371,10 +371,10 @@ assert_contains "$validator_drift_output" "validate-openspec-cn.mjs"
 
 validator_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
 assert_contains "$validator_repair_output" "validate-openspec-cn.mjs"
-test_file_executable "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
-cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CLAUDE_HOME/forgevia/bin/validate-openspec-cn.mjs"
+test_file_executable "$CLAUDE_HOME/firefly/bin/validate-openspec-cn.mjs"
+cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CLAUDE_HOME/firefly/bin/validate-openspec-cn.mjs"
 
-rm "$CLAUDE_HOME/forgevia/bin/forgevia"
+rm "$CLAUDE_HOME/firefly/bin/firefly"
 
 set +e
 command_drift_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" 2>&1)"
@@ -385,14 +385,14 @@ if [[ "$command_drift_status" != "1" ]]; then
   echo "expected command drift exit code 1 but got $command_drift_status" >&2
   exit 1
 fi
-assert_contains "$command_drift_output" "$CLAUDE_HOME/forgevia/bin/forgevia"
+assert_contains "$command_drift_output" "$CLAUDE_HOME/firefly/bin/firefly"
 
 command_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
-assert_contains "$command_repair_output" "$CLAUDE_HOME/forgevia/bin/forgevia"
-test_file_executable "$CLAUDE_HOME/forgevia/bin/forgevia"
-cmp "$ROOT_DIR/scripts/forgevia.sh" "$CLAUDE_HOME/forgevia/bin/forgevia"
+assert_contains "$command_repair_output" "$CLAUDE_HOME/firefly/bin/firefly"
+test_file_executable "$CLAUDE_HOME/firefly/bin/firefly"
+cmp "$ROOT_DIR/scripts/firefly.sh" "$CLAUDE_HOME/firefly/bin/firefly"
 
-rm "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
+rm "$CLAUDE_HOME/firefly/bin/doctor-claude.sh"
 
 set +e
 doctor_script_drift_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" 2>&1)"
@@ -403,12 +403,12 @@ if [[ "$doctor_script_drift_status" != "1" ]]; then
   echo "expected doctor runtime script drift exit code 1 but got $doctor_script_drift_status" >&2
   exit 1
 fi
-assert_contains "$doctor_script_drift_output" "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
+assert_contains "$doctor_script_drift_output" "$CLAUDE_HOME/firefly/bin/doctor-claude.sh"
 
 doctor_script_repair_output="$(PATH="$bin_dir:$PATH" "$DOCTOR" --repair)"
-assert_contains "$doctor_script_repair_output" "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
-test_file_executable "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
-cmp "$ROOT_DIR/scripts/doctor-claude.sh" "$CLAUDE_HOME/forgevia/bin/doctor-claude.sh"
+assert_contains "$doctor_script_repair_output" "$CLAUDE_HOME/firefly/bin/doctor-claude.sh"
+test_file_executable "$CLAUDE_HOME/firefly/bin/doctor-claude.sh"
+cmp "$ROOT_DIR/scripts/doctor-claude.sh" "$CLAUDE_HOME/firefly/bin/doctor-claude.sh"
 
 missing_openspec_root="$tmp_dir/missing-openspec"
 rm -rf "$missing_openspec_root"
@@ -450,12 +450,12 @@ if [[ "$mismatched_openspec_install_status" != "1" ]]; then
   echo "expected mismatched openspec installer exit code 1 but got $mismatched_openspec_install_status" >&2
   exit 1
 fi
-assert_contains "$mismatched_openspec_install_output" "Forgevia Claude install incomplete"
+assert_contains "$mismatched_openspec_install_output" "firefly Claude install incomplete"
 test_path_not_exists "$mismatched_openspec_root/dist/core/config-prompts.js"
 
 invalid_openspec_root="$tmp_dir/invalid-openspec"
 mkdir -p "$invalid_openspec_root"
-rm -rf "$CLAUDE_HOME/skills/forgevia"
+rm -rf "$CLAUDE_HOME/skills/firefly"
 
 set +e
 invalid_openspec_install_output="$(OPENSPEC_ROOT="$invalid_openspec_root" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
@@ -468,12 +468,12 @@ if [[ "$invalid_openspec_install_status" != "1" ]]; then
 fi
 assert_contains "$invalid_openspec_install_output" "OpenSpec package metadata is missing or invalid"
 test_path_not_exists "$invalid_openspec_root/dist/core/config-prompts.js"
-test_file_exists "$CLAUDE_HOME/skills/forgevia/SKILL.md"
+test_file_exists "$CLAUDE_HOME/skills/firefly/SKILL.md"
 
 missing_openspec_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir" "$missing_openspec_dir"' EXIT
 export CLAUDE_HOME="$missing_openspec_dir/.claude"
-export FORGEVIA_BIN_DIR="$missing_openspec_dir/.local/bin"
+export FIREFLY_BIN_DIR="$missing_openspec_dir/.local/bin"
 unset OPENSPEC_ROOT
 mkdir -p "$CLAUDE_HOME/plugins"
 missing_openspec_superpowers_root="$CLAUDE_HOME/plugins/cache/superpowers/6.1.1"
@@ -503,14 +503,14 @@ if [[ "$missing_openspec_status" != "1" ]]; then
   exit 1
 fi
 assert_contains "$missing_openspec_output" "openspec install root not found"
-assert_contains "$missing_openspec_output" "Applied Forgevia-managed Claude assets"
-assert_contains "$missing_openspec_output" "Applied Forgevia-managed Claude superpowers overrides"
-assert_contains "$missing_openspec_output" "Forgevia Claude install incomplete"
+assert_contains "$missing_openspec_output" "Applied firefly-managed Claude assets"
+assert_contains "$missing_openspec_output" "Applied firefly-managed Claude superpowers overrides"
+assert_contains "$missing_openspec_output" "firefly Claude install incomplete"
 
 missing_plugin_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir" "$missing_openspec_dir" "$missing_plugin_dir"' EXIT
 export CLAUDE_HOME="$missing_plugin_dir/.claude"
-export FORGEVIA_BIN_DIR="$missing_plugin_dir/.local/bin"
+export FIREFLY_BIN_DIR="$missing_plugin_dir/.local/bin"
 export OPENSPEC_ROOT="$tmp_dir/openspec"
 mkdir -p "$CLAUDE_HOME/plugins"
 
@@ -549,7 +549,7 @@ cat > "$untrusted_plugin_home/plugins/installed_plugins.json" <<EOF
 EOF
 
 set +e
-untrusted_plugin_output="$(CLAUDE_HOME="$untrusted_plugin_home" FORGEVIA_BIN_DIR="$untrusted_plugin_home/.local/bin" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
+untrusted_plugin_output="$(CLAUDE_HOME="$untrusted_plugin_home" FIREFLY_BIN_DIR="$untrusted_plugin_home/.local/bin" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
 untrusted_plugin_status=$?
 set -e
 
@@ -585,7 +585,7 @@ cat > "$linked_skills_home/plugins/installed_plugins.json" <<EOF
 EOF
 
 set +e
-linked_skills_output="$(CLAUDE_HOME="$linked_skills_home" FORGEVIA_BIN_DIR="$linked_skills_home/.local/bin" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
+linked_skills_output="$(CLAUDE_HOME="$linked_skills_home" FIREFLY_BIN_DIR="$linked_skills_home/.local/bin" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
 linked_skills_status=$?
 set -e
 
@@ -600,7 +600,7 @@ if [[ "$(cat "$linked_skills_target/brainstorming/SKILL.md")" != "preserve linke
 fi
 
 set +e
-linked_skills_doctor_output="$(CLAUDE_HOME="$linked_skills_home" FORGEVIA_BIN_DIR="$linked_skills_home/.local/bin" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$DOCTOR" --repair 2>&1)"
+linked_skills_doctor_output="$(CLAUDE_HOME="$linked_skills_home" FIREFLY_BIN_DIR="$linked_skills_home/.local/bin" OPENSPEC_ROOT="$tmp_dir/openspec" PATH="$bin_dir:$PATH" "$DOCTOR" --repair 2>&1)"
 linked_skills_doctor_status=$?
 set -e
 

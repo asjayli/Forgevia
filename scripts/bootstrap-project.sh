@@ -114,7 +114,7 @@ assert_initializer_tree_safe() {
     return 0
   fi
 
-  scan_file="$(mktemp "${TMPDIR:-/tmp}/forgevia-bootstrap-scan.XXXXXX")"
+  scan_file="$(mktemp "${TMPDIR:-/tmp}/firefly-bootstrap-scan.XXXXXX")"
   if ! find "$root" -type l -print0 > "$scan_file"; then
     rm -f -- "$scan_file"
     echo "unable to scan initializer output safely: $root" >&2

@@ -21,8 +21,8 @@ assert_contains() {
 }
 
 for platform in codex claude; do
-  think="$ROOT_DIR/assets/$platform/skills/forgevia-think/SKILL.md"
-  propose="$ROOT_DIR/assets/$platform/skills/forgevia-propose/SKILL.md"
+  think="$ROOT_DIR/assets/$platform/skills/firefly-think/SKILL.md"
+  propose="$ROOT_DIR/assets/$platform/skills/firefly-propose/SKILL.md"
 
   # Requirement completeness matrix (greenfield).
   assert_contains "$think" "Check requirement completeness"
@@ -48,7 +48,7 @@ for platform in codex claude; do
   openspec_propose="$ROOT_DIR/assets/$platform/skills/openspec-propose/SKILL.md"
   brainstorming="$ROOT_DIR/assets/$platform/superpowers/skills/brainstorming/SKILL.md"
 
-  # forgevia-propose runs the 7-item producer self-critique before its reviewer.
+  # firefly-propose runs the 7-item producer self-critique before its reviewer.
   assert_contains "$propose" "producer self-critique"
   assert_contains "$propose" "falsifiable"
   assert_contains "$propose" "acyclic"

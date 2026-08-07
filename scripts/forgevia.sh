@@ -13,15 +13,15 @@ SCRIPT_DIR="$(cd -P "$(dirname "$SCRIPT_SOURCE")" && pwd)"
 
 usage() {
   cat <<'EOF'
-Usage: forgevia <command> [arguments]
+Usage: firefly <command> [arguments]
 
 Commands:
   validate [--root <project-root>]  Run Chinese-compatible OpenSpec strict validation
   init [arguments]                  Initialize OpenSpec project files
   tasks [arguments]                 List active change tasks
-  draw [arguments]                  Generate a Forgevia design diagram
-  doctor                            Check Forgevia managed assets
-  repair                            Repair Forgevia managed assets
+  draw [arguments]                  Generate a firefly design diagram
+  doctor                            Check firefly managed assets
+  repair                            Repair firefly managed assets
 EOF
 }
 
@@ -32,7 +32,7 @@ run_doctor() {
   if [[ -x "$SCRIPT_DIR/doctor-claude.sh" ]]; then
     exec "$SCRIPT_DIR/doctor-claude.sh" "$@"
   fi
-  echo "Forgevia doctor runtime helper is missing" >&2
+  echo "firefly doctor runtime helper is missing" >&2
   exit 1
 }
 
@@ -52,7 +52,7 @@ case "$command_name" in
     ;;
   draw)
     shift
-    exec "$SCRIPT_DIR/forgevia-draw.sh" "$@"
+    exec "$SCRIPT_DIR/firefly-draw.sh" "$@"
     ;;
   doctor)
     shift

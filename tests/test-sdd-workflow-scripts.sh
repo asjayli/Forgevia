@@ -116,7 +116,7 @@ for path in "${EXECUTING_PLAN_SKILLS[@]}"; do
   assert_not_contains "$contents" '`APPROVE` immediately advances to the next dependency-ready task group'
   assert_in_order "$contents" \
     'After the final `APPROVE`, read the objective authorization envelope.' \
-    'Forgevia implement and a complete Forgevia workflow default to a completion summary with the change still active.' \
+    'firefly implement and a complete firefly workflow default to a completion summary with the change still active.' \
     'If the envelope does not separately and explicitly authorize the relevant merge, push, or cleanup effect, return that summary without branch-finishing options.' \
     'Only when the envelope contains that explicit authorization may you invoke `superpowers:finishing-a-development-branch`.'
   assert_contains "$contents" 'The controller dispatches an authorized final repair subagent, reruns full verification, and dispatches a fresh independent final reviewer'
@@ -225,7 +225,7 @@ repo_dir="$tmp_dir/repo"
 mkdir -p "$repo_dir"
 git -C "$repo_dir" init -q
 git -C "$repo_dir" config user.email "test@example.com"
-git -C "$repo_dir" config user.name "Forgevia Test"
+git -C "$repo_dir" config user.name "firefly Test"
 
 cat > "$repo_dir/tasks.md" <<'EOF'
 ## 1. Prepare workspace
@@ -381,7 +381,7 @@ symlink_repo="$tmp_dir/symlink-repo"
 mkdir -p "$symlink_repo"
 git -C "$symlink_repo" init -q
 git -C "$symlink_repo" config user.email "test@example.com"
-git -C "$symlink_repo" config user.name "Forgevia Test"
+git -C "$symlink_repo" config user.name "firefly Test"
 ln -s "$tmp_dir" "$symlink_repo/.superpowers"
 if (cd "$symlink_repo" && "$SDD_WORKSPACE") >/dev/null 2>&1; then
   echo "expected sdd-workspace to reject a symlinked .superpowers" >&2

@@ -3,22 +3,22 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "$(dirname "${BASH_SOURCE[0]}")/forgevia-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/firefly-common.sh"
 MANIFEST_PATH="$ROOT_DIR/manifests/codex.json"
 CODEX_ROOT="${CODEX_HOME:-$HOME/.codex}"
-FORGEVIA_BIN_DIR="${FORGEVIA_BIN_DIR:-$HOME/.local/bin}"
-GLOBAL_COMMAND_STATE_PATH="$FORGEVIA_BIN_DIR/.forgevia-global-command.sha256"
+FIREFLY_BIN_DIR="${FIREFLY_BIN_DIR:-$HOME/.local/bin}"
+GLOBAL_COMMAND_STATE_PATH="$FIREFLY_BIN_DIR/.firefly-global-command.sha256"
 ASSETS_DIR="$ROOT_DIR/assets/codex"
 OPENSPEC_ASSETS_DIR="$ROOT_DIR/assets/openspec"
 OPENSPEC_ROOT="${OPENSPEC_ROOT:-}"
-# Forgevia's openspec override files are snapshots taken against this upstream
+# firefly's openspec override files are snapshots taken against this upstream
 # openspec version. Repair must not overlay them onto a different upstream
 # version — that would silently downgrade upstream behavior.
 OPENSPEC_OVERRIDE_VERSION="1.6.0"
 
 usage() {
   cat <<EOF
-Check Forgevia Codex managed assets.
+Check firefly Codex managed assets.
 
 Usage:
   $(basename "$0") [--help] [--repair]
@@ -28,12 +28,12 @@ Manifest:
 
 Checks:
   - openspec config override
-  - Forgevia and OpenSpec support skills under ~/.codex/skills
-  - Forgevia runtime command dispatcher under ~/.codex/forgevia/bin
-  - global forgevia command at ~/.local/bin/forgevia
+  - firefly and OpenSpec support skills under ~/.codex/skills
+  - firefly runtime command dispatcher under ~/.codex/firefly/bin
+  - global firefly command at ~/.local/bin/firefly
   - mermaid-diagram-specialist and playwright-interactive helper skills
-  - Forgevia-managed superpowers overrides
-  - content drift against Forgevia-owned copies
+  - firefly-managed superpowers overrides
+  - content drift against firefly-owned copies
 EOF
 }
 
@@ -178,7 +178,7 @@ compare_path() {
 }
 
 compare_global_command() {
-  local command_path="$FORGEVIA_BIN_DIR/forgevia"
+  local command_path="$FIREFLY_BIN_DIR/firefly"
 
   if [[ ! -e "$command_path" && ! -L "$command_path" ]]; then
     print_status "MISS" "$command_path"
@@ -188,23 +188,23 @@ compare_global_command() {
     print_status "DRIFT" "$command_path"
     return 1
   fi
-  compare_path "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path"
+  compare_path "$ROOT_DIR/scripts/firefly-global.sh" "$command_path"
 }
 
 is_managed_global_command() {
   local command_path="$1"
 
   [[ -f "$command_path" && ! -L "$command_path" ]] || return 1
-  cmp -s "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path" && return 0
+  cmp -s "$ROOT_DIR/scripts/firefly-global.sh" "$command_path" && return 0
   [[ -f "$GLOBAL_COMMAND_STATE_PATH" ]] && [[ "$(<"$GLOBAL_COMMAND_STATE_PATH")" == "$(command_checksum "$command_path")" ]]
 }
 
 command_checksum() {
-  forgevia_sha256_file "$1"
+  firefly_sha256_file "$1"
 }
 
 write_global_command_state() {
-  command_checksum "$FORGEVIA_BIN_DIR/forgevia" > "$GLOBAL_COMMAND_STATE_PATH"
+  command_checksum "$FIREFLY_BIN_DIR/firefly" > "$GLOBAL_COMMAND_STATE_PATH"
 }
 
 is_legacy_runtime_link() {
@@ -213,16 +213,16 @@ is_legacy_runtime_link() {
 
   [[ -L "$command_path" ]] || return 1
   target_path="$(readlink "$command_path")"
-  [[ "$target_path" == "$CODEX_ROOT/forgevia/bin/forgevia" || "$target_path" == "${CLAUDE_HOME:-$HOME/.claude}/forgevia/bin/forgevia" ]]
+  [[ "$target_path" == "$CODEX_ROOT/firefly/bin/firefly" || "$target_path" == "${CLAUDE_HOME:-$HOME/.claude}/firefly/bin/firefly" ]]
 }
 
 repair_global_command() {
-  local command_path="$FORGEVIA_BIN_DIR/forgevia"
+  local command_path="$FIREFLY_BIN_DIR/firefly"
 
   if is_legacy_runtime_link "$command_path"; then
     rm -f "$command_path"
-    mkdir -p "$FORGEVIA_BIN_DIR"
-    cp "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path"
+    mkdir -p "$FIREFLY_BIN_DIR"
+    cp "$ROOT_DIR/scripts/firefly-global.sh" "$command_path"
     write_global_command_state
     log_success "Repaired $command_path"
     return 0
@@ -231,13 +231,13 @@ repair_global_command() {
     log_info "Cannot repair global command without replacing an existing command: $command_path"
     return 1
   fi
-  repair_path "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path"
+  repair_path "$ROOT_DIR/scripts/firefly-global.sh" "$command_path"
   write_global_command_state
 }
 
 backup_target_if_present() {
   local target_path="$1"
-  local backup_path="${target_path}.forgevia.bak"
+  local backup_path="${target_path}.firefly.bak"
 
   if [[ ! -e "$target_path" ]]; then
     return
@@ -275,7 +275,7 @@ resolve_managed_target() {
 
 remove_stale_backup() {
   local target_path="$1"
-  local backup_path="${target_path}.forgevia.bak"
+  local backup_path="${target_path}.firefly.bak"
 
   rm -rf "$backup_path"
 }
@@ -321,10 +321,10 @@ main() {
   local openspec_root
   local openspec_compatible="false"
 
-  echo "🔎 Forgevia Codex doctor"
+  echo "🔎 firefly Codex doctor"
   validate_root "$CODEX_ROOT" ".codex"
-  validate_root "$FORGEVIA_BIN_DIR" ""
-  forgevia_require_sha256
+  validate_root "$FIREFLY_BIN_DIR" ""
+  firefly_require_sha256
   if [[ "$repair_requested" == "true" ]]; then
     echo "🛠️ Repairing drifted or missing assets"
   fi
@@ -351,18 +351,18 @@ main() {
     "$ASSETS_DIR/skills/openspec-archive-change::$CODEX_ROOT/skills/openspec-archive-change" \
     "$ASSETS_DIR/skills/openspec-explore::$CODEX_ROOT/skills/openspec-explore" \
     "$ASSETS_DIR/skills/openspec-sync-specs::$CODEX_ROOT/skills/openspec-sync-specs" \
-    "$ASSETS_DIR/skills/forgevia::$CODEX_ROOT/skills/forgevia" \
-    "$ASSETS_DIR/skills/forgevia-init::$CODEX_ROOT/skills/forgevia-init" \
-    "$ASSETS_DIR/skills/forgevia-doctor::$CODEX_ROOT/skills/forgevia-doctor" \
-    "$ASSETS_DIR/skills/forgevia-repair::$CODEX_ROOT/skills/forgevia-repair" \
-    "$ASSETS_DIR/skills/forgevia-implement::$CODEX_ROOT/skills/forgevia-implement" \
-    "$ASSETS_DIR/skills/forgevia-archive::$CODEX_ROOT/skills/forgevia-archive" \
-    "$ASSETS_DIR/skills/forgevia-tasks::$CODEX_ROOT/skills/forgevia-tasks" \
-    "$ASSETS_DIR/skills/forgevia-think::$CODEX_ROOT/skills/forgevia-think" \
-    "$ASSETS_DIR/skills/forgevia-propose::$CODEX_ROOT/skills/forgevia-propose" \
-    "$ASSETS_DIR/skills/forgevia-review::$CODEX_ROOT/skills/forgevia-review" \
-    "$ASSETS_DIR/skills/forgevia-verify-web::$CODEX_ROOT/skills/forgevia-verify-web" \
-    "$ASSETS_DIR/skills/forgevia-draw::$CODEX_ROOT/skills/forgevia-draw" \
+    "$ASSETS_DIR/skills/firefly::$CODEX_ROOT/skills/firefly" \
+    "$ASSETS_DIR/skills/firefly-init::$CODEX_ROOT/skills/firefly-init" \
+    "$ASSETS_DIR/skills/firefly-doctor::$CODEX_ROOT/skills/firefly-doctor" \
+    "$ASSETS_DIR/skills/firefly-repair::$CODEX_ROOT/skills/firefly-repair" \
+    "$ASSETS_DIR/skills/firefly-implement::$CODEX_ROOT/skills/firefly-implement" \
+    "$ASSETS_DIR/skills/firefly-archive::$CODEX_ROOT/skills/firefly-archive" \
+    "$ASSETS_DIR/skills/firefly-tasks::$CODEX_ROOT/skills/firefly-tasks" \
+    "$ASSETS_DIR/skills/firefly-think::$CODEX_ROOT/skills/firefly-think" \
+    "$ASSETS_DIR/skills/firefly-propose::$CODEX_ROOT/skills/firefly-propose" \
+    "$ASSETS_DIR/skills/firefly-review::$CODEX_ROOT/skills/firefly-review" \
+    "$ASSETS_DIR/skills/firefly-verify-web::$CODEX_ROOT/skills/firefly-verify-web" \
+    "$ASSETS_DIR/skills/firefly-draw::$CODEX_ROOT/skills/firefly-draw" \
     "$ASSETS_DIR/skills/mermaid-diagram-specialist::$CODEX_ROOT/skills/mermaid-diagram-specialist" \
     "$ASSETS_DIR/skills/playwright-interactive::$CODEX_ROOT/skills/playwright-interactive" \
     "$ASSETS_DIR/superpowers/skills/brainstorming/SKILL.md::$CODEX_ROOT/superpowers/skills/brainstorming/SKILL.md" \
@@ -371,13 +371,13 @@ main() {
     "$ASSETS_DIR/superpowers/skills/subagent-driven-development::$CODEX_ROOT/superpowers/skills/subagent-driven-development" \
     "$ASSETS_DIR/superpowers/skills/requesting-code-review::$CODEX_ROOT/superpowers/skills/requesting-code-review" \
     "$ASSETS_DIR/superpowers/skills/test-driven-development/SKILL.md::$CODEX_ROOT/superpowers/skills/test-driven-development/SKILL.md" \
-    "$ROOT_DIR/scripts/bootstrap-project.sh::$CODEX_ROOT/forgevia/bin/bootstrap-project.sh" \
-    "$ROOT_DIR/scripts/list-change-tasks.sh::$CODEX_ROOT/forgevia/bin/list-change-tasks.sh" \
-    "$ROOT_DIR/scripts/forgevia-draw.sh::$CODEX_ROOT/forgevia/bin/forgevia-draw.sh" \
-    "$ROOT_DIR/scripts/doctor-codex.sh::$CODEX_ROOT/forgevia/bin/doctor-codex.sh" \
-    "$ROOT_DIR/scripts/validate-openspec-cn.mjs::$CODEX_ROOT/forgevia/bin/validate-openspec-cn.mjs" \
-    "$ROOT_DIR/scripts/forgevia.sh::$CODEX_ROOT/forgevia/bin/forgevia" \
-    "$ROOT_DIR/scripts/forgevia-common.sh::$CODEX_ROOT/forgevia/bin/forgevia-common.sh"
+    "$ROOT_DIR/scripts/bootstrap-project.sh::$CODEX_ROOT/firefly/bin/bootstrap-project.sh" \
+    "$ROOT_DIR/scripts/list-change-tasks.sh::$CODEX_ROOT/firefly/bin/list-change-tasks.sh" \
+    "$ROOT_DIR/scripts/firefly-draw.sh::$CODEX_ROOT/firefly/bin/firefly-draw.sh" \
+    "$ROOT_DIR/scripts/doctor-codex.sh::$CODEX_ROOT/firefly/bin/doctor-codex.sh" \
+    "$ROOT_DIR/scripts/validate-openspec-cn.mjs::$CODEX_ROOT/firefly/bin/validate-openspec-cn.mjs" \
+    "$ROOT_DIR/scripts/firefly.sh::$CODEX_ROOT/firefly/bin/firefly" \
+    "$ROOT_DIR/scripts/firefly-common.sh::$CODEX_ROOT/firefly/bin/firefly-common.sh"
   do
     local source_path="${pair%%::*}"
     local target_path="${pair#*::}"
@@ -432,19 +432,19 @@ main() {
 
   if [[ "$unhealthy" -ne 0 ]]; then
     if [[ "$repair_requested" == "true" ]]; then
-      echo "Forgevia Codex doctor repair incomplete; unresolved managed assets remain" >&2
+      echo "firefly Codex doctor repair incomplete; unresolved managed assets remain" >&2
     else
-      echo "Forgevia Codex doctor found missing or drifted managed assets" >&2
+      echo "firefly Codex doctor found missing or drifted managed assets" >&2
     fi
     exit 1
   fi
 
   if [[ "$repair_requested" == "true" ]]; then
-    echo "Forgevia Codex doctor repair complete"
+    echo "firefly Codex doctor repair complete"
     exit 0
   fi
 
-  echo "Forgevia Codex doctor passed"
+  echo "firefly Codex doctor passed"
 }
 
 main "$@"

@@ -87,7 +87,7 @@ If the final reviewer fails to start, times out, crashes, or returns an invalid 
 
 Use a commit-bounded review package when checkpoints were authorized. If changes remain uncommitted, use the SDD `review-package BASE WORKTREE` mode so the reviewer receives committed, staged, unstaged, and untracked files.
 
-After the final `APPROVE`, read the objective authorization envelope. Forgevia implement and a complete Forgevia workflow default to a completion summary with the change still active. If the envelope does not separately and explicitly authorize the relevant merge, push, or cleanup effect, return that summary without branch-finishing options. Only when the envelope contains that explicit authorization may you invoke `superpowers:finishing-a-development-branch`.
+After the final `APPROVE`, read the objective authorization envelope. firefly implement and a complete firefly workflow default to a completion summary with the change still active. If the envelope does not separately and explicitly authorize the relevant merge, push, or cleanup effect, return that summary without branch-finishing options. Only when the envelope contains that explicit authorization may you invoke `superpowers:finishing-a-development-branch`.
 
 ## Recovery and Escalation Boundaries
 
