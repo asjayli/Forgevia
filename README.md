@@ -8,6 +8,8 @@
 
 </div>
 
+**当前版本：0.1.0**（[CHANGELOG](CHANGELOG.md)）· 许可证：[Apache-2.0](LICENSE) · [第三方声明](THIRD_PARTY_NOTICES.md)
+
 把你的 agent 开发流程锻造成钢铁。
 
 firefly 是一套面向 agent coding 的工作流整合方案。

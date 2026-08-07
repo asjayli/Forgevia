@@ -8,6 +8,8 @@
 
 </div>
 
+**Current version: 0.1.0** ([CHANGELOG](CHANGELOG.md)) · License: [Apache-2.0](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)
+
 Forge your agent workflow into steel.
 
 firefly is an opinionated workflow bundle for agent coding.

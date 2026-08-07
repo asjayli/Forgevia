@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "fireflyVersion": "0.1.0",
   "platform": "codex",
   "managedRoot": "~/.codex",
   "sources": {
