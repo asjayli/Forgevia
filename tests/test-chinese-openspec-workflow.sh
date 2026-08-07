@@ -101,12 +101,10 @@ do
   assert_file_not_contains "$path" 'at `openspec/specs/<capability>/spec.md`'
 done
 
-for root in "$ROOT_DIR/assets/codex/skills"; do
-  while IFS= read -r path; do
-    assert_file_not_contains "$path" "AskUserQuestion"
-    assert_file_not_contains "$path" "TodoWrite"
-    assert_file_not_contains "$path" "Task tool"
-  done < <(find "$root" -mindepth 2 -maxdepth 2 -path '*/openspec-*/SKILL.md' -type f | sort)
-done
+while IFS= read -r path; do
+  assert_file_not_contains "$path" "AskUserQuestion"
+  assert_file_not_contains "$path" "TodoWrite"
+  assert_file_not_contains "$path" "Task tool"
+done < <(find "$ROOT_DIR/assets/codex/skills" -mindepth 2 -maxdepth 2 -path '*/openspec-*/SKILL.md' -type f | sort)
 
 echo "chinese OpenSpec workflow integration test passed"
