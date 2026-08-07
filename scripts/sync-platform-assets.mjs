@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Forgevia platform-asset generator.
+// firefly platform-asset generator.
 //
 // assets/shared/ is the single hand-edited source for managed assets that are
 // identical across Codex/Claude or differ only by enumerable platform tokens.

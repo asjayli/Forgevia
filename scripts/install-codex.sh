@@ -3,23 +3,23 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "$(dirname "${BASH_SOURCE[0]}")/forgevia-common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/firefly-common.sh"
 MANIFEST_PATH="$ROOT_DIR/manifests/codex.json"
 ASSETS_DIR="$ROOT_DIR/assets/codex"
 OPENSPEC_ASSETS_DIR="$ROOT_DIR/assets/openspec"
 CODEX_ROOT="${CODEX_HOME:-$HOME/.codex}"
-FORGEVIA_BIN_DIR="${FORGEVIA_BIN_DIR:-$HOME/.local/bin}"
-GLOBAL_COMMAND_STATE_PATH="$FORGEVIA_BIN_DIR/.forgevia-global-command.sha256"
+FIREFLY_BIN_DIR="${FIREFLY_BIN_DIR:-$HOME/.local/bin}"
+GLOBAL_COMMAND_STATE_PATH="$FIREFLY_BIN_DIR/.firefly-global-command.sha256"
 SUPERPOWERS_INSTALL_URL="https://raw.githubusercontent.com/obra/superpowers/refs/heads/main/.codex/INSTALL.md"
 OPENSPEC_ROOT="${OPENSPEC_ROOT:-}"
-# Forgevia's openspec override files are snapshots taken against this upstream
+# firefly's openspec override files are snapshots taken against this upstream
 # openspec version. Never overlay them onto a different upstream version —
 # that would silently downgrade upstream behavior.
 OPENSPEC_OVERRIDE_VERSION="1.6.0"
 
 usage() {
   cat <<EOF
-Install Forgevia Codex assets.
+Install firefly Codex assets.
 
 Usage:
   $(basename "$0") [--help]
@@ -30,10 +30,10 @@ Manifest:
 Behavior:
   - verifies the Codex root at $CODEX_ROOT
   - installs OpenSpec $OPENSPEC_OVERRIDE_VERSION on every run
-  - overlays Forgevia-managed openspec customization
+  - overlays firefly-managed openspec customization
   - requires upstream superpowers to already exist
-  - directly overlays Forgevia-managed assets into ~/.codex
-  - exposes the forgevia command at ~/.local/bin/forgevia
+  - directly overlays firefly-managed assets into ~/.codex
+  - exposes the firefly command at ~/.local/bin/firefly
 EOF
 }
 
@@ -129,7 +129,7 @@ resolve_managed_target() {
 
 backup_target_if_present() {
   local target_path="$1"
-  local backup_path="${target_path}.forgevia.bak"
+  local backup_path="${target_path}.firefly.bak"
 
   if [[ ! -e "$target_path" ]]; then
     return
@@ -142,7 +142,7 @@ backup_target_if_present() {
 
 remove_stale_backup() {
   local target_path="$1"
-  local backup_path="${target_path}.forgevia.bak"
+  local backup_path="${target_path}.firefly.bak"
 
   rm -rf "$backup_path"
 }
@@ -217,9 +217,9 @@ EOF
 }
 
 validate_global_command_target() {
-  local command_path="$FORGEVIA_BIN_DIR/forgevia"
+  local command_path="$FIREFLY_BIN_DIR/firefly"
 
-  validate_root "$FORGEVIA_BIN_DIR" ""
+  validate_root "$FIREFLY_BIN_DIR" ""
   if [[ ( -e "$command_path" || -L "$command_path" ) ]] && ! is_managed_global_command "$command_path" && ! is_legacy_runtime_link "$command_path"; then
     echo "refusing to replace existing command: $command_path" >&2
     exit 1
@@ -230,16 +230,16 @@ is_managed_global_command() {
   local command_path="$1"
 
   [[ -f "$command_path" && ! -L "$command_path" ]] || return 1
-  cmp -s "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path" && return 0
+  cmp -s "$ROOT_DIR/scripts/firefly-global.sh" "$command_path" && return 0
   [[ -f "$GLOBAL_COMMAND_STATE_PATH" ]] && [[ "$(<"$GLOBAL_COMMAND_STATE_PATH")" == "$(command_checksum "$command_path")" ]]
 }
 
 command_checksum() {
-  forgevia_sha256_file "$1"
+  firefly_sha256_file "$1"
 }
 
 write_global_command_state() {
-  command_checksum "$FORGEVIA_BIN_DIR/forgevia" > "$GLOBAL_COMMAND_STATE_PATH"
+  command_checksum "$FIREFLY_BIN_DIR/firefly" > "$GLOBAL_COMMAND_STATE_PATH"
 }
 
 is_legacy_runtime_link() {
@@ -248,29 +248,29 @@ is_legacy_runtime_link() {
 
   [[ -L "$command_path" ]] || return 1
   target_path="$(readlink "$command_path")"
-  [[ "$target_path" == "$CODEX_ROOT/forgevia/bin/forgevia" || "$target_path" == "${CLAUDE_HOME:-$HOME/.claude}/forgevia/bin/forgevia" ]]
+  [[ "$target_path" == "$CODEX_ROOT/firefly/bin/firefly" || "$target_path" == "${CLAUDE_HOME:-$HOME/.claude}/firefly/bin/firefly" ]]
 }
 
 overlay_assets() {
-  log_step "Overlaying Forgevia-managed assets into $CODEX_ROOT"
+  log_step "Overlaying firefly-managed assets into $CODEX_ROOT"
 
   sync_path "$ASSETS_DIR/skills/openspec-propose" "$CODEX_ROOT/skills/openspec-propose"
   sync_path "$ASSETS_DIR/skills/openspec-apply-change" "$CODEX_ROOT/skills/openspec-apply-change"
   sync_path "$ASSETS_DIR/skills/openspec-archive-change" "$CODEX_ROOT/skills/openspec-archive-change"
   sync_path "$ASSETS_DIR/skills/openspec-explore" "$CODEX_ROOT/skills/openspec-explore"
   sync_path "$ASSETS_DIR/skills/openspec-sync-specs" "$CODEX_ROOT/skills/openspec-sync-specs"
-  sync_path "$ASSETS_DIR/skills/forgevia" "$CODEX_ROOT/skills/forgevia"
-  sync_path "$ASSETS_DIR/skills/forgevia-init" "$CODEX_ROOT/skills/forgevia-init"
-  sync_path "$ASSETS_DIR/skills/forgevia-doctor" "$CODEX_ROOT/skills/forgevia-doctor"
-  sync_path "$ASSETS_DIR/skills/forgevia-repair" "$CODEX_ROOT/skills/forgevia-repair"
-  sync_path "$ASSETS_DIR/skills/forgevia-implement" "$CODEX_ROOT/skills/forgevia-implement"
-  sync_path "$ASSETS_DIR/skills/forgevia-archive" "$CODEX_ROOT/skills/forgevia-archive"
-  sync_path "$ASSETS_DIR/skills/forgevia-tasks" "$CODEX_ROOT/skills/forgevia-tasks"
-  sync_path "$ASSETS_DIR/skills/forgevia-think" "$CODEX_ROOT/skills/forgevia-think"
-  sync_path "$ASSETS_DIR/skills/forgevia-propose" "$CODEX_ROOT/skills/forgevia-propose"
-  sync_path "$ASSETS_DIR/skills/forgevia-review" "$CODEX_ROOT/skills/forgevia-review"
-  sync_path "$ASSETS_DIR/skills/forgevia-verify-web" "$CODEX_ROOT/skills/forgevia-verify-web"
-  sync_path "$ASSETS_DIR/skills/forgevia-draw" "$CODEX_ROOT/skills/forgevia-draw"
+  sync_path "$ASSETS_DIR/skills/firefly" "$CODEX_ROOT/skills/firefly"
+  sync_path "$ASSETS_DIR/skills/firefly-init" "$CODEX_ROOT/skills/firefly-init"
+  sync_path "$ASSETS_DIR/skills/firefly-doctor" "$CODEX_ROOT/skills/firefly-doctor"
+  sync_path "$ASSETS_DIR/skills/firefly-repair" "$CODEX_ROOT/skills/firefly-repair"
+  sync_path "$ASSETS_DIR/skills/firefly-implement" "$CODEX_ROOT/skills/firefly-implement"
+  sync_path "$ASSETS_DIR/skills/firefly-archive" "$CODEX_ROOT/skills/firefly-archive"
+  sync_path "$ASSETS_DIR/skills/firefly-tasks" "$CODEX_ROOT/skills/firefly-tasks"
+  sync_path "$ASSETS_DIR/skills/firefly-think" "$CODEX_ROOT/skills/firefly-think"
+  sync_path "$ASSETS_DIR/skills/firefly-propose" "$CODEX_ROOT/skills/firefly-propose"
+  sync_path "$ASSETS_DIR/skills/firefly-review" "$CODEX_ROOT/skills/firefly-review"
+  sync_path "$ASSETS_DIR/skills/firefly-verify-web" "$CODEX_ROOT/skills/firefly-verify-web"
+  sync_path "$ASSETS_DIR/skills/firefly-draw" "$CODEX_ROOT/skills/firefly-draw"
   sync_path "$ASSETS_DIR/skills/mermaid-diagram-specialist" "$CODEX_ROOT/skills/mermaid-diagram-specialist"
   sync_path "$ASSETS_DIR/skills/playwright-interactive" "$CODEX_ROOT/skills/playwright-interactive"
   sync_path "$ASSETS_DIR/superpowers/skills/brainstorming/SKILL.md" "$CODEX_ROOT/superpowers/skills/brainstorming/SKILL.md"
@@ -279,43 +279,43 @@ overlay_assets() {
   sync_path "$ASSETS_DIR/superpowers/skills/subagent-driven-development" "$CODEX_ROOT/superpowers/skills/subagent-driven-development"
   sync_path "$ASSETS_DIR/superpowers/skills/requesting-code-review" "$CODEX_ROOT/superpowers/skills/requesting-code-review"
   sync_path "$ASSETS_DIR/superpowers/skills/test-driven-development/SKILL.md" "$CODEX_ROOT/superpowers/skills/test-driven-development/SKILL.md"
-  log_success "Applied Forgevia-managed Codex assets"
+  log_success "Applied firefly-managed Codex assets"
 }
 
 overlay_runtime_scripts() {
-  local runtime_dir="$CODEX_ROOT/forgevia/bin"
-  log_step "Installing Forgevia runtime scripts into $runtime_dir"
+  local runtime_dir="$CODEX_ROOT/firefly/bin"
+  log_step "Installing firefly runtime scripts into $runtime_dir"
   mkdir -p "$runtime_dir"
   sync_path "$ROOT_DIR/scripts/bootstrap-project.sh" "$runtime_dir/bootstrap-project.sh"
   sync_path "$ROOT_DIR/scripts/list-change-tasks.sh" "$runtime_dir/list-change-tasks.sh"
-  sync_path "$ROOT_DIR/scripts/forgevia-draw.sh" "$runtime_dir/forgevia-draw.sh"
+  sync_path "$ROOT_DIR/scripts/firefly-draw.sh" "$runtime_dir/firefly-draw.sh"
   sync_path "$ROOT_DIR/scripts/doctor-codex.sh" "$runtime_dir/doctor-codex.sh"
   sync_path "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$runtime_dir/validate-openspec-cn.mjs"
-  sync_path "$ROOT_DIR/scripts/forgevia.sh" "$runtime_dir/forgevia"
-  sync_path "$ROOT_DIR/scripts/forgevia-common.sh" "$runtime_dir/forgevia-common.sh"
-  log_success "Installed Forgevia runtime scripts (forgevia/common/bootstrap/list-change-tasks/draw/doctor/validate-openspec-cn)"
+  sync_path "$ROOT_DIR/scripts/firefly.sh" "$runtime_dir/firefly"
+  sync_path "$ROOT_DIR/scripts/firefly-common.sh" "$runtime_dir/firefly-common.sh"
+  log_success "Installed firefly runtime scripts (firefly/common/bootstrap/list-change-tasks/draw/doctor/validate-openspec-cn)"
 }
 
 install_global_command() {
-  local command_path="$FORGEVIA_BIN_DIR/forgevia"
+  local command_path="$FIREFLY_BIN_DIR/firefly"
 
-  log_step "Installing Forgevia command at $command_path"
-  mkdir -p "$FORGEVIA_BIN_DIR"
+  log_step "Installing firefly command at $command_path"
+  mkdir -p "$FIREFLY_BIN_DIR"
   if [[ -e "$command_path" || -L "$command_path" ]]; then
     rm -f "$command_path"
   fi
-  cp "$ROOT_DIR/scripts/forgevia-global.sh" "$command_path"
+  cp "$ROOT_DIR/scripts/firefly-global.sh" "$command_path"
   write_global_command_state
-  log_success "Installed Forgevia command: $command_path"
+  log_success "Installed firefly command: $command_path"
 }
 
-overlay_forgevia_home() {
-  local home_dir="$CODEX_ROOT/forgevia"
-  log_step "Mirroring Forgevia source into $home_dir (baseline for global doctor/repair)"
+overlay_firefly_home() {
+  local home_dir="$CODEX_ROOT/firefly"
+  log_step "Mirroring firefly source into $home_dir (baseline for global doctor/repair)"
   sync_path "$ROOT_DIR/assets" "$home_dir/assets"
   sync_path "$ROOT_DIR/scripts" "$home_dir/scripts"
   sync_path "$ROOT_DIR/manifests" "$home_dir/manifests"
-  log_success "Mirrored Forgevia source baseline"
+  log_success "Mirrored firefly source baseline"
 }
 
 overlay_openspec_assets() {
@@ -335,8 +335,8 @@ overlay_openspec_assets() {
   if ! openspec_version_matches "$openspec_root"; then
     local actual_version
     actual_version="$(read_openspec_version "$openspec_root")"
-    log_info "openspec $actual_version detected; Forgevia openspec override targets $OPENSPEC_OVERRIDE_VERSION."
-    log_info "Skipping openspec override to avoid downgrading upstream. Pin openspec to $OPENSPEC_OVERRIDE_VERSION or update Forgevia's override."
+    log_info "openspec $actual_version detected; firefly openspec override targets $OPENSPEC_OVERRIDE_VERSION."
+    log_info "Skipping openspec override to avoid downgrading upstream. Pin openspec to $OPENSPEC_OVERRIDE_VERSION or update firefly's override."
     return 1
   fi
 
@@ -363,7 +363,7 @@ main() {
     esac
   done
 
-  log_step "Forgevia Codex installer"
+  log_step "firefly Codex installer"
   validate_root "$CODEX_ROOT" ".codex"
   validate_global_command_target
   require_command cp
@@ -372,7 +372,7 @@ main() {
   require_command node
 
   require_command npm
-  forgevia_require_sha256
+  firefly_require_sha256
   install_openspec
 
   if ! overlay_openspec_assets; then
@@ -383,16 +383,16 @@ main() {
   verify_superpowers_present
   log_success "Detected upstream superpowers at $CODEX_ROOT/superpowers"
   overlay_assets
-  overlay_forgevia_home
+  overlay_firefly_home
   overlay_runtime_scripts
   install_global_command
 
   if [[ "$install_incomplete" == "true" ]]; then
-    echo "Forgevia Codex install incomplete: OpenSpec overrides were not applied" >&2
+    echo "firefly Codex install incomplete: OpenSpec overrides were not applied" >&2
     exit 1
   fi
 
-  echo "🎉 Forgevia Codex install complete"
+  echo "🎉 firefly Codex install complete"
 }
 
 main "$@"

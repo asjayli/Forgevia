@@ -65,21 +65,21 @@ global_bin_dir="$tmp_dir/.local/bin"
 mkdir -p "$codex_home/superpowers"
 create_openspec_package "$codex_openspec"
 
-CODEX_HOME="$codex_home" FORGEVIA_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$codex_openspec" FAKE_NPM_ROOT="$tmp_dir/npm-global" PATH="$bin_dir:$PATH" "$CODEX_INSTALLER" >/dev/null
+CODEX_HOME="$codex_home" FIREFLY_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$codex_openspec" FAKE_NPM_ROOT="$tmp_dir/npm-global" PATH="$bin_dir:$PATH" "$CODEX_INSTALLER" >/dev/null
 
-codex_link_target="$tmp_dir/codex/user-managed/forgevia"
+codex_link_target="$tmp_dir/codex/user-managed/firefly"
 mkdir -p "$(dirname "$codex_link_target")"
-mv "$codex_home/skills/forgevia" "$codex_link_target"
-ln -s "$codex_link_target" "$codex_home/skills/forgevia"
+mv "$codex_home/skills/firefly" "$codex_link_target"
+ln -s "$codex_link_target" "$codex_home/skills/firefly"
 
-CODEX_HOME="$codex_home" FORGEVIA_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$codex_openspec" FAKE_NPM_ROOT="$tmp_dir/npm-global" PATH="$bin_dir:$PATH" "$CODEX_INSTALLER" >/dev/null
-assert_symlink "$codex_home/skills/forgevia"
-assert_paths_equal "$ROOT_DIR/assets/codex/skills/forgevia" "$codex_link_target"
+CODEX_HOME="$codex_home" FIREFLY_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$codex_openspec" FAKE_NPM_ROOT="$tmp_dir/npm-global" PATH="$bin_dir:$PATH" "$CODEX_INSTALLER" >/dev/null
+assert_symlink "$codex_home/skills/firefly"
+assert_paths_equal "$ROOT_DIR/assets/codex/skills/firefly" "$codex_link_target"
 
 printf 'drift\n' >> "$codex_link_target/SKILL.md"
-CODEX_HOME="$codex_home" FORGEVIA_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$codex_openspec" PATH="$bin_dir:$PATH" "$CODEX_DOCTOR" --repair >/dev/null
-assert_symlink "$codex_home/skills/forgevia"
-assert_paths_equal "$ROOT_DIR/assets/codex/skills/forgevia" "$codex_link_target"
+CODEX_HOME="$codex_home" FIREFLY_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$codex_openspec" PATH="$bin_dir:$PATH" "$CODEX_DOCTOR" --repair >/dev/null
+assert_symlink "$codex_home/skills/firefly"
+assert_paths_equal "$ROOT_DIR/assets/codex/skills/firefly" "$codex_link_target"
 
 claude_home="$tmp_dir/claude/.claude"
 claude_openspec="$tmp_dir/claude/openspec"
@@ -96,30 +96,30 @@ cat > "$claude_home/plugins/installed_plugins.json" <<EOF
 }
 EOF
 
-CLAUDE_HOME="$claude_home" FORGEVIA_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$claude_openspec" FAKE_NPM_ROOT="$tmp_dir/npm-global" PATH="$bin_dir:$PATH" "$CLAUDE_INSTALLER" >/dev/null
+CLAUDE_HOME="$claude_home" FIREFLY_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$claude_openspec" FAKE_NPM_ROOT="$tmp_dir/npm-global" PATH="$bin_dir:$PATH" "$CLAUDE_INSTALLER" >/dev/null
 
-claude_link_target="$tmp_dir/claude/user-managed/forgevia"
+claude_link_target="$tmp_dir/claude/user-managed/firefly"
 mkdir -p "$(dirname "$claude_link_target")"
-mv "$claude_home/skills/forgevia" "$claude_link_target"
-ln -s "$claude_link_target" "$claude_home/skills/forgevia"
+mv "$claude_home/skills/firefly" "$claude_link_target"
+ln -s "$claude_link_target" "$claude_home/skills/firefly"
 
-CLAUDE_HOME="$claude_home" FORGEVIA_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$claude_openspec" FAKE_NPM_ROOT="$tmp_dir/npm-global" PATH="$bin_dir:$PATH" "$CLAUDE_INSTALLER" >/dev/null
-assert_symlink "$claude_home/skills/forgevia"
-assert_paths_equal "$ROOT_DIR/assets/claude/skills/forgevia" "$claude_link_target"
+CLAUDE_HOME="$claude_home" FIREFLY_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$claude_openspec" FAKE_NPM_ROOT="$tmp_dir/npm-global" PATH="$bin_dir:$PATH" "$CLAUDE_INSTALLER" >/dev/null
+assert_symlink "$claude_home/skills/firefly"
+assert_paths_equal "$ROOT_DIR/assets/claude/skills/firefly" "$claude_link_target"
 
 printf 'drift\n' >> "$claude_link_target/SKILL.md"
-CLAUDE_HOME="$claude_home" FORGEVIA_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$claude_openspec" PATH="$bin_dir:$PATH" "$CLAUDE_DOCTOR" --repair >/dev/null
-assert_symlink "$claude_home/skills/forgevia"
-assert_paths_equal "$ROOT_DIR/assets/claude/skills/forgevia" "$claude_link_target"
+CLAUDE_HOME="$claude_home" FIREFLY_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$claude_openspec" PATH="$bin_dir:$PATH" "$CLAUDE_DOCTOR" --repair >/dev/null
+assert_symlink "$claude_home/skills/firefly"
+assert_paths_equal "$ROOT_DIR/assets/claude/skills/firefly" "$claude_link_target"
 
-test -x "$global_bin_dir/forgevia"
-test ! -L "$global_bin_dir/forgevia"
-cmp "$ROOT_DIR/scripts/forgevia-global.sh" "$global_bin_dir/forgevia"
-global_doctor_output="$(CODEX_HOME="$codex_home" CLAUDE_HOME="$claude_home" FORGEVIA_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$claude_openspec" PATH="$bin_dir:$PATH" "$global_bin_dir/forgevia" doctor)"
-[[ "$global_doctor_output" == *"Forgevia Codex doctor passed"* ]]
-[[ "$global_doctor_output" == *"Forgevia Claude doctor passed"* ]]
-global_repair_output="$(CODEX_HOME="$codex_home" CLAUDE_HOME="$claude_home" FORGEVIA_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$claude_openspec" PATH="$bin_dir:$PATH" "$global_bin_dir/forgevia" doctor --repair)"
-[[ "$global_repair_output" == *"Forgevia Codex doctor repair complete"* ]]
-[[ "$global_repair_output" == *"Forgevia Claude doctor repair complete"* ]]
+test -x "$global_bin_dir/firefly"
+test ! -L "$global_bin_dir/firefly"
+cmp "$ROOT_DIR/scripts/firefly-global.sh" "$global_bin_dir/firefly"
+global_doctor_output="$(CODEX_HOME="$codex_home" CLAUDE_HOME="$claude_home" FIREFLY_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$claude_openspec" PATH="$bin_dir:$PATH" "$global_bin_dir/firefly" doctor)"
+[[ "$global_doctor_output" == *"firefly Codex doctor passed"* ]]
+[[ "$global_doctor_output" == *"firefly Claude doctor passed"* ]]
+global_repair_output="$(CODEX_HOME="$codex_home" CLAUDE_HOME="$claude_home" FIREFLY_BIN_DIR="$global_bin_dir" OPENSPEC_ROOT="$claude_openspec" PATH="$bin_dir:$PATH" "$global_bin_dir/firefly" doctor --repair)"
+[[ "$global_repair_output" == *"firefly Codex doctor repair complete"* ]]
+[[ "$global_repair_output" == *"firefly Claude doctor repair complete"* ]]
 
 echo "managed symlink test passed"

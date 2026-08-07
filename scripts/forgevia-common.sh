@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Forgevia shared shell helpers.
+# firefly shared shell helpers.
 #
 # Sourced by the platform install and doctor scripts to avoid duplicating
 # platform-sensitive logic. The canonical example is SHA-256 computation:
 # Linux defaults to `sha256sum` while macOS ships `shasum -a 256` instead.
 # Centralizing the provider selection here keeps the four install/doctor
 # scripts in lockstep and lets runtime copies under
-# ~/.{claude,codex}/forgevia/bin/ load the same helpers from an adjacent path.
+# ~/.{claude,codex}/firefly/bin/ load the same helpers from an adjacent path.
 #
 # This file only DEFINES functions. It must not execute work or set shell
 # options when sourced, so callers retain control of `set -euo pipefail`
@@ -14,9 +14,9 @@
 
 # Print the SHA-256 digest of a file path to stdout.
 # Prefers `sha256sum` (Linux) and falls back to `shasum -a 256` (macOS).
-# Fails loudly when neither provider is available; Forgevia never silently
+# Fails loudly when neither provider is available; firefly never silently
 # downgrades to a weaker hash.
-forgevia_sha256_file() {
+firefly_sha256_file() {
   local path="$1"
   local line
   if command -v sha256sum >/dev/null 2>&1; then
@@ -35,9 +35,9 @@ forgevia_sha256_file() {
 
 # Pre-flight check used by install/doctor entry points: refuse to run when no
 # SHA-256 provider is available. Emits the same message as
-# forgevia_sha256_file so a missing provider stays attributable whether it
+# firefly_sha256_file so a missing provider stays attributable whether it
 # surfaces during preflight or during checksum computation.
-forgevia_require_sha256() {
+firefly_require_sha256() {
   if ! command -v sha256sum >/dev/null 2>&1 && ! command -v shasum >/dev/null 2>&1; then
     echo "missing required command: sha256sum or shasum" >&2
     exit 1

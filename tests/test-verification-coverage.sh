@@ -5,11 +5,11 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Pins the verification coverage ledger introduced in task group 6 on both
-# rendered platforms. forgevia-implement, forgevia-review, openspec-apply-change
+# rendered platforms. firefly-implement, firefly-review, openspec-apply-change
 # and subagent-driven-development must each carry the five coverage statuses,
-# the no-downgrade rule, and the browser-evidence rule. forgevia-implement
+# the no-downgrade rule, and the browser-evidence rule. firefly-implement
 # additionally emits the ledger and the trusted-prior ratio warning;
-# forgevia-verify-web produces browser-evidence; the code-reviewer prompt checks
+# firefly-verify-web produces browser-evidence; the code-reviewer prompt checks
 # coverage row by row.
 
 assert_contains() {
@@ -23,8 +23,8 @@ assert_contains() {
 }
 
 for platform in codex claude; do
-  implement="$ROOT_DIR/assets/$platform/skills/forgevia-implement/SKILL.md"
-  review="$ROOT_DIR/assets/$platform/skills/forgevia-review/SKILL.md"
+  implement="$ROOT_DIR/assets/$platform/skills/firefly-implement/SKILL.md"
+  review="$ROOT_DIR/assets/$platform/skills/firefly-review/SKILL.md"
   apply="$ROOT_DIR/assets/$platform/skills/openspec-apply-change/SKILL.md"
   sdd="$ROOT_DIR/assets/$platform/superpowers/skills/subagent-driven-development/SKILL.md"
 
@@ -41,12 +41,12 @@ for platform in codex claude; do
     assert_contains "$skill" "declared browser verification"
   done
 
-  # forgevia-implement emits the ledger and warns on the trusted-prior ratio.
+  # firefly-implement emits the ledger and warns on the trusted-prior ratio.
   assert_contains "$implement" "## Verification Coverage"
   assert_contains "$implement" "trusted-prior / total > 30%"
 
-  # forgevia-verify-web produces browser-evidence artifacts.
-  verify_web="$ROOT_DIR/assets/$platform/skills/forgevia-verify-web/SKILL.md"
+  # firefly-verify-web produces browser-evidence artifacts.
+  verify_web="$ROOT_DIR/assets/$platform/skills/firefly-verify-web/SKILL.md"
   assert_contains "$verify_web" "record the steps executed, the observed result, and an artifact path"
 
   # code-reviewer prompt checks coverage row by row.

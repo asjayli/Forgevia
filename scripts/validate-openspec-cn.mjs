@@ -236,7 +236,7 @@ function main() {
     return 1;
   }
 
-  const stagingRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'forgevia-openspec-cn-'));
+  const stagingRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'firefly-openspec-cn-'));
   try {
     copyTreeDereferenced(path.join(root, 'openspec'), path.join(stagingRoot, 'openspec'));
     injectNativeModals(stagingRoot, root, inspections);

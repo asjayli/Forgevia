@@ -99,18 +99,18 @@ assert_contains "$(<"$INSTALLER")" 'npm install -g @fission-ai/openspec@1.6.0'
 installer_help="$("$INSTALLER" --help)"
 doctor_help="$("$DOCTOR" --help)"
 
-assert_contains "$installer_help" "Install Forgevia Codex assets"
+assert_contains "$installer_help" "Install firefly Codex assets"
 assert_contains "$installer_help" "$MANIFEST"
-assert_contains "$doctor_help" "Check Forgevia Codex managed assets"
+assert_contains "$doctor_help" "Check firefly Codex managed assets"
 assert_contains "$doctor_help" "$MANIFEST"
 assert_contains "$doctor_help" "--repair"
-assert_contains "$doctor_help" "Forgevia runtime command dispatcher"
+assert_contains "$doctor_help" "firefly runtime command dispatcher"
 
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
 export CODEX_HOME="$tmp_dir/.codex"
-export FORGEVIA_BIN_DIR="$tmp_dir/.local/bin"
+export FIREFLY_BIN_DIR="$tmp_dir/.local/bin"
 export OPENSPEC_ROOT="$tmp_dir/openspec"
 bin_dir="$tmp_dir/bin"
 npm_log="$tmp_dir/npm.log"
@@ -156,47 +156,47 @@ printf 'user local tdd\n' > "$CODEX_HOME/superpowers/skills/test-driven-developm
 printf 'export function serializeConfig() { return \"wrong\"; }\n' > "$OPENSPEC_ROOT/dist/core/config-prompts.js"
 printf 'export const propose = \"wrong\";\n' > "$OPENSPEC_ROOT/dist/core/templates/workflows/propose.js"
 
-mkdir -p "$FORGEVIA_BIN_DIR"
-printf '#!/usr/bin/env bash\n# Forgevia global command shim\necho user-command\n' > "$FORGEVIA_BIN_DIR/forgevia"
-chmod +x "$FORGEVIA_BIN_DIR/forgevia"
+mkdir -p "$FIREFLY_BIN_DIR"
+printf '#!/usr/bin/env bash\n# firefly global command shim\necho user-command\n' > "$FIREFLY_BIN_DIR/firefly"
+chmod +x "$FIREFLY_BIN_DIR/firefly"
 
 set +e
 command_collision_output="$("$INSTALLER" 2>&1)"
 command_collision_status=$?
 set -e
 assert_exit_code "$command_collision_status" "1"
-assert_contains "$command_collision_output" "refusing to replace existing command: $FORGEVIA_BIN_DIR/forgevia"
-rm "$FORGEVIA_BIN_DIR/forgevia"
+assert_contains "$command_collision_output" "refusing to replace existing command: $FIREFLY_BIN_DIR/firefly"
+rm "$FIREFLY_BIN_DIR/firefly"
 
 installer_output="$("$INSTALLER")"
-assert_contains "$installer_output" "🧱 Forgevia Codex installer"
+assert_contains "$installer_output" "🧱 firefly Codex installer"
 assert_contains "$installer_output" "✅ Applied openspec override"
-assert_contains "$installer_output" "✅ Applied Forgevia-managed Codex assets"
+assert_contains "$installer_output" "✅ Applied firefly-managed Codex assets"
 assert_contains "$installer_output" "💾 Backed up"
-assert_contains "$installer_output" "🎉 Forgevia Codex install complete"
+assert_contains "$installer_output" "🎉 firefly Codex install complete"
 assert_contains "$(cat "$npm_log")" "install -g @fission-ai/openspec@1.6.0"
 
 for mirror_path in assets scripts manifests; do
-  assert_paths_equal "$ROOT_DIR/$mirror_path" "$CODEX_HOME/forgevia/$mirror_path"
+  assert_paths_equal "$ROOT_DIR/$mirror_path" "$CODEX_HOME/firefly/$mirror_path"
 done
 
-test_path_not_exists "$CODEX_HOME/superpowers/skills/brainstorming/SKILL.md.forgevia.bak"
-test_path_not_exists "$CODEX_HOME/superpowers/skills/test-driven-development/SKILL.md.forgevia.bak"
-test_path_not_exists "$OPENSPEC_ROOT/dist/core/config-prompts.js.forgevia.bak"
-test_path_not_exists "$OPENSPEC_ROOT/dist/core/templates/workflows/propose.js.forgevia.bak"
+test_path_not_exists "$CODEX_HOME/superpowers/skills/brainstorming/SKILL.md.firefly.bak"
+test_path_not_exists "$CODEX_HOME/superpowers/skills/test-driven-development/SKILL.md.firefly.bak"
+test_path_not_exists "$OPENSPEC_ROOT/dist/core/config-prompts.js.firefly.bak"
+test_path_not_exists "$OPENSPEC_ROOT/dist/core/templates/workflows/propose.js.firefly.bak"
 test_file_exists "$CODEX_HOME/skills/mermaid-diagram-specialist/SKILL.md"
-test_file_exists "$CODEX_HOME/skills/forgevia/SKILL.md"
-test_file_exists "$CODEX_HOME/skills/forgevia-init/SKILL.md"
-test_file_exists "$CODEX_HOME/skills/forgevia-doctor/SKILL.md"
-test_file_exists "$CODEX_HOME/skills/forgevia-repair/SKILL.md"
-test_file_exists "$CODEX_HOME/skills/forgevia-implement/SKILL.md"
-test_file_exists "$CODEX_HOME/skills/forgevia-archive/SKILL.md"
-test_file_exists "$CODEX_HOME/skills/forgevia-tasks/SKILL.md"
-test_file_exists "$CODEX_HOME/skills/forgevia-think/SKILL.md"
-test_file_exists "$CODEX_HOME/skills/forgevia-propose/SKILL.md"
-test_file_exists "$CODEX_HOME/skills/forgevia-review/SKILL.md"
-test_file_exists "$CODEX_HOME/skills/forgevia-verify-web/SKILL.md"
-test_file_exists "$CODEX_HOME/skills/forgevia-draw/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/firefly/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/firefly-init/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/firefly-doctor/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/firefly-repair/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/firefly-implement/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/firefly-archive/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/firefly-tasks/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/firefly-think/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/firefly-propose/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/firefly-review/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/firefly-verify-web/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/firefly-draw/SKILL.md"
 test_file_exists "$CODEX_HOME/skills/openspec-propose/SKILL.md"
 test_file_exists "$CODEX_HOME/skills/openspec-apply-change/SKILL.md"
 test_file_exists "$CODEX_HOME/skills/openspec-archive-change/SKILL.md"
@@ -226,54 +226,54 @@ test_file_executable "$codex_sp_root/subagent-driven-development/scripts/sdd-wor
 test_file_exists "$codex_sp_root/requesting-code-review/SKILL.md"
 test_file_exists "$codex_sp_root/requesting-code-review/code-reviewer.md"
 
-# Runtime scripts are installed to ~/.codex/forgevia/bin and must stay executable.
-test_file_executable "$CODEX_HOME/forgevia/bin/bootstrap-project.sh"
-test_file_executable "$CODEX_HOME/forgevia/bin/list-change-tasks.sh"
-test_file_executable "$CODEX_HOME/forgevia/bin/forgevia-draw.sh"
-test_file_executable "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
-test_file_executable "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
-cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
-test_file_executable "$CODEX_HOME/forgevia/bin/forgevia"
-cmp "$ROOT_DIR/scripts/forgevia.sh" "$CODEX_HOME/forgevia/bin/forgevia"
-test_file_executable "$FORGEVIA_BIN_DIR/forgevia"
-cmp "$ROOT_DIR/scripts/forgevia-global.sh" "$FORGEVIA_BIN_DIR/forgevia"
-global_command_output="$(CLAUDE_HOME="$tmp_dir/.claude" "$FORGEVIA_BIN_DIR/forgevia" doctor)"
-assert_contains "$global_command_output" "Forgevia Codex doctor passed"
+# Runtime scripts are installed to ~/.codex/firefly/bin and must stay executable.
+test_file_executable "$CODEX_HOME/firefly/bin/bootstrap-project.sh"
+test_file_executable "$CODEX_HOME/firefly/bin/list-change-tasks.sh"
+test_file_executable "$CODEX_HOME/firefly/bin/firefly-draw.sh"
+test_file_executable "$CODEX_HOME/firefly/bin/doctor-codex.sh"
+test_file_executable "$CODEX_HOME/firefly/bin/validate-openspec-cn.mjs"
+cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CODEX_HOME/firefly/bin/validate-openspec-cn.mjs"
+test_file_executable "$CODEX_HOME/firefly/bin/firefly"
+cmp "$ROOT_DIR/scripts/firefly.sh" "$CODEX_HOME/firefly/bin/firefly"
+test_file_executable "$FIREFLY_BIN_DIR/firefly"
+cmp "$ROOT_DIR/scripts/firefly-global.sh" "$FIREFLY_BIN_DIR/firefly"
+global_command_output="$(CLAUDE_HOME="$tmp_dir/.claude" "$FIREFLY_BIN_DIR/firefly" doctor)"
+assert_contains "$global_command_output" "firefly Codex doctor passed"
 
 doctor_output="$("$DOCTOR")"
-assert_contains "$doctor_output" "🔎 Forgevia Codex doctor"
+assert_contains "$doctor_output" "🔎 firefly Codex doctor"
 assert_contains "$doctor_output" "✅ OK"
 assert_contains "$doctor_output" "📋 Summary"
-assert_contains "$doctor_output" "Forgevia Codex doctor passed"
+assert_contains "$doctor_output" "firefly Codex doctor passed"
 assert_contains "$doctor_output" "$OPENSPEC_ROOT/dist/core/config-prompts.js"
 assert_contains "$doctor_output" "$OPENSPEC_ROOT/dist/core/templates/workflows/propose.js"
 assert_contains "$doctor_output" "$CODEX_HOME/skills/openspec-propose"
 assert_contains "$doctor_output" "$CODEX_HOME/skills/openspec-apply-change"
 assert_contains "$doctor_output" "$CODEX_HOME/skills/openspec-sync-specs"
 
-rm "$FORGEVIA_BIN_DIR/forgevia"
+rm "$FIREFLY_BIN_DIR/firefly"
 
 set +e
 global_command_drift_output="$("$DOCTOR" 2>&1)"
 global_command_drift_status=$?
 set -e
 assert_exit_code "$global_command_drift_status" "1"
-assert_contains "$global_command_drift_output" "$FORGEVIA_BIN_DIR/forgevia"
+assert_contains "$global_command_drift_output" "$FIREFLY_BIN_DIR/firefly"
 
 global_command_repair_output="$("$DOCTOR" --repair)"
-assert_contains "$global_command_repair_output" "$FORGEVIA_BIN_DIR/forgevia"
-test_file_executable "$FORGEVIA_BIN_DIR/forgevia"
-cmp "$ROOT_DIR/scripts/forgevia-global.sh" "$FORGEVIA_BIN_DIR/forgevia"
+assert_contains "$global_command_repair_output" "$FIREFLY_BIN_DIR/firefly"
+test_file_executable "$FIREFLY_BIN_DIR/firefly"
+cmp "$ROOT_DIR/scripts/firefly-global.sh" "$FIREFLY_BIN_DIR/firefly"
 
-rm "$FORGEVIA_BIN_DIR/forgevia"
-rm "$FORGEVIA_BIN_DIR/.forgevia-global-command.sha256"
-ln -s "$CODEX_HOME/forgevia/bin/forgevia" "$FORGEVIA_BIN_DIR/forgevia"
+rm "$FIREFLY_BIN_DIR/firefly"
+rm "$FIREFLY_BIN_DIR/.firefly-global-command.sha256"
+ln -s "$CODEX_HOME/firefly/bin/firefly" "$FIREFLY_BIN_DIR/firefly"
 
 legacy_command_repair_output="$("$DOCTOR" --repair)"
-assert_contains "$legacy_command_repair_output" "$FORGEVIA_BIN_DIR/forgevia"
-test_file_executable "$FORGEVIA_BIN_DIR/forgevia"
-test_path_not_exists "$FORGEVIA_BIN_DIR/forgevia.forgevia.bak"
-cmp "$ROOT_DIR/scripts/forgevia-global.sh" "$FORGEVIA_BIN_DIR/forgevia"
+assert_contains "$legacy_command_repair_output" "$FIREFLY_BIN_DIR/firefly"
+test_file_executable "$FIREFLY_BIN_DIR/firefly"
+test_path_not_exists "$FIREFLY_BIN_DIR/firefly.firefly.bak"
+cmp "$ROOT_DIR/scripts/firefly-global.sh" "$FIREFLY_BIN_DIR/firefly"
 
 expected_openspec_config="$(cat "$ROOT_DIR/assets/openspec/dist/core/config-prompts.js")"
 actual_openspec_config="$(cat "$OPENSPEC_ROOT/dist/core/config-prompts.js")"
@@ -287,8 +287,8 @@ assert_contains "$actual_openspec_propose" "$expected_openspec_propose"
 expected_openspec_propose_skill="$(cat "$ROOT_DIR/assets/codex/skills/openspec-propose/SKILL.md")"
 actual_openspec_propose_skill="$(cat "$CODEX_HOME/skills/openspec-propose/SKILL.md")"
 assert_contains "$actual_openspec_propose_skill" "$expected_openspec_propose_skill"
-assert_contains "$actual_openspec_propose_skill" 'Next command: `Forgevia implement <name>`'
-assert_contains "$actual_openspec_propose" 'Next command: \`Forgevia implement <name>\`'
+assert_contains "$actual_openspec_propose_skill" 'Next command: `firefly implement <name>`'
+assert_contains "$actual_openspec_propose" 'Next command: \`firefly implement <name>\`'
 
 echo "drift" >> "$CODEX_HOME/superpowers/skills/brainstorming/SKILL.md"
 
@@ -305,13 +305,13 @@ repair_output="$("$DOCTOR" --repair)"
 assert_contains "$repair_output" "🛠️ Repairing drifted or missing assets"
 assert_contains "$repair_output" "💾 Backed up"
 assert_contains "$repair_output" "✅ Repaired"
-test_path_not_exists "$CODEX_HOME/superpowers/skills/brainstorming/SKILL.md.forgevia.bak"
+test_path_not_exists "$CODEX_HOME/superpowers/skills/brainstorming/SKILL.md.firefly.bak"
 
 post_repair_output="$("$DOCTOR")"
 assert_contains "$post_repair_output" "✨ No drift detected"
-assert_contains "$post_repair_output" "Forgevia Codex doctor passed"
+assert_contains "$post_repair_output" "firefly Codex doctor passed"
 
-chmod -x "$CODEX_HOME/forgevia/bin/forgevia-draw.sh"
+chmod -x "$CODEX_HOME/firefly/bin/firefly-draw.sh"
 
 set +e
 mode_drift_output="$("$DOCTOR" 2>&1)"
@@ -320,13 +320,13 @@ set -e
 
 assert_exit_code "$mode_drift_status" "1"
 assert_contains "$mode_drift_output" "❌ DRIFT"
-assert_contains "$mode_drift_output" "$CODEX_HOME/forgevia/bin/forgevia-draw.sh"
+assert_contains "$mode_drift_output" "$CODEX_HOME/firefly/bin/firefly-draw.sh"
 
 mode_repair_output="$("$DOCTOR" --repair)"
-assert_contains "$mode_repair_output" "$CODEX_HOME/forgevia/bin/forgevia-draw.sh"
-test_file_executable "$CODEX_HOME/forgevia/bin/forgevia-draw.sh"
+assert_contains "$mode_repair_output" "$CODEX_HOME/firefly/bin/firefly-draw.sh"
+test_file_executable "$CODEX_HOME/firefly/bin/firefly-draw.sh"
 
-rm "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
+rm "$CODEX_HOME/firefly/bin/validate-openspec-cn.mjs"
 
 set +e
 validator_drift_output="$("$DOCTOR" 2>&1)"
@@ -338,10 +338,10 @@ assert_contains "$validator_drift_output" "validate-openspec-cn.mjs"
 
 validator_repair_output="$("$DOCTOR" --repair)"
 assert_contains "$validator_repair_output" "validate-openspec-cn.mjs"
-test_file_executable "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
-cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CODEX_HOME/forgevia/bin/validate-openspec-cn.mjs"
+test_file_executable "$CODEX_HOME/firefly/bin/validate-openspec-cn.mjs"
+cmp "$ROOT_DIR/scripts/validate-openspec-cn.mjs" "$CODEX_HOME/firefly/bin/validate-openspec-cn.mjs"
 
-rm "$CODEX_HOME/forgevia/bin/forgevia"
+rm "$CODEX_HOME/firefly/bin/firefly"
 
 set +e
 command_drift_output="$($DOCTOR 2>&1)"
@@ -349,14 +349,14 @@ command_drift_status=$?
 set -e
 
 assert_exit_code "$command_drift_status" "1"
-assert_contains "$command_drift_output" "$CODEX_HOME/forgevia/bin/forgevia"
+assert_contains "$command_drift_output" "$CODEX_HOME/firefly/bin/firefly"
 
 command_repair_output="$($DOCTOR --repair)"
-assert_contains "$command_repair_output" "$CODEX_HOME/forgevia/bin/forgevia"
-test_file_executable "$CODEX_HOME/forgevia/bin/forgevia"
-cmp "$ROOT_DIR/scripts/forgevia.sh" "$CODEX_HOME/forgevia/bin/forgevia"
+assert_contains "$command_repair_output" "$CODEX_HOME/firefly/bin/firefly"
+test_file_executable "$CODEX_HOME/firefly/bin/firefly"
+cmp "$ROOT_DIR/scripts/firefly.sh" "$CODEX_HOME/firefly/bin/firefly"
 
-rm "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
+rm "$CODEX_HOME/firefly/bin/doctor-codex.sh"
 
 set +e
 doctor_script_drift_output="$($DOCTOR 2>&1)"
@@ -364,12 +364,12 @@ doctor_script_drift_status=$?
 set -e
 
 assert_exit_code "$doctor_script_drift_status" "1"
-assert_contains "$doctor_script_drift_output" "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
+assert_contains "$doctor_script_drift_output" "$CODEX_HOME/firefly/bin/doctor-codex.sh"
 
 doctor_script_repair_output="$($DOCTOR --repair)"
-assert_contains "$doctor_script_repair_output" "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
-test_file_executable "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
-cmp "$ROOT_DIR/scripts/doctor-codex.sh" "$CODEX_HOME/forgevia/bin/doctor-codex.sh"
+assert_contains "$doctor_script_repair_output" "$CODEX_HOME/firefly/bin/doctor-codex.sh"
+test_file_executable "$CODEX_HOME/firefly/bin/doctor-codex.sh"
+cmp "$ROOT_DIR/scripts/doctor-codex.sh" "$CODEX_HOME/firefly/bin/doctor-codex.sh"
 
 missing_openspec_root="$tmp_dir/missing-openspec"
 rm -rf "$missing_openspec_root"
@@ -402,12 +402,12 @@ mismatched_openspec_install_status=$?
 set -e
 
 assert_exit_code "$mismatched_openspec_install_status" "1"
-assert_contains "$mismatched_openspec_install_output" "Forgevia Codex install incomplete"
+assert_contains "$mismatched_openspec_install_output" "firefly Codex install incomplete"
 test_path_not_exists "$mismatched_openspec_root/dist/core/config-prompts.js"
 
 invalid_openspec_root="$tmp_dir/invalid-openspec"
 mkdir -p "$invalid_openspec_root"
-rm -rf "$CODEX_HOME/skills/forgevia"
+rm -rf "$CODEX_HOME/skills/firefly"
 
 set +e
 invalid_openspec_install_output="$(OPENSPEC_ROOT="$invalid_openspec_root" "$INSTALLER" 2>&1)"
@@ -417,7 +417,7 @@ set -e
 assert_exit_code "$invalid_openspec_install_status" "1"
 assert_contains "$invalid_openspec_install_output" "OpenSpec package metadata is missing or invalid"
 test_path_not_exists "$invalid_openspec_root/dist/core/config-prompts.js"
-test_file_exists "$CODEX_HOME/skills/forgevia/SKILL.md"
+test_file_exists "$CODEX_HOME/skills/firefly/SKILL.md"
 
 bad_root_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir" "$bad_root_dir"' EXIT
@@ -441,12 +441,12 @@ trap 'rm -rf "$tmp_dir" "$bad_root_dir" "$missing_openspec_dir"' EXIT
 mkdir -p "$missing_openspec_dir/.codex/superpowers"
 
 set +e
-missing_openspec_install_output="$(env -u OPENSPEC_ROOT CODEX_HOME="$missing_openspec_dir/.codex" FORGEVIA_BIN_DIR="$missing_openspec_dir/.local/bin" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
+missing_openspec_install_output="$(env -u OPENSPEC_ROOT CODEX_HOME="$missing_openspec_dir/.codex" FIREFLY_BIN_DIR="$missing_openspec_dir/.local/bin" PATH="$bin_dir:$PATH" "$INSTALLER" 2>&1)"
 missing_openspec_install_status=$?
 set -e
 
 assert_exit_code "$missing_openspec_install_status" "1"
 assert_contains "$missing_openspec_install_output" "openspec install root not found"
-assert_contains "$missing_openspec_install_output" "Forgevia Codex install incomplete"
+assert_contains "$missing_openspec_install_output" "firefly Codex install incomplete"
 
 echo "codex installer smoke test passed"

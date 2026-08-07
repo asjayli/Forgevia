@@ -47,40 +47,40 @@ assert_normalized_equal() {
 }
 
 for path in \
-  "$ROOT_DIR/assets/codex/skills/forgevia-propose/SKILL.md" \
-  "$ROOT_DIR/assets/claude/skills/forgevia-propose/SKILL.md"
+  "$ROOT_DIR/assets/codex/skills/firefly-propose/SKILL.md" \
+  "$ROOT_DIR/assets/claude/skills/firefly-propose/SKILL.md"
 do
   assert_file_contains "$path" "必须、不得、禁止、应当"
   assert_file_contains "$path" "### Requirement:"
-  assert_file_contains "$path" "forgevia\" validate"
+  assert_file_contains "$path" "firefly\" validate"
 done
 
-for skill_name in forgevia-propose forgevia-review forgevia-archive; do
+for skill_name in firefly-propose firefly-review firefly-archive; do
   assert_normalized_equal \
     "$ROOT_DIR/assets/codex/skills/$skill_name/SKILL.md" \
     "$ROOT_DIR/assets/claude/skills/$skill_name/SKILL.md"
 done
 
 for path in \
-  "$ROOT_DIR/assets/codex/skills/forgevia-review/SKILL.md" \
-  "$ROOT_DIR/assets/claude/skills/forgevia-review/SKILL.md" \
-  "$ROOT_DIR/assets/codex/skills/forgevia-archive/SKILL.md" \
-  "$ROOT_DIR/assets/claude/skills/forgevia-archive/SKILL.md"
+  "$ROOT_DIR/assets/codex/skills/firefly-review/SKILL.md" \
+  "$ROOT_DIR/assets/claude/skills/firefly-review/SKILL.md" \
+  "$ROOT_DIR/assets/codex/skills/firefly-archive/SKILL.md" \
+  "$ROOT_DIR/assets/claude/skills/firefly-archive/SKILL.md"
 do
-  assert_file_contains "$path" "forgevia\" validate"
+  assert_file_contains "$path" "firefly\" validate"
 done
 
-assert_file_contains "$ROOT_DIR/README.md" "forgevia validate"
+assert_file_contains "$ROOT_DIR/README.md" "firefly validate"
 assert_file_contains "$ROOT_DIR/README.md" "不支持中文章节或标题"
-assert_file_contains "$ROOT_DIR/README_EN.md" "forgevia validate"
+assert_file_contains "$ROOT_DIR/README_EN.md" "firefly validate"
 assert_file_contains "$ROOT_DIR/README_EN.md" "does not support Chinese section or heading keywords"
 
 assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-archive-change/SKILL.md" "planningHome.changesDir"
 assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-archive-change/SKILL.md" "artifactPaths.specs.existingOutputPaths"
 assert_file_not_contains "$ROOT_DIR/assets/codex/skills/openspec-archive-change/SKILL.md" "mkdir -p openspec/changes/archive"
 assert_file_contains "$ROOT_DIR/assets/codex/skills/openspec-explore/SKILL.md" "artifactPaths.<artifact>.existingOutputPaths"
-assert_file_contains "$ROOT_DIR/assets/codex/skills/forgevia/SKILL.md" "changeRoot"
-assert_file_contains "$ROOT_DIR/assets/claude/skills/forgevia/SKILL.md" "changeRoot"
+assert_file_contains "$ROOT_DIR/assets/codex/skills/firefly/SKILL.md" "changeRoot"
+assert_file_contains "$ROOT_DIR/assets/claude/skills/firefly/SKILL.md" "changeRoot"
 
 for path in \
   "$ROOT_DIR/assets/claude/commands/opsx/sync.md" \
