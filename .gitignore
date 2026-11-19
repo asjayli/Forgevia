@@ -8,3 +8,4 @@
 # Local client state; distributable client assets live under assets/.
 /.claude/
 /.codex/
+/.video_agent/
